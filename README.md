@@ -8,7 +8,7 @@ ALaS is a general-purpose, Turing-complete programming language designed exclusi
 - **JSON-Based**: All code is represented as structured JSON following a strict schema
 - **Turing-Complete**: Supports functions, conditionals, loops, and recursion
 - **Type System**: Basic types including int, float, string, bool, array, and map
-- **Modular**: Programs are organized as modules with import/export capabilities
+- **Module System**: Import/export capabilities with dependency resolution and encapsulation
 
 ## Project Structure
 
@@ -25,7 +25,8 @@ alas/
 │   ├── codegen/        # LLVM IR code generator
 │   └── runtime/        # Runtime value types
 ├── examples/
-│   └── programs/       # Example ALaS programs
+│   ├── programs/       # Example ALaS programs
+│   └── modules/        # Example ALaS modules
 ├── tests/              # Test suite
 └── docs/
     └── alas_lang_spec.md  # Language specification
@@ -59,6 +60,9 @@ make run-all-examples
 
 # Run array example
 ./bin/alas-run -file examples/programs/simple_array.alas.json
+
+# Run module example
+./bin/alas-run -file examples/programs/module_demo.alas.json
 
 # Run a specific function with arguments (default function is 'main')
 ./bin/alas-run -file examples/programs/fibonacci.alas.json -fn main
@@ -189,6 +193,7 @@ Here's an example demonstrating array and map operations:
 - `binary` - Binary operations (+, -, *, /, %, ==, !=, <, <=, >, >=, &&, ||)
 - `unary` - Unary operations (!, -)
 - `call` - Function calls
+- `module_call` - Cross-module function calls (module.function)
 - `array_literal` - Array literals with elements
 - `map_literal` - Map literals with key-value pairs
 - `index` - Array/map indexing operations
@@ -202,6 +207,41 @@ Here's an example demonstrating array and map operations:
 - `map` - Key-value maps with string keys
 - `void` - No return value
 
+### Module System
+
+ALaS supports modular programming with import/export capabilities:
+
+- **Imports**: Declare dependencies on other modules using the `imports` array
+- **Exports**: Specify which functions are accessible from other modules using the `exports` array
+- **Module Calls**: Call exported functions using `module.function` syntax
+- **Dependency Resolution**: Modules are automatically loaded when imported
+- **Encapsulation**: Non-exported functions remain private to the module
+
+Example:
+```json
+{
+  "type": "module",
+  "name": "main",
+  "imports": ["math_utils"],
+  "functions": [{
+    "name": "calculate",
+    "body": [{
+      "type": "assign",
+      "target": "result",
+      "value": {
+        "type": "module_call",
+        "module": "math_utils",
+        "name": "add",
+        "args": [
+          {"type": "literal", "value": 10},
+          {"type": "literal", "value": 5}
+        ]
+      }
+    }]
+  }]
+}
+```
+
 ## Development Status
 
 Current implementation includes:
@@ -213,14 +253,15 @@ Current implementation includes:
 - ✅ Control flow (if/else, while loops)
 - ✅ Binary and unary operations
 - ✅ Arrays and maps with indexing
+- ✅ Module imports/exports with dependency resolution
 - ✅ Comprehensive test suite
 
 Future work:
-- ⏳ Module imports/exports
 - ⏳ Standard library
 - ⏳ Plugin system
 - ⏳ Advanced LLVM IR optimizations
 - ⏳ Runtime garbage collection for arrays/maps
+- ⏳ Cross-module LLVM compilation and linking
 
 ## License
 
