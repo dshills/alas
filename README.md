@@ -16,11 +16,13 @@ ALaS is a general-purpose, Turing-complete programming language designed exclusi
 alas/
 ├── cmd/
 │   ├── alas-validate/   # AST validation tool
-│   └── alas-run/        # Reference interpreter
+│   ├── alas-run/        # Reference interpreter
+│   └── alas-compile/    # LLVM IR compiler
 ├── internal/
 │   ├── ast/            # AST type definitions
 │   ├── validator/      # AST validation logic
 │   ├── interpreter/    # Reference interpreter
+│   ├── codegen/        # LLVM IR code generator
 │   └── runtime/        # Runtime value types
 ├── examples/
 │   └── programs/       # Example ALaS programs
@@ -55,8 +57,11 @@ make run-all-examples
 # Run a specific example
 ./bin/alas-run -file examples/programs/hello.alas.json
 
-# Run a specific function with arguments
-./bin/alas-run -file examples/programs/fibonacci.alas.json -fn fibonacci 10
+# Run array example
+./bin/alas-run -file examples/programs/simple_array.alas.json
+
+# Run a specific function with arguments (default function is 'main')
+./bin/alas-run -file examples/programs/fibonacci.alas.json -fn main
 ```
 
 ### Validating Programs
@@ -81,7 +86,9 @@ make compile-examples
 make test
 ```
 
-## Example Program
+## Example Programs
+
+### Hello World
 
 Here's a simple "Hello, World!" program in ALaS:
 
@@ -109,6 +116,64 @@ Here's a simple "Hello, World!" program in ALaS:
 }
 ```
 
+### Arrays and Maps
+
+Here's an example demonstrating array and map operations:
+
+```json
+{
+  "type": "module",
+  "name": "arrays_demo",
+  "functions": [
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "int",
+      "body": [
+        {
+          "type": "assign",
+          "target": "numbers",
+          "value": {
+            "type": "array_literal",
+            "elements": [
+              {"type": "literal", "value": 10},
+              {"type": "literal", "value": 20},
+              {"type": "literal", "value": 30}
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "person",
+          "value": {
+            "type": "map_literal",
+            "pairs": [
+              {
+                "key": {"type": "literal", "value": "name"},
+                "value": {"type": "literal", "value": "Alice"}
+              },
+              {
+                "key": {"type": "literal", "value": "age"},
+                "value": {"type": "literal", "value": 30}
+              }
+            ]
+          }
+        },
+        {
+          "type": "return",
+          "value": {
+            "type": "index",
+            "object": {"type": "variable", "name": "numbers"},
+            "index": {"type": "literal", "value": 1}
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
 ## Language Features
 
 ### Statements
@@ -124,14 +189,17 @@ Here's a simple "Hello, World!" program in ALaS:
 - `binary` - Binary operations (+, -, *, /, %, ==, !=, <, <=, >, >=, &&, ||)
 - `unary` - Unary operations (!, -)
 - `call` - Function calls
+- `array_literal` - Array literals with elements
+- `map_literal` - Map literals with key-value pairs
+- `index` - Array/map indexing operations
 
 ### Types
 - `int` - Integer numbers
 - `float` - Floating-point numbers
 - `string` - Text strings
 - `bool` - Boolean values (true/false)
-- `array` - Arrays (planned)
-- `map` - Key-value maps (planned)
+- `array` - Arrays of values with integer indexing
+- `map` - Key-value maps with string keys
 - `void` - No return value
 
 ## Development Status
@@ -144,15 +212,16 @@ Current implementation includes:
 - ✅ Functions and recursion
 - ✅ Control flow (if/else, while loops)
 - ✅ Binary and unary operations
-- ✅ Test suite
+- ✅ Arrays and maps with indexing
+- ✅ Comprehensive test suite
 
 Future work:
-- ⏳ Arrays and maps
 - ⏳ Module imports/exports
 - ⏳ Standard library
 - ⏳ Plugin system
-- ⏳ LLVM IR optimizations
+- ⏳ Advanced LLVM IR optimizations
+- ⏳ Runtime garbage collection for arrays/maps
 
 ## License
 
-This project is currently in development. License to be determined.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
