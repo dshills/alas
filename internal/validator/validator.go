@@ -252,6 +252,39 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 			}
 		}
 
+	case ast.ExprArrayLit:
+		// Validate array elements
+		for i, elem := range expr.Elements {
+			if err := v.validateExpression(&elem, scope); err != nil {
+				return fmt.Errorf("array element %d: %v", i, err)
+			}
+		}
+
+	case ast.ExprMapLit:
+		// Validate map key-value pairs
+		for i, pair := range expr.Pairs {
+			if err := v.validateExpression(&pair.Key, scope); err != nil {
+				return fmt.Errorf("map pair %d key: %v", i, err)
+			}
+			if err := v.validateExpression(&pair.Value, scope); err != nil {
+				return fmt.Errorf("map pair %d value: %v", i, err)
+			}
+		}
+
+	case ast.ExprIndex:
+		if expr.Object == nil {
+			return fmt.Errorf("index expression must have an object")
+		}
+		if expr.Index == nil {
+			return fmt.Errorf("index expression must have an index")
+		}
+		if err := v.validateExpression(expr.Object, scope); err != nil {
+			return fmt.Errorf("index object: %v", err)
+		}
+		if err := v.validateExpression(expr.Index, scope); err != nil {
+			return fmt.Errorf("index: %v", err)
+		}
+
 	default:
 		return fmt.Errorf("unknown expression type: %s", expr.Type)
 	}

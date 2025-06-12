@@ -1,0 +1,49 @@
+{
+  "type": "module",
+  "name": "simple_array",
+  "functions": [
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "int",
+      "body": [
+        {
+          "type": "assign",
+          "target": "arr",
+          "value": {
+            "type": "array_literal",
+            "elements": [
+              {
+                "type": "literal",
+                "value": 10
+              },
+              {
+                "type": "literal",
+                "value": 20
+              },
+              {
+                "type": "literal",
+                "value": 30
+              }
+            ]
+          }
+        },
+        {
+          "type": "return",
+          "value": {
+            "type": "index",
+            "object": {
+              "type": "variable",
+              "name": "arr"
+            },
+            "index": {
+              "type": "literal",
+              "value": 1
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

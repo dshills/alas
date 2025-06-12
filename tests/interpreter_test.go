@@ -50,6 +50,13 @@ func TestInterpreter(t *testing.T) {
 			args:     []runtime.Value{},
 			expected: runtime.NewInt(55),
 		},
+		{
+			name:     "Simple Array Access",
+			file:     "../examples/programs/simple_array.alas.json",
+			function: "main",
+			args:     []runtime.Value{},
+			expected: runtime.NewInt(20),
+		},
 	}
 
 	for _, tc := range tests {
@@ -192,10 +199,158 @@ func valuesEqual(a, b runtime.Value) bool {
 		return ab == bb
 	case runtime.ValueTypeVoid:
 		return true
-	case runtime.ValueTypeArray, runtime.ValueTypeMap:
-		// TODO: Implement array and map comparison
-		return false
+	case runtime.ValueTypeArray:
+		aa, _ := a.AsArray()
+		ba, _ := b.AsArray()
+		if len(aa) != len(ba) {
+			return false
+		}
+		for i := range aa {
+			if !valuesEqual(aa[i], ba[i]) {
+				return false
+			}
+		}
+		return true
+	case runtime.ValueTypeMap:
+		am, _ := a.AsMap()
+		bm, _ := b.AsMap()
+		if len(am) != len(bm) {
+			return false
+		}
+		for k, v := range am {
+			if bv, ok := bm[k]; !ok || !valuesEqual(v, bv) {
+				return false
+			}
+		}
+		return true
 	default:
 		return false
+	}
+}
+
+// TestArrayOperations tests array literal creation and indexing.
+func TestArrayOperations(t *testing.T) {
+	interp := interpreter.New()
+	
+	// Create a simple array program
+	module := &ast.Module{
+		Type: "module",
+		Name: "test_arrays",
+		Functions: []ast.Function{
+			{
+				Type:    "function",
+				Name:    "test_array",
+				Params:  []ast.Parameter{},
+				Returns: "int",
+				Body: []ast.Statement{
+					{
+						Type:   "assign",
+						Target: "arr",
+						Value: &ast.Expression{
+							Type: ast.ExprArrayLit,
+							Elements: []ast.Expression{
+								{Type: ast.ExprLiteral, Value: float64(10)},
+								{Type: ast.ExprLiteral, Value: float64(20)},
+								{Type: ast.ExprLiteral, Value: float64(30)},
+							},
+						},
+					},
+					{
+						Type: "return",
+						Value: &ast.Expression{
+							Type: ast.ExprIndex,
+							Object: &ast.Expression{
+								Type: ast.ExprVariable,
+								Name: "arr",
+							},
+							Index: &ast.Expression{
+								Type:  ast.ExprLiteral,
+								Value: float64(1),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	
+	if err := interp.LoadModule(module); err != nil {
+		t.Fatalf("Failed to load module: %v", err)
+	}
+	
+	result, err := interp.Run("test_array", []runtime.Value{})
+	if err != nil {
+		t.Fatalf("Runtime error: %v", err)
+	}
+	
+	expected := runtime.NewInt(20)
+	if !valuesEqual(result, expected) {
+		t.Errorf("Expected %v, got %v", expected, result)
+	}
+}
+
+// TestMapOperations tests map literal creation and key access.
+func TestMapOperations(t *testing.T) {
+	interp := interpreter.New()
+	
+	// Create a simple map program
+	module := &ast.Module{
+		Type: "module",
+		Name: "test_maps",
+		Functions: []ast.Function{
+			{
+				Type:    "function",
+				Name:    "test_map",
+				Params:  []ast.Parameter{},
+				Returns: "string",
+				Body: []ast.Statement{
+					{
+						Type:   "assign",
+						Target: "person",
+						Value: &ast.Expression{
+							Type: ast.ExprMapLit,
+							Pairs: []ast.MapPair{
+								{
+									Key:   ast.Expression{Type: ast.ExprLiteral, Value: "name"},
+									Value: ast.Expression{Type: ast.ExprLiteral, Value: "Alice"},
+								},
+								{
+									Key:   ast.Expression{Type: ast.ExprLiteral, Value: "age"},
+									Value: ast.Expression{Type: ast.ExprLiteral, Value: float64(30)},
+								},
+							},
+						},
+					},
+					{
+						Type: "return",
+						Value: &ast.Expression{
+							Type: ast.ExprIndex,
+							Object: &ast.Expression{
+								Type: ast.ExprVariable,
+								Name: "person",
+							},
+							Index: &ast.Expression{
+								Type:  ast.ExprLiteral,
+								Value: "name",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	
+	if err := interp.LoadModule(module); err != nil {
+		t.Fatalf("Failed to load module: %v", err)
+	}
+	
+	result, err := interp.Run("test_map", []runtime.Value{})
+	if err != nil {
+		t.Fatalf("Runtime error: %v", err)
+	}
+	
+	expected := runtime.NewString("Alice")
+	if !valuesEqual(result, expected) {
+		t.Errorf("Expected %v, got %v", expected, result)
 	}
 }

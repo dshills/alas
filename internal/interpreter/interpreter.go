@@ -222,6 +222,51 @@ func (i *Interpreter) evaluateExpression(expr *ast.Expression, env *Environment)
 		}
 		return i.Run(expr.Name, args)
 
+	case ast.ExprArrayLit:
+		// Evaluate array literal
+		elements := make([]runtime.Value, len(expr.Elements))
+		for idx, elem := range expr.Elements {
+			val, err := i.evaluateExpression(&elem, env)
+			if err != nil {
+				return runtime.NewVoid(), err
+			}
+			elements[idx] = val
+		}
+		return runtime.NewArray(elements), nil
+
+	case ast.ExprMapLit:
+		// Evaluate map literal
+		mapValue := make(map[string]runtime.Value)
+		for _, pair := range expr.Pairs {
+			key, err := i.evaluateExpression(&pair.Key, env)
+			if err != nil {
+				return runtime.NewVoid(), err
+			}
+			value, err := i.evaluateExpression(&pair.Value, env)
+			if err != nil {
+				return runtime.NewVoid(), err
+			}
+			
+			keyStr, err := key.AsString()
+			if err != nil {
+				return runtime.NewVoid(), fmt.Errorf("map key must be a string: %v", err)
+			}
+			mapValue[keyStr] = value
+		}
+		return runtime.NewMap(mapValue), nil
+
+	case ast.ExprIndex:
+		// Evaluate indexing (array[index] or map[key])
+		object, err := i.evaluateExpression(expr.Object, env)
+		if err != nil {
+			return runtime.NewVoid(), err
+		}
+		index, err := i.evaluateExpression(expr.Index, env)
+		if err != nil {
+			return runtime.NewVoid(), err
+		}
+		return i.evaluateIndexAccess(object, index)
+
 	default:
 		return runtime.NewVoid(), fmt.Errorf("unknown expression type: %s", expr.Type)
 	}
@@ -386,9 +431,30 @@ func (i *Interpreter) valuesEqual(left, right runtime.Value) bool {
 		return l == r
 	case runtime.ValueTypeVoid:
 		return true
-	case runtime.ValueTypeArray, runtime.ValueTypeMap:
-		// TODO: Implement array and map comparison
-		return false
+	case runtime.ValueTypeArray:
+		l, _ := left.AsArray()
+		r, _ := right.AsArray()
+		if len(l) != len(r) {
+			return false
+		}
+		for idx := range l {
+			if !i.valuesEqual(l[idx], r[idx]) {
+				return false
+			}
+		}
+		return true
+	case runtime.ValueTypeMap:
+		l, _ := left.AsMap()
+		r, _ := right.AsMap()
+		if len(l) != len(r) {
+			return false
+		}
+		for k, v := range l {
+			if rv, ok := r[k]; !ok || !i.valuesEqual(v, rv) {
+				return false
+			}
+		}
+		return true
 	default:
 		return false
 	}
@@ -425,4 +491,46 @@ func (i *Interpreter) compareValues(left, right runtime.Value) int {
 		return 1
 	}
 	return 0
+}
+
+// evaluateIndexAccess handles array and map indexing.
+func (i *Interpreter) evaluateIndexAccess(object, index runtime.Value) (runtime.Value, error) {
+	switch object.Type {
+	case runtime.ValueTypeArray:
+		arr, err := object.AsArray()
+		if err != nil {
+			return runtime.NewVoid(), err
+		}
+		
+		idx, err := index.AsInt()
+		if err != nil {
+			return runtime.NewVoid(), fmt.Errorf("array index must be an integer: %v", err)
+		}
+		
+		if idx < 0 || idx >= int64(len(arr)) {
+			return runtime.NewVoid(), fmt.Errorf("array index out of bounds: %d", idx)
+		}
+		
+		return arr[idx], nil
+		
+	case runtime.ValueTypeMap:
+		m, err := object.AsMap()
+		if err != nil {
+			return runtime.NewVoid(), err
+		}
+		
+		key, err := index.AsString()
+		if err != nil {
+			return runtime.NewVoid(), fmt.Errorf("map key must be a string: %v", err)
+		}
+		
+		if val, ok := m[key]; ok {
+			return val, nil
+		}
+		
+		return runtime.NewVoid(), fmt.Errorf("map key not found: %s", key)
+		
+	default:
+		return runtime.NewVoid(), fmt.Errorf("cannot index into %v", object.Type)
+	}
 }

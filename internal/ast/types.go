@@ -40,13 +40,23 @@ type Statement struct {
 
 // Expression represents any expression in ALaS.
 type Expression struct {
-	Type  string       `json:"type"`
-	Value interface{}  `json:"value,omitempty"`
-	Name  string       `json:"name,omitempty"`
-	Op    string       `json:"op,omitempty"`
-	Left  *Expression  `json:"left,omitempty"`
-	Right *Expression  `json:"right,omitempty"`
-	Args  []Expression `json:"args,omitempty"`
+	Type     string                `json:"type"`
+	Value    interface{}           `json:"value,omitempty"`
+	Name     string                `json:"name,omitempty"`
+	Op       string                `json:"op,omitempty"`
+	Left     *Expression           `json:"left,omitempty"`
+	Right    *Expression           `json:"right,omitempty"`
+	Args     []Expression          `json:"args,omitempty"`
+	Elements []Expression          `json:"elements,omitempty"` // For array literals
+	Pairs    []MapPair             `json:"pairs,omitempty"`    // For map literals
+	Index    *Expression           `json:"index,omitempty"`    // For indexing operations
+	Object   *Expression           `json:"object,omitempty"`   // For field/index access
+}
+
+// MapPair represents a key-value pair in a map literal.
+type MapPair struct {
+	Key   Expression `json:"key"`
+	Value Expression `json:"value"`
 }
 
 // Statement types.
@@ -61,13 +71,15 @@ const (
 
 // Expression types.
 const (
-	ExprLiteral  = "literal"
-	ExprVariable = "variable"
-	ExprBinary   = "binary"
-	ExprUnary    = "unary"
-	ExprCall     = "call"
-	ExprIndex    = "index"
-	ExprField    = "field"
+	ExprLiteral     = "literal"
+	ExprVariable    = "variable"
+	ExprBinary      = "binary"
+	ExprUnary       = "unary"
+	ExprCall        = "call"
+	ExprIndex       = "index"
+	ExprField       = "field"
+	ExprArrayLit    = "array_literal"
+	ExprMapLit      = "map_literal"
 )
 
 // Binary operators.

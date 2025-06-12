@@ -207,6 +207,15 @@ func (g *LLVMCodegen) generateExpression(expr *ast.Expression) (value.Value, err
 	case ast.ExprCall:
 		return g.generateCall(expr)
 
+	case ast.ExprArrayLit:
+		return g.generateArrayLiteral(expr)
+
+	case ast.ExprMapLit:
+		return g.generateMapLiteral(expr)
+
+	case ast.ExprIndex:
+		return g.generateIndexAccess(expr)
+
 	default:
 		return nil, fmt.Errorf("unsupported expression type: %s", expr.Type)
 	}
@@ -516,6 +525,14 @@ func (g *LLVMCodegen) convertType(alasType string) (types.Type, error) {
 	case ast.TypeString:
 		// For now, represent strings as i8* (simplified)
 		return types.NewPointer(types.I8), nil
+	case ast.TypeArray:
+		// Represent arrays as a struct with pointer and length
+		// struct { i8* data, i64 length }
+		return types.NewStruct(types.NewPointer(types.I8), types.I64), nil
+	case ast.TypeMap:
+		// Represent maps as a simple pointer (simplified implementation)
+		// In a real implementation, this would be a hash table structure
+		return types.NewPointer(types.I8), nil
 	case ast.TypeVoid, "":
 		return types.Void, nil
 	default:
@@ -533,10 +550,70 @@ func (g *LLVMCodegen) getZeroValue(t types.Type) value.Value {
 	case types.Double:
 		return constant.NewFloat(types.Double, 0.0)
 	default:
-		// For pointer types and others, use null
+		// For pointer types, use null
 		if ptr, ok := t.(*types.PointerType); ok {
 			return constant.NewNull(ptr)
 		}
+		// For struct types (arrays), create zero struct
+		if structType, ok := t.(*types.StructType); ok {
+			fields := make([]constant.Constant, len(structType.Fields))
+			for i, fieldType := range structType.Fields {
+				fields[i] = g.getZeroValue(fieldType).(constant.Constant)
+			}
+			return constant.NewStruct(structType, fields...)
+		}
 		return constant.NewInt(types.I64, 0) // Default fallback
 	}
+}
+
+// generateArrayLiteral generates LLVM IR for array literals.
+// For simplicity, this creates a simplified array representation
+func (g *LLVMCodegen) generateArrayLiteral(expr *ast.Expression) (value.Value, error) {
+	// For now, create a simplified array structure
+	// This is a basic implementation - a full implementation would allocate memory
+	// and properly initialize the array elements
+	
+	arrayType, _ := g.convertType(ast.TypeArray)
+	structType := arrayType.(*types.StructType)
+	
+	// Create null pointer for data (simplified)
+	dataPtr := constant.NewNull(types.NewPointer(types.I8))
+	// Set length
+	length := constant.NewInt(types.I64, int64(len(expr.Elements)))
+	
+	// Create struct with data pointer and length
+	fields := []constant.Constant{dataPtr, length}
+	return constant.NewStruct(structType, fields...), nil
+}
+
+// generateMapLiteral generates LLVM IR for map literals.
+// For simplicity, this creates a null pointer (maps would need complex runtime support)
+func (g *LLVMCodegen) generateMapLiteral(expr *ast.Expression) (value.Value, error) {
+	// For now, just return a null pointer
+	// A full implementation would need runtime support for hash tables
+	mapType, _ := g.convertType(ast.TypeMap)
+	return constant.NewNull(mapType.(*types.PointerType)), nil
+}
+
+// generateIndexAccess generates LLVM IR for array/map indexing.
+// This is a simplified implementation that would need runtime support
+func (g *LLVMCodegen) generateIndexAccess(expr *ast.Expression) (value.Value, error) {
+	// Generate object and index expressions
+	_, err := g.generateExpression(expr.Object)
+	if err != nil {
+		return nil, err
+	}
+	
+	_, err = g.generateExpression(expr.Index)
+	if err != nil {
+		return nil, err
+	}
+	
+	// For now, return a placeholder zero value
+	// A full implementation would need to:
+	// 1. Check if object is array or map
+	// 2. Generate appropriate indexing logic
+	// 3. Handle bounds checking for arrays
+	// 4. Handle key lookup for maps
+	return constant.NewInt(types.I64, 0), nil
 }

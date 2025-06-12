@@ -1,0 +1,149 @@
+{
+  "type": "module",
+  "name": "arrays_maps_demo",
+  "functions": [
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "int",
+      "body": [
+        {
+          "type": "assign",
+          "target": "numbers",
+          "value": {
+            "type": "array_literal",
+            "elements": [
+              {
+                "type": "literal",
+                "value": 1
+              },
+              {
+                "type": "literal",
+                "value": 2
+              },
+              {
+                "type": "literal",
+                "value": 3
+              },
+              {
+                "type": "literal",
+                "value": 4
+              },
+              {
+                "type": "literal",
+                "value": 5
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "person",
+          "value": {
+            "type": "map_literal",
+            "pairs": [
+              {
+                "key": {
+                  "type": "literal",
+                  "value": "name"
+                },
+                "value": {
+                  "type": "literal",
+                  "value": "Alice"
+                }
+              },
+              {
+                "key": {
+                  "type": "literal",
+                  "value": "age"
+                },
+                "value": {
+                  "type": "literal",
+                  "value": 30
+                }
+              },
+              {
+                "key": {
+                  "type": "literal",
+                  "value": "city"
+                },
+                "value": {
+                  "type": "literal",
+                  "value": "New York"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "first_number",
+          "value": {
+            "type": "index",
+            "object": {
+              "type": "variable",
+              "name": "numbers"
+            },
+            "index": {
+              "type": "literal",
+              "value": 0
+            }
+          }
+        },
+        {
+          "type": "assign",
+          "target": "person_name",
+          "value": {
+            "type": "index",
+            "object": {
+              "type": "variable",
+              "name": "person"
+            },
+            "index": {
+              "type": "literal",
+              "value": "name"
+            }
+          }
+        },
+        {
+          "type": "assign",
+          "target": "sum",
+          "value": {
+            "type": "binary",
+            "op": "+",
+            "left": {
+              "type": "index",
+              "object": {
+                "type": "variable",
+                "name": "numbers"
+              },
+              "index": {
+                "type": "literal",
+                "value": 0
+              }
+            },
+            "right": {
+              "type": "index",
+              "object": {
+                "type": "variable",
+                "name": "numbers"
+              },
+              "index": {
+                "type": "literal",
+                "value": 1
+              }
+            }
+          }
+        },
+        {
+          "type": "return",
+          "value": {
+            "type": "variable",
+            "name": "sum"
+          }
+        }
+      ]
+    }
+  ]
+}
