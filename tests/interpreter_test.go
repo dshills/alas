@@ -231,7 +231,7 @@ func valuesEqual(a, b runtime.Value) bool {
 // TestArrayOperations tests array literal creation and indexing.
 func TestArrayOperations(t *testing.T) {
 	interp := interpreter.New()
-	
+
 	// Create a simple array program
 	module := &ast.Module{
 		Type: "module",
@@ -273,16 +273,16 @@ func TestArrayOperations(t *testing.T) {
 			},
 		},
 	}
-	
+
 	if err := interp.LoadModule(module); err != nil {
 		t.Fatalf("Failed to load module: %v", err)
 	}
-	
+
 	result, err := interp.Run("test_array", []runtime.Value{})
 	if err != nil {
 		t.Fatalf("Runtime error: %v", err)
 	}
-	
+
 	expected := runtime.NewInt(20)
 	if !valuesEqual(result, expected) {
 		t.Errorf("Expected %v, got %v", expected, result)
@@ -292,7 +292,7 @@ func TestArrayOperations(t *testing.T) {
 // TestMapOperations tests map literal creation and key access.
 func TestMapOperations(t *testing.T) {
 	interp := interpreter.New()
-	
+
 	// Create a simple map program
 	module := &ast.Module{
 		Type: "module",
@@ -339,16 +339,16 @@ func TestMapOperations(t *testing.T) {
 			},
 		},
 	}
-	
+
 	if err := interp.LoadModule(module); err != nil {
 		t.Fatalf("Failed to load module: %v", err)
 	}
-	
+
 	result, err := interp.Run("test_map", []runtime.Value{})
 	if err != nil {
 		t.Fatalf("Runtime error: %v", err)
 	}
-	
+
 	expected := runtime.NewString("Alice")
 	if !valuesEqual(result, expected) {
 		t.Errorf("Expected %v, got %v", expected, result)

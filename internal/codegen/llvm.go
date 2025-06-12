@@ -567,48 +567,50 @@ func (g *LLVMCodegen) getZeroValue(t types.Type) value.Value {
 }
 
 // generateArrayLiteral generates LLVM IR for array literals.
-// For simplicity, this creates a simplified array representation
+// For simplicity, this creates a simplified array representation.
 func (g *LLVMCodegen) generateArrayLiteral(expr *ast.Expression) (value.Value, error) {
 	// For now, create a simplified array structure
 	// This is a basic implementation - a full implementation would allocate memory
 	// and properly initialize the array elements
-	
+
 	arrayType, _ := g.convertType(ast.TypeArray)
 	structType := arrayType.(*types.StructType)
-	
+
 	// Create null pointer for data (simplified)
 	dataPtr := constant.NewNull(types.NewPointer(types.I8))
 	// Set length
 	length := constant.NewInt(types.I64, int64(len(expr.Elements)))
-	
+
 	// Create struct with data pointer and length
 	fields := []constant.Constant{dataPtr, length}
 	return constant.NewStruct(structType, fields...), nil
 }
 
 // generateMapLiteral generates LLVM IR for map literals.
-// For simplicity, this creates a null pointer (maps would need complex runtime support)
+// For simplicity, this creates a null pointer (maps would need complex runtime support).
 func (g *LLVMCodegen) generateMapLiteral(expr *ast.Expression) (value.Value, error) {
 	// For now, just return a null pointer
 	// A full implementation would need runtime support for hash tables
+	// The expr parameter contains the map pairs but we're not using them in this simplified implementation
+	_ = expr.Pairs // Acknowledge we're not using the pairs in this simplified implementation
 	mapType, _ := g.convertType(ast.TypeMap)
 	return constant.NewNull(mapType.(*types.PointerType)), nil
 }
 
 // generateIndexAccess generates LLVM IR for array/map indexing.
-// This is a simplified implementation that would need runtime support
+// This is a simplified implementation that would need runtime support.
 func (g *LLVMCodegen) generateIndexAccess(expr *ast.Expression) (value.Value, error) {
 	// Generate object and index expressions
 	_, err := g.generateExpression(expr.Object)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	_, err = g.generateExpression(expr.Index)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// For now, return a placeholder zero value
 	// A full implementation would need to:
 	// 1. Check if object is array or map

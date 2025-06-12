@@ -246,7 +246,7 @@ func (i *Interpreter) evaluateExpression(expr *ast.Expression, env *Environment)
 			if err != nil {
 				return runtime.NewVoid(), err
 			}
-			
+
 			keyStr, err := key.AsString()
 			if err != nil {
 				return runtime.NewVoid(), fmt.Errorf("map key must be a string: %v", err)
@@ -501,35 +501,37 @@ func (i *Interpreter) evaluateIndexAccess(object, index runtime.Value) (runtime.
 		if err != nil {
 			return runtime.NewVoid(), err
 		}
-		
+
 		idx, err := index.AsInt()
 		if err != nil {
 			return runtime.NewVoid(), fmt.Errorf("array index must be an integer: %v", err)
 		}
-		
+
 		if idx < 0 || idx >= int64(len(arr)) {
 			return runtime.NewVoid(), fmt.Errorf("array index out of bounds: %d", idx)
 		}
-		
+
 		return arr[idx], nil
-		
+
 	case runtime.ValueTypeMap:
 		m, err := object.AsMap()
 		if err != nil {
 			return runtime.NewVoid(), err
 		}
-		
+
 		key, err := index.AsString()
 		if err != nil {
 			return runtime.NewVoid(), fmt.Errorf("map key must be a string: %v", err)
 		}
-		
+
 		if val, ok := m[key]; ok {
 			return val, nil
 		}
-		
+
 		return runtime.NewVoid(), fmt.Errorf("map key not found: %s", key)
-		
+
+	case runtime.ValueTypeInt, runtime.ValueTypeFloat, runtime.ValueTypeString, runtime.ValueTypeBool, runtime.ValueTypeVoid:
+		return runtime.NewVoid(), fmt.Errorf("cannot index into %v", object.Type)
 	default:
 		return runtime.NewVoid(), fmt.Errorf("cannot index into %v", object.Type)
 	}
