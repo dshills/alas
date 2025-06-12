@@ -1,0 +1,51 @@
+{
+  "name": "hello-world-tests",
+  "description": "Test suite for the hello-world plugin",
+  "plugin": "hello-world",
+  "tests": [
+    {
+      "name": "greet_basic",
+      "description": "Test basic greeting functionality",
+      "function": "greet",
+      "args": ["World"],
+      "expected": "Hello, World!"
+    },
+    {
+      "name": "greet_empty_name",
+      "description": "Test greeting with empty name",
+      "function": "greet",
+      "args": [""],
+      "expected": "Hello, !"
+    },
+    {
+      "name": "greet_special_chars",
+      "description": "Test greeting with special characters",
+      "function": "greet",
+      "args": ["ALaS™"],
+      "expected": "Hello, ALaS™!"
+    },
+    {
+      "name": "farewell_basic",
+      "description": "Test basic farewell functionality",
+      "function": "farewell",
+      "args": ["World"],
+      "expected": "Goodbye, World. See you later!"
+    },
+    {
+      "name": "farewell_friend",
+      "description": "Test farewell to a friend",
+      "function": "farewell",
+      "args": ["Alice"],
+      "expected": "Goodbye, Alice. See you later!"
+    },
+    {
+      "name": "greet_timeout",
+      "description": "Test greeting with timeout",
+      "function": "greet",
+      "args": ["Timeout Test"],
+      "expected": "Hello, Timeout Test!",
+      "timeout": "1s",
+      "tags": ["performance"]
+    }
+  ]
+}

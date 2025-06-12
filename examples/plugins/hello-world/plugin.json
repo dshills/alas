@@ -1,0 +1,47 @@
+{
+  "name": "hello-world",
+  "version": "1.0.0",
+  "description": "A simple hello world plugin demonstrating basic ALaS plugin functionality",
+  "author": "ALaS Team",
+  "license": "MIT",
+  "type": "module",
+  "capabilities": ["function"],
+  "module": "hello",
+  "functions": [
+    {
+      "name": "greet",
+      "params": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ],
+      "returns": "string",
+      "description": "Greets someone by name"
+    },
+    {
+      "name": "farewell",
+      "params": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ],
+      "returns": "string",
+      "description": "Says goodbye to someone by name"
+    }
+  ],
+  "alas_version": ">=0.1.0",
+  "implementation": {
+    "language": "alas",
+    "entrypoint": "hello.alas.json"
+  },
+  "security": {
+    "sandbox": true
+  },
+  "runtime": {
+    "lazy": true,
+    "persistent": false,
+    "parallel": true
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "type": "module",
+  "name": "test-plugin",
+  "exports": ["hello"],
+  "functions": [
+    {
+      "type": "function",
+      "name": "hello",
+      "params": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "binary",
+            "op": "+",
+            "left": {
+              "type": "literal",
+              "value": "Hello, "
+            },
+            "right": {
+              "type": "variable",
+              "name": "name"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
