@@ -1,0 +1,38 @@
+{
+  "name": "test-plugin",
+  "version": "0.1.0",
+  "description": "ALaS plugin: test-plugin",
+  "author": "Your Name",
+  "license": "MIT",
+  "type": "module",
+  "capabilities": [
+    "function"
+  ],
+  "module": "test-plugin",
+  "functions": [
+    {
+      "name": "hello",
+      "params": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ],
+      "returns": "string",
+      "description": "Example function that greets someone"
+    }
+  ],
+  "alas_version": "\u003e=0.1.0",
+  "implementation": {
+    "language": "alas",
+    "entrypoint": "test-plugin.alas.json"
+  },
+  "security": {
+    "sandbox": true
+  },
+  "runtime": {
+    "lazy": true,
+    "persistent": false,
+    "parallel": false
+  }
+}

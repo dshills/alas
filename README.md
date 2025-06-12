@@ -10,6 +10,7 @@ ALaS is a general-purpose, Turing-complete programming language designed exclusi
 - **Type System**: Basic types including int, float, string, bool, array, and map
 - **Module System**: Import/export capabilities with dependency resolution and encapsulation
 - **Standard Library**: Comprehensive set of modules for I/O, math, collections, strings, and more
+- **Plugin System**: Dynamic extensibility with security, sandboxing, and multiple plugin types
 
 ## Project Structure
 
@@ -28,7 +29,8 @@ alas/
 ├── stdlib/             # Standard library modules
 ├── examples/
 │   ├── programs/       # Example ALaS programs
-│   └── modules/        # Example ALaS modules
+│   ├── modules/        # Example ALaS modules
+│   └── plugins/        # Example plugin implementations
 ├── tests/              # Test suite
 └── docs/
     └── alas_lang_spec.md  # Language specification
@@ -46,10 +48,11 @@ alas/
 make build
 ```
 
-This creates three binaries in the `bin/` directory:
+This creates four binaries in the `bin/` directory:
 - `alas-validate` - Validates ALaS JSON programs
 - `alas-run` - Executes ALaS programs
 - `alas-compile` - Compiles ALaS programs to LLVM IR
+- `alas-plugin` - Manages plugins (list, install, create, etc.)
 
 ### Running Examples
 
@@ -84,6 +87,10 @@ make run-all-examples
 
 # Compile all examples
 make compile-examples
+
+# Plugin management
+make plugin-list
+make validate-plugins
 ```
 
 ### Running Tests
@@ -221,6 +228,73 @@ Standard library modules can be imported like any other module:
 
 See the [stdlib/README.md](stdlib/README.md) for complete documentation.
 
+## Plugin System
+
+ALaS features a comprehensive plugin system that enables dynamic extension of the language while maintaining security and type safety. The plugin system supports multiple plugin types and provides a rich development and management experience.
+
+### Plugin Types
+
+- **Module Plugins** - Pure ALaS implementations for business logic and algorithms
+- **Native Plugins** - Compiled shared libraries for performance-critical operations  
+- **Hybrid Plugins** - Combination of ALaS modules with native function implementations
+- **Built-in Plugins** - Runtime-integrated plugins for core system functionality
+
+### Plugin Management
+
+```bash
+# List available plugins
+./bin/alas-plugin list -path examples/plugins
+
+# Get detailed plugin information
+./bin/alas-plugin info -path examples/plugins hello-world
+
+# Create a new plugin from template
+./bin/alas-plugin create my-plugin
+
+# Validate plugin manifest
+./bin/alas-plugin validate plugin.json
+
+# Load/unload plugins at runtime
+./bin/alas-plugin load my-plugin
+./bin/alas-plugin unload my-plugin
+```
+
+### Example Plugin Usage
+
+```json
+{
+  "type": "module",
+  "name": "my_program", 
+  "imports": ["hello"],
+  "functions": [
+    {
+      "name": "main",
+      "body": [
+        {
+          "type": "assign",
+          "target": "greeting",
+          "value": {
+            "type": "module_call",
+            "module": "hello",
+            "name": "greet",
+            "args": [{"type": "literal", "value": "World"}]
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Security Features
+
+- **Sandboxing** - Isolated execution environments with resource limits
+- **Capability System** - Fine-grained permission control
+- **Resource Monitoring** - Memory, CPU, and timeout limits
+- **Validation** - Comprehensive manifest and dependency validation
+
+See the [docs/plugin_system.md](docs/plugin_system.md) for complete plugin development guide.
+
 ## Language Features
 
 ### Statements
@@ -298,14 +372,15 @@ Current implementation includes:
 - ✅ Arrays and maps with indexing
 - ✅ Module imports/exports with dependency resolution
 - ✅ Standard library specification (8 core modules)
+- ✅ Plugin system with security and multi-type support
 - ✅ Comprehensive test suite
 
 Future work:
-- ⏳ Plugin system
 - ⏳ Advanced LLVM IR optimizations
 - ⏳ Runtime garbage collection for arrays/maps
 - ⏳ Cross-module LLVM compilation and linking
 - ⏳ Standard library runtime implementation
+- ⏳ Plugin marketplace and hot reloading
 
 ## License
 

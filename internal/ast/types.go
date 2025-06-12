@@ -82,6 +82,7 @@ const (
 	ExprArrayLit   = "array_literal"
 	ExprMapLit     = "map_literal"
 	ExprModuleCall = "module_call"
+	ExprBuiltin    = "builtin"
 )
 
 // Binary operators.

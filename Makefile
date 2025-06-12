@@ -7,6 +7,7 @@ build:
 	go build -o bin/alas-validate ./cmd/alas-validate
 	go build -o bin/alas-run ./cmd/alas-run
 	go build -o bin/alas-compile ./cmd/alas-compile
+	go build -o bin/alas-plugin ./cmd/alas-plugin
 
 # Run tests
 test:
@@ -51,3 +52,15 @@ deps:
 # Format code
 fmt:
 	go fmt ./...
+
+# Plugin management
+plugin-list: build
+	./bin/alas-plugin list -path examples/plugins
+
+plugin-create: build
+	./bin/alas-plugin create test-plugin
+
+validate-plugins: build
+	@echo "Validating example plugins..."
+	@./bin/alas-plugin validate examples/plugins/hello-world/plugin.json
+	@./bin/alas-plugin validate examples/plugins/math-utils/plugin.json

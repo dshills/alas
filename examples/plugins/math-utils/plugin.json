@@ -1,0 +1,68 @@
+{
+  "name": "math-utils",
+  "version": "1.0.0",
+  "description": "Extended mathematical utilities plugin for ALaS",
+  "author": "ALaS Team",
+  "license": "MIT",
+  "type": "hybrid",
+  "capabilities": ["function"],
+  "module": "math_utils",
+  "functions": [
+    {
+      "name": "fibonacci",
+      "params": [
+        {
+          "name": "n",
+          "type": "int"
+        }
+      ],
+      "returns": "int",
+      "description": "Calculate nth Fibonacci number",
+      "native": false
+    },
+    {
+      "name": "prime_check",
+      "params": [
+        {
+          "name": "n",
+          "type": "int"
+        }
+      ],
+      "returns": "bool",
+      "description": "Check if a number is prime",
+      "native": false
+    },
+    {
+      "name": "gcd",
+      "params": [
+        {
+          "name": "a",
+          "type": "int"
+        },
+        {
+          "name": "b",
+          "type": "int"
+        }
+      ],
+      "returns": "int",
+      "description": "Calculate greatest common divisor",
+      "native": false
+    }
+  ],
+  "alas_version": ">=0.1.0",
+  "dependencies": ["std.math"],
+  "implementation": {
+    "language": "alas",
+    "entrypoint": "math_utils.alas.json"
+  },
+  "security": {
+    "sandbox": true,
+    "max_memory": "10MB",
+    "timeout": "5s"
+  },
+  "runtime": {
+    "lazy": false,
+    "persistent": true,
+    "parallel": true
+  }
+}
