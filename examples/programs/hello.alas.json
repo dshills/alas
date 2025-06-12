@@ -1,0 +1,21 @@
+{
+  "type": "module",
+  "name": "hello",
+  "functions": [
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "literal",
+            "value": "Hello, ALaS!"
+          }
+        }
+      ]
+    }
+  ]
+}

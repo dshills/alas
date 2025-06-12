@@ -1,0 +1,106 @@
+{
+  "type": "module",
+  "name": "fibonacci",
+  "functions": [
+    {
+      "type": "function",
+      "name": "fibonacci",
+      "params": [
+        {"name": "n", "type": "int"}
+      ],
+      "returns": "int",
+      "body": [
+        {
+          "type": "if",
+          "cond": {
+            "type": "binary",
+            "op": "<=",
+            "left": {
+              "type": "variable",
+              "name": "n"
+            },
+            "right": {
+              "type": "literal",
+              "value": 1
+            }
+          },
+          "then": [
+            {
+              "type": "return",
+              "value": {
+                "type": "variable",
+                "name": "n"
+              }
+            }
+          ],
+          "else": [
+            {
+              "type": "return",
+              "value": {
+                "type": "binary",
+                "op": "+",
+                "left": {
+                  "type": "call",
+                  "name": "fibonacci",
+                  "args": [
+                    {
+                      "type": "binary",
+                      "op": "-",
+                      "left": {
+                        "type": "variable",
+                        "name": "n"
+                      },
+                      "right": {
+                        "type": "literal",
+                        "value": 1
+                      }
+                    }
+                  ]
+                },
+                "right": {
+                  "type": "call",
+                  "name": "fibonacci",
+                  "args": [
+                    {
+                      "type": "binary",
+                      "op": "-",
+                      "left": {
+                        "type": "variable",
+                        "name": "n"
+                      },
+                      "right": {
+                        "type": "literal",
+                        "value": 2
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "int",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "call",
+            "name": "fibonacci",
+            "args": [
+              {
+                "type": "literal",
+                "value": 10
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

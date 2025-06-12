@@ -1,0 +1,192 @@
+version: "2"
+
+# Timeout for analysis
+run:
+  # Timeout for linter (default is 1m)
+  timeout: 5m
+  # Go version to use for type checking
+  go: '1.24.4'
+  # Include test files
+  tests: true
+  # Skip vendor, third party, etc.
+  skip-dirs-use-default: true
+
+# Linter settings  
+linters:
+  # Start with default linters (enable commonly used ones)
+  default: standard
+  
+  # Enable additional linters
+  enable:
+    # Code quality
+    - dogsled       # Checks for too many blank identifiers
+    - dupl          # Code duplication detector
+    - goconst       # Finds repeated strings that could be constants
+    - nakedret      # Naked returns in long functions
+    - unconvert     # Remove unnecessary type conversions
+    - unparam       # Reports unused function parameters
+    - whitespace    # Detects leading/trailing whitespace
+    
+    # Security
+    - gosec         # Inspects source for security problems
+    
+    # Performance  
+    - prealloc      # Suggests preallocations
+    - bodyclose     # Checks HTTP response body is closed
+    
+    # Style
+    - revive        # Fast, configurable linter
+    - misspell      # Spell checker
+    - godot         # Check that comments end with period
+    
+    # Bugs/Correctness
+    - staticcheck   # Advanced static analysis (includes gosimple, stylecheck)
+    - loggercheck   # Checks logger arguments
+    - errcheck      # Check error returns
+    - exhaustive    # Check exhaustiveness of enum switches
+    - nilnil        # Checks for return of nil error and nil value
+    
+  # Disable some default linters if needed
+  disable:
+    - errcheck      # Can be noisy, enable selectively
+
+  # Linter-specific settings
+  settings:
+    # Configure revive
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+        - name: if-return
+        - name: increment-decrement
+        - name: var-naming
+        - name: var-declaration
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: indent-error-flow
+        - name: errorf
+        
+    # Configure staticcheck
+    staticcheck:
+      checks:
+        - all
+        - '-SA1019'  # Ignore deprecation warnings if needed
+        
+    # Configure goconst
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+      
+    # Configure dupl
+    dupl:
+      threshold: 100
+      
+    # Configure misspell
+    misspell:
+      locale: US
+      
+    # Configure gosec
+    gosec:
+      excludes:
+        - G204  # Subprocess launch with variable
+        
+    # Configure govet
+    govet:
+      enable-all: true
+      disable:
+        - shadow  # Can be noisy
+        
+  # Exclusion rules
+  exclusions:
+    # Handle generated files
+    generated: lax
+    
+    # Use default exclusion presets
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+      
+    # Path exclusions
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+      - vendor$
+      
+    # Custom exclusion rules
+    rules:
+      # Ignore certain linters in test files
+      - path: '(.+)_test\.go'
+        linters:
+          - dupl
+          - goconst
+          - gosec
+          
+      # Ignore long lines in generated files
+      - path: '(.+)\.pb\.go'
+        linters:
+          - lll
+          
+      # Ignore certain error checks in main
+      - path: 'main\.go'
+        text: 'Error return value of .* is not checked'
+        
+# Code formatters
+formatters:
+  enable:
+    - gofmt       # Standard Go formatter
+    - goimports   # Organize imports
+    
+  settings:
+    gofmt:
+      simplify: true
+      
+    goimports:
+      local-prefixes: github.com/dshills/alas
+      
+  exclusions:
+    paths:
+      - third_party$
+      - vendor$
+      - '(.+)\.pb\.go'
+
+# Output configuration
+output:
+  formats:
+    # Default colored text output
+    text:
+      path: stdout
+      color: true
+      
+    # JSON output for CI/CD integration
+    # json:
+    #   path: golangci-report.json
+      
+    # Checkstyle for integration with other tools  
+    # checkstyle:
+    #   path: checkstyle.xml
+
+# Issue reporting settings
+issues:
+  # Maximum issues per linter
+  max-issues-per-linter: 50
+  
+  # Maximum same issues
+  max-same-issues: 3
+  
+  # Show all issues from a linter
+  whole-files: false
+  
+  # Fix found issues (if supported by linter)
+  fix: false
