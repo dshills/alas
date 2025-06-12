@@ -1,0 +1,85 @@
+{
+  "type": "module",
+  "name": "math_utils",
+  "exports": ["add", "multiply"],
+  "functions": [
+    {
+      "type": "function",
+      "name": "add",
+      "params": [
+        {"name": "a", "type": "int"},
+        {"name": "b", "type": "int"}
+      ],
+      "returns": "int",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "binary",
+            "op": "+",
+            "left": {
+              "type": "variable",
+              "name": "a"
+            },
+            "right": {
+              "type": "variable",
+              "name": "b"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "multiply",
+      "params": [
+        {"name": "x", "type": "int"},
+        {"name": "y", "type": "int"}
+      ],
+      "returns": "int",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "binary",
+            "op": "*",
+            "left": {
+              "type": "variable",
+              "name": "x"
+            },
+            "right": {
+              "type": "variable",
+              "name": "y"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "subtract",
+      "params": [
+        {"name": "a", "type": "int"},
+        {"name": "b", "type": "int"}
+      ],
+      "returns": "int",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "binary",
+            "op": "-",
+            "left": {
+              "type": "variable",
+              "name": "a"
+            },
+            "right": {
+              "type": "variable",
+              "name": "b"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

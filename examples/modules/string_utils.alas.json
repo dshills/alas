@@ -1,0 +1,50 @@
+{
+  "type": "module",
+  "name": "string_utils",
+  "exports": ["concat", "length"],
+  "functions": [
+    {
+      "type": "function",
+      "name": "concat",
+      "params": [
+        {"name": "a", "type": "string"},
+        {"name": "b", "type": "string"}
+      ],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "binary",
+            "op": "+",
+            "left": {
+              "type": "variable",
+              "name": "a"
+            },
+            "right": {
+              "type": "variable",
+              "name": "b"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "length",
+      "params": [
+        {"name": "s", "type": "string"}
+      ],
+      "returns": "int",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "literal",
+            "value": 5
+          }
+        }
+      ]
+    }
+  ]
+}

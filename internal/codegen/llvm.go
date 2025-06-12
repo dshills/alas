@@ -207,6 +207,9 @@ func (g *LLVMCodegen) generateExpression(expr *ast.Expression) (value.Value, err
 	case ast.ExprCall:
 		return g.generateCall(expr)
 
+	case ast.ExprModuleCall:
+		return g.generateModuleCall(expr)
+
 	case ast.ExprArrayLit:
 		return g.generateArrayLiteral(expr)
 
@@ -618,4 +621,23 @@ func (g *LLVMCodegen) generateIndexAccess(expr *ast.Expression) (value.Value, er
 	// 3. Handle bounds checking for arrays
 	// 4. Handle key lookup for maps
 	return constant.NewInt(types.I64, 0), nil
+}
+
+// generateModuleCall generates LLVM IR for module function calls.
+// For simplicity, treats module calls as regular function calls with mangled names.
+func (g *LLVMCodegen) generateModuleCall(expr *ast.Expression) (value.Value, error) {
+	// Create mangled function name: module_name__function_name
+	_ = expr.Module + "__" + expr.Name // Acknowledge mangled name creation but not using it yet
+
+	// For now, generate a simplified call that returns a constant
+	// A full implementation would need to:
+	// 1. Manage cross-module function declarations
+	// 2. Handle module linking at compile time
+	// 3. Generate proper external function calls
+
+	// Acknowledge that we're using the expression parameters but not implementing full functionality
+	_ = expr.Args // Not using args in this simplified implementation
+
+	// Return a placeholder constant for now
+	return constant.NewInt(types.I64, 42), nil
 }

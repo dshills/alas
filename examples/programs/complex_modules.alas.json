@@ -1,0 +1,29 @@
+{
+  "type": "module",
+  "name": "complex_modules",
+  "imports": ["format_utils"],
+  "functions": [
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "module_call",
+            "module": "format_utils",
+            "name": "format_number",
+            "args": [
+              {
+                "type": "literal",
+                "value": 21
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
