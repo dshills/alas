@@ -1,0 +1,801 @@
+{
+  "type": "module",
+  "name": "std.collections",
+  "exports": [
+    "arrayLength", "arrayAppend", "arrayPrepend", "arraySlice", "arrayConcat",
+    "arrayFilter", "arrayMap", "arrayReduce", "arrayContains", "arrayIndexOf",
+    "arraySort", "arrayReverse", "arrayIsEmpty",
+    "mapKeys", "mapValues", "mapHas", "mapGet", "mapSet", "mapDelete",
+    "mapMerge", "mapIsEmpty", "mapSize"
+  ],
+  "imports": [],
+  "functions": [
+    {
+      "type": "function",
+      "name": "arrayLength",
+      "params": [
+        {
+          "name": "arr",
+          "type": "array"
+        }
+      ],
+      "returns": "int",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.arrayLength",
+            "args": [
+              {
+                "type": "variable",
+                "name": "arr"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Get array length"
+      }
+    },
+    {
+      "type": "function",
+      "name": "arrayAppend",
+      "params": [
+        {
+          "name": "arr",
+          "type": "array"
+        },
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "array",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.arrayAppend",
+            "args": [
+              {
+                "type": "variable",
+                "name": "arr"
+              },
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Append value to array"
+      }
+    },
+    {
+      "type": "function",
+      "name": "arrayPrepend",
+      "params": [
+        {
+          "name": "arr",
+          "type": "array"
+        },
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "array",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.arrayPrepend",
+            "args": [
+              {
+                "type": "variable",
+                "name": "arr"
+              },
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Prepend value to array"
+      }
+    },
+    {
+      "type": "function",
+      "name": "arraySlice",
+      "params": [
+        {
+          "name": "arr",
+          "type": "array"
+        },
+        {
+          "name": "start",
+          "type": "int"
+        },
+        {
+          "name": "end",
+          "type": "int"
+        }
+      ],
+      "returns": "array",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.arraySlice",
+            "args": [
+              {
+                "type": "variable",
+                "name": "arr"
+              },
+              {
+                "type": "variable",
+                "name": "start"
+              },
+              {
+                "type": "variable",
+                "name": "end"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Get array slice from start to end (exclusive)"
+      }
+    },
+    {
+      "type": "function",
+      "name": "arrayConcat",
+      "params": [
+        {
+          "name": "arr1",
+          "type": "array"
+        },
+        {
+          "name": "arr2",
+          "type": "array"
+        }
+      ],
+      "returns": "array",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.arrayConcat",
+            "args": [
+              {
+                "type": "variable",
+                "name": "arr1"
+              },
+              {
+                "type": "variable",
+                "name": "arr2"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Concatenate two arrays"
+      }
+    },
+    {
+      "type": "function",
+      "name": "arrayFilter",
+      "params": [
+        {
+          "name": "arr",
+          "type": "array"
+        },
+        {
+          "name": "predicate",
+          "type": "function"
+        }
+      ],
+      "returns": "array",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.arrayFilter",
+            "args": [
+              {
+                "type": "variable",
+                "name": "arr"
+              },
+              {
+                "type": "variable",
+                "name": "predicate"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Filter array by predicate function"
+      }
+    },
+    {
+      "type": "function",
+      "name": "arrayMap",
+      "params": [
+        {
+          "name": "arr",
+          "type": "array"
+        },
+        {
+          "name": "mapper",
+          "type": "function"
+        }
+      ],
+      "returns": "array",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.arrayMap",
+            "args": [
+              {
+                "type": "variable",
+                "name": "arr"
+              },
+              {
+                "type": "variable",
+                "name": "mapper"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Map array values using mapper function"
+      }
+    },
+    {
+      "type": "function",
+      "name": "arrayReduce",
+      "params": [
+        {
+          "name": "arr",
+          "type": "array"
+        },
+        {
+          "name": "reducer",
+          "type": "function"
+        },
+        {
+          "name": "initial",
+          "type": "any"
+        }
+      ],
+      "returns": "any",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.arrayReduce",
+            "args": [
+              {
+                "type": "variable",
+                "name": "arr"
+              },
+              {
+                "type": "variable",
+                "name": "reducer"
+              },
+              {
+                "type": "variable",
+                "name": "initial"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Reduce array to single value"
+      }
+    },
+    {
+      "type": "function",
+      "name": "arrayContains",
+      "params": [
+        {
+          "name": "arr",
+          "type": "array"
+        },
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.arrayContains",
+            "args": [
+              {
+                "type": "variable",
+                "name": "arr"
+              },
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if array contains value"
+      }
+    },
+    {
+      "type": "function",
+      "name": "arrayIndexOf",
+      "params": [
+        {
+          "name": "arr",
+          "type": "array"
+        },
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "int",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.arrayIndexOf",
+            "args": [
+              {
+                "type": "variable",
+                "name": "arr"
+              },
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Find index of value in array (-1 if not found)"
+      }
+    },
+    {
+      "type": "function",
+      "name": "arraySort",
+      "params": [
+        {
+          "name": "arr",
+          "type": "array"
+        },
+        {
+          "name": "compareFn",
+          "type": "function"
+        }
+      ],
+      "returns": "array",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.arraySort",
+            "args": [
+              {
+                "type": "variable",
+                "name": "arr"
+              },
+              {
+                "type": "variable",
+                "name": "compareFn"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Sort array using compare function"
+      }
+    },
+    {
+      "type": "function",
+      "name": "arrayReverse",
+      "params": [
+        {
+          "name": "arr",
+          "type": "array"
+        }
+      ],
+      "returns": "array",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.arrayReverse",
+            "args": [
+              {
+                "type": "variable",
+                "name": "arr"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Reverse array"
+      }
+    },
+    {
+      "type": "function",
+      "name": "arrayIsEmpty",
+      "params": [
+        {
+          "name": "arr",
+          "type": "array"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.arrayIsEmpty",
+            "args": [
+              {
+                "type": "variable",
+                "name": "arr"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if array is empty"
+      }
+    },
+    {
+      "type": "function",
+      "name": "mapKeys",
+      "params": [
+        {
+          "name": "m",
+          "type": "map"
+        }
+      ],
+      "returns": "array",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.mapKeys",
+            "args": [
+              {
+                "type": "variable",
+                "name": "m"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Get array of map keys"
+      }
+    },
+    {
+      "type": "function",
+      "name": "mapValues",
+      "params": [
+        {
+          "name": "m",
+          "type": "map"
+        }
+      ],
+      "returns": "array",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.mapValues",
+            "args": [
+              {
+                "type": "variable",
+                "name": "m"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Get array of map values"
+      }
+    },
+    {
+      "type": "function",
+      "name": "mapHas",
+      "params": [
+        {
+          "name": "m",
+          "type": "map"
+        },
+        {
+          "name": "key",
+          "type": "string"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.mapHas",
+            "args": [
+              {
+                "type": "variable",
+                "name": "m"
+              },
+              {
+                "type": "variable",
+                "name": "key"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if map has key"
+      }
+    },
+    {
+      "type": "function",
+      "name": "mapGet",
+      "params": [
+        {
+          "name": "m",
+          "type": "map"
+        },
+        {
+          "name": "key",
+          "type": "string"
+        }
+      ],
+      "returns": "any",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.mapGet",
+            "args": [
+              {
+                "type": "variable",
+                "name": "m"
+              },
+              {
+                "type": "variable",
+                "name": "key"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Get value from map by key"
+      }
+    },
+    {
+      "type": "function",
+      "name": "mapSet",
+      "params": [
+        {
+          "name": "m",
+          "type": "map"
+        },
+        {
+          "name": "key",
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.mapSet",
+            "args": [
+              {
+                "type": "variable",
+                "name": "m"
+              },
+              {
+                "type": "variable",
+                "name": "key"
+              },
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Set value in map (returns new map)"
+      }
+    },
+    {
+      "type": "function",
+      "name": "mapDelete",
+      "params": [
+        {
+          "name": "m",
+          "type": "map"
+        },
+        {
+          "name": "key",
+          "type": "string"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.mapDelete",
+            "args": [
+              {
+                "type": "variable",
+                "name": "m"
+              },
+              {
+                "type": "variable",
+                "name": "key"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Delete key from map (returns new map)"
+      }
+    },
+    {
+      "type": "function",
+      "name": "mapMerge",
+      "params": [
+        {
+          "name": "m1",
+          "type": "map"
+        },
+        {
+          "name": "m2",
+          "type": "map"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.mapMerge",
+            "args": [
+              {
+                "type": "variable",
+                "name": "m1"
+              },
+              {
+                "type": "variable",
+                "name": "m2"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Merge two maps (m2 overwrites m1)"
+      }
+    },
+    {
+      "type": "function",
+      "name": "mapIsEmpty",
+      "params": [
+        {
+          "name": "m",
+          "type": "map"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.mapIsEmpty",
+            "args": [
+              {
+                "type": "variable",
+                "name": "m"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if map is empty"
+      }
+    },
+    {
+      "type": "function",
+      "name": "mapSize",
+      "params": [
+        {
+          "name": "m",
+          "type": "map"
+        }
+      ],
+      "returns": "int",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "collections.mapSize",
+            "args": [
+              {
+                "type": "variable",
+                "name": "m"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Get number of entries in map"
+      }
+    }
+  ],
+  "types": [],
+  "meta": {
+    "version": "0.1.0",
+    "description": "Standard collection utilities for ALaS"
+  }
+}

@@ -1,0 +1,713 @@
+{
+  "type": "module",
+  "name": "std.string",
+  "exports": [
+    "length", "substring", "indexOf", "split", "join", "replace",
+    "toLowerCase", "toUpperCase", "trim", "startsWith", "endsWith",
+    "format", "charAt", "charCodeAt", "fromCharCode", "repeat",
+    "padStart", "padEnd", "contains"
+  ],
+  "imports": [],
+  "functions": [
+    {
+      "type": "function",
+      "name": "length",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        }
+      ],
+      "returns": "int",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.length",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Get string length"
+      }
+    },
+    {
+      "type": "function",
+      "name": "substring",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        },
+        {
+          "name": "start",
+          "type": "int"
+        },
+        {
+          "name": "end",
+          "type": "int"
+        }
+      ],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.substring",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              },
+              {
+                "type": "variable",
+                "name": "start"
+              },
+              {
+                "type": "variable",
+                "name": "end"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Get substring from start to end (exclusive)"
+      }
+    },
+    {
+      "type": "function",
+      "name": "indexOf",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        },
+        {
+          "name": "search",
+          "type": "string"
+        }
+      ],
+      "returns": "int",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.indexOf",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              },
+              {
+                "type": "variable",
+                "name": "search"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Find index of substring (-1 if not found)"
+      }
+    },
+    {
+      "type": "function",
+      "name": "split",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        },
+        {
+          "name": "delimiter",
+          "type": "string"
+        }
+      ],
+      "returns": "array",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.split",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              },
+              {
+                "type": "variable",
+                "name": "delimiter"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Split string by delimiter"
+      }
+    },
+    {
+      "type": "function",
+      "name": "join",
+      "params": [
+        {
+          "name": "arr",
+          "type": "array"
+        },
+        {
+          "name": "separator",
+          "type": "string"
+        }
+      ],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.join",
+            "args": [
+              {
+                "type": "variable",
+                "name": "arr"
+              },
+              {
+                "type": "variable",
+                "name": "separator"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Join array elements with separator"
+      }
+    },
+    {
+      "type": "function",
+      "name": "replace",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        },
+        {
+          "name": "search",
+          "type": "string"
+        },
+        {
+          "name": "replacement",
+          "type": "string"
+        }
+      ],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.replace",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              },
+              {
+                "type": "variable",
+                "name": "search"
+              },
+              {
+                "type": "variable",
+                "name": "replacement"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Replace first occurrence of search with replacement"
+      }
+    },
+    {
+      "type": "function",
+      "name": "toLowerCase",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        }
+      ],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.toLowerCase",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Convert string to lowercase"
+      }
+    },
+    {
+      "type": "function",
+      "name": "toUpperCase",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        }
+      ],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.toUpperCase",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Convert string to uppercase"
+      }
+    },
+    {
+      "type": "function",
+      "name": "trim",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        }
+      ],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.trim",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Remove leading and trailing whitespace"
+      }
+    },
+    {
+      "type": "function",
+      "name": "startsWith",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        },
+        {
+          "name": "prefix",
+          "type": "string"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.startsWith",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              },
+              {
+                "type": "variable",
+                "name": "prefix"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if string starts with prefix"
+      }
+    },
+    {
+      "type": "function",
+      "name": "endsWith",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        },
+        {
+          "name": "suffix",
+          "type": "string"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.endsWith",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              },
+              {
+                "type": "variable",
+                "name": "suffix"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if string ends with suffix"
+      }
+    },
+    {
+      "type": "function",
+      "name": "format",
+      "params": [
+        {
+          "name": "template",
+          "type": "string"
+        },
+        {
+          "name": "args",
+          "type": "map"
+        }
+      ],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.format",
+            "args": [
+              {
+                "type": "variable",
+                "name": "template"
+              },
+              {
+                "type": "variable",
+                "name": "args"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Format string with template variables like {name}"
+      }
+    },
+    {
+      "type": "function",
+      "name": "charAt",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        },
+        {
+          "name": "index",
+          "type": "int"
+        }
+      ],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.charAt",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              },
+              {
+                "type": "variable",
+                "name": "index"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Get character at index"
+      }
+    },
+    {
+      "type": "function",
+      "name": "charCodeAt",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        },
+        {
+          "name": "index",
+          "type": "int"
+        }
+      ],
+      "returns": "int",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.charCodeAt",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              },
+              {
+                "type": "variable",
+                "name": "index"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Get character code at index"
+      }
+    },
+    {
+      "type": "function",
+      "name": "fromCharCode",
+      "params": [
+        {
+          "name": "code",
+          "type": "int"
+        }
+      ],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.fromCharCode",
+            "args": [
+              {
+                "type": "variable",
+                "name": "code"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Create string from character code"
+      }
+    },
+    {
+      "type": "function",
+      "name": "repeat",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        },
+        {
+          "name": "count",
+          "type": "int"
+        }
+      ],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.repeat",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              },
+              {
+                "type": "variable",
+                "name": "count"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Repeat string count times"
+      }
+    },
+    {
+      "type": "function",
+      "name": "padStart",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        },
+        {
+          "name": "length",
+          "type": "int"
+        },
+        {
+          "name": "padString",
+          "type": "string"
+        }
+      ],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.padStart",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              },
+              {
+                "type": "variable",
+                "name": "length"
+              },
+              {
+                "type": "variable",
+                "name": "padString"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Pad string at start to reach target length"
+      }
+    },
+    {
+      "type": "function",
+      "name": "padEnd",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        },
+        {
+          "name": "length",
+          "type": "int"
+        },
+        {
+          "name": "padString",
+          "type": "string"
+        }
+      ],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.padEnd",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              },
+              {
+                "type": "variable",
+                "name": "length"
+              },
+              {
+                "type": "variable",
+                "name": "padString"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Pad string at end to reach target length"
+      }
+    },
+    {
+      "type": "function",
+      "name": "contains",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        },
+        {
+          "name": "search",
+          "type": "string"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "string.contains",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              },
+              {
+                "type": "variable",
+                "name": "search"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if string contains substring"
+      }
+    }
+  ],
+  "types": [],
+  "meta": {
+    "version": "0.1.0",
+    "description": "Standard string manipulation for ALaS"
+  }
+}

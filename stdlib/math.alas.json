@@ -1,0 +1,541 @@
+{
+  "type": "module",
+  "name": "std.math",
+  "exports": [
+    "PI", "E",
+    "abs", "min", "max", "pow", "sqrt",
+    "sin", "cos", "tan", "asin", "acos", "atan",
+    "floor", "ceil", "round",
+    "random", "randomInt"
+  ],
+  "imports": [],
+  "functions": [
+    {
+      "type": "function",
+      "name": "PI",
+      "params": [],
+      "returns": "float",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "literal",
+            "value": 3.141592653589793
+          }
+        }
+      ],
+      "meta": {
+        "description": "Mathematical constant pi"
+      }
+    },
+    {
+      "type": "function",
+      "name": "E",
+      "params": [],
+      "returns": "float",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "literal",
+            "value": 2.718281828459045
+          }
+        }
+      ],
+      "meta": {
+        "description": "Mathematical constant e"
+      }
+    },
+    {
+      "type": "function",
+      "name": "abs",
+      "params": [
+        {
+          "name": "x",
+          "type": "float"
+        }
+      ],
+      "returns": "float",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "math.abs",
+            "args": [
+              {
+                "type": "variable",
+                "name": "x"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Absolute value"
+      }
+    },
+    {
+      "type": "function",
+      "name": "min",
+      "params": [
+        {
+          "name": "a",
+          "type": "float"
+        },
+        {
+          "name": "b",
+          "type": "float"
+        }
+      ],
+      "returns": "float",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "math.min",
+            "args": [
+              {
+                "type": "variable",
+                "name": "a"
+              },
+              {
+                "type": "variable",
+                "name": "b"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Minimum of two values"
+      }
+    },
+    {
+      "type": "function",
+      "name": "max",
+      "params": [
+        {
+          "name": "a",
+          "type": "float"
+        },
+        {
+          "name": "b",
+          "type": "float"
+        }
+      ],
+      "returns": "float",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "math.max",
+            "args": [
+              {
+                "type": "variable",
+                "name": "a"
+              },
+              {
+                "type": "variable",
+                "name": "b"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Maximum of two values"
+      }
+    },
+    {
+      "type": "function",
+      "name": "pow",
+      "params": [
+        {
+          "name": "base",
+          "type": "float"
+        },
+        {
+          "name": "exp",
+          "type": "float"
+        }
+      ],
+      "returns": "float",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "math.pow",
+            "args": [
+              {
+                "type": "variable",
+                "name": "base"
+              },
+              {
+                "type": "variable",
+                "name": "exp"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Raise base to power of exp"
+      }
+    },
+    {
+      "type": "function",
+      "name": "sqrt",
+      "params": [
+        {
+          "name": "x",
+          "type": "float"
+        }
+      ],
+      "returns": "float",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "math.sqrt",
+            "args": [
+              {
+                "type": "variable",
+                "name": "x"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Square root"
+      }
+    },
+    {
+      "type": "function",
+      "name": "sin",
+      "params": [
+        {
+          "name": "x",
+          "type": "float"
+        }
+      ],
+      "returns": "float",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "math.sin",
+            "args": [
+              {
+                "type": "variable",
+                "name": "x"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Sine of x (radians)"
+      }
+    },
+    {
+      "type": "function",
+      "name": "cos",
+      "params": [
+        {
+          "name": "x",
+          "type": "float"
+        }
+      ],
+      "returns": "float",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "math.cos",
+            "args": [
+              {
+                "type": "variable",
+                "name": "x"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Cosine of x (radians)"
+      }
+    },
+    {
+      "type": "function",
+      "name": "tan",
+      "params": [
+        {
+          "name": "x",
+          "type": "float"
+        }
+      ],
+      "returns": "float",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "math.tan",
+            "args": [
+              {
+                "type": "variable",
+                "name": "x"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Tangent of x (radians)"
+      }
+    },
+    {
+      "type": "function",
+      "name": "asin",
+      "params": [
+        {
+          "name": "x",
+          "type": "float"
+        }
+      ],
+      "returns": "float",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "math.asin",
+            "args": [
+              {
+                "type": "variable",
+                "name": "x"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Arcsine of x (result in radians)"
+      }
+    },
+    {
+      "type": "function",
+      "name": "acos",
+      "params": [
+        {
+          "name": "x",
+          "type": "float"
+        }
+      ],
+      "returns": "float",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "math.acos",
+            "args": [
+              {
+                "type": "variable",
+                "name": "x"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Arccosine of x (result in radians)"
+      }
+    },
+    {
+      "type": "function",
+      "name": "atan",
+      "params": [
+        {
+          "name": "x",
+          "type": "float"
+        }
+      ],
+      "returns": "float",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "math.atan",
+            "args": [
+              {
+                "type": "variable",
+                "name": "x"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Arctangent of x (result in radians)"
+      }
+    },
+    {
+      "type": "function",
+      "name": "floor",
+      "params": [
+        {
+          "name": "x",
+          "type": "float"
+        }
+      ],
+      "returns": "float",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "math.floor",
+            "args": [
+              {
+                "type": "variable",
+                "name": "x"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Round down to nearest integer"
+      }
+    },
+    {
+      "type": "function",
+      "name": "ceil",
+      "params": [
+        {
+          "name": "x",
+          "type": "float"
+        }
+      ],
+      "returns": "float",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "math.ceil",
+            "args": [
+              {
+                "type": "variable",
+                "name": "x"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Round up to nearest integer"
+      }
+    },
+    {
+      "type": "function",
+      "name": "round",
+      "params": [
+        {
+          "name": "x",
+          "type": "float"
+        }
+      ],
+      "returns": "float",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "math.round",
+            "args": [
+              {
+                "type": "variable",
+                "name": "x"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Round to nearest integer"
+      }
+    },
+    {
+      "type": "function",
+      "name": "random",
+      "params": [],
+      "returns": "float",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "math.random",
+            "args": []
+          }
+        }
+      ],
+      "meta": {
+        "description": "Random float between 0 and 1"
+      }
+    },
+    {
+      "type": "function",
+      "name": "randomInt",
+      "params": [
+        {
+          "name": "min",
+          "type": "int"
+        },
+        {
+          "name": "max",
+          "type": "int"
+        }
+      ],
+      "returns": "int",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "math.randomInt",
+            "args": [
+              {
+                "type": "variable",
+                "name": "min"
+              },
+              {
+                "type": "variable",
+                "name": "max"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Random integer between min and max (inclusive)"
+      }
+    }
+  ],
+  "types": [],
+  "meta": {
+    "version": "0.1.0",
+    "description": "Standard mathematical operations for ALaS"
+  }
+}

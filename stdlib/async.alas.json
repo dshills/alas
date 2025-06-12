@@ -1,0 +1,372 @@
+{
+  "type": "module",
+  "name": "std.async",
+  "exports": [
+    "spawn", "await", "awaitTimeout", "parallel", "race",
+    "sleep", "timeout", "cancel", "isRunning", "isCompleted"
+  ],
+  "imports": ["std.result"],
+  "functions": [
+    {
+      "type": "function",
+      "name": "spawn",
+      "params": [
+        {
+          "name": "fn",
+          "type": "function"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "async.spawn",
+            "args": [
+              {
+                "type": "variable",
+                "name": "fn"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Spawn async task",
+        "returns_schema": {
+          "type": "task",
+          "id": "string",
+          "status": "string"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "name": "await",
+      "params": [
+        {
+          "name": "task",
+          "type": "map"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "async.await",
+            "args": [
+              {
+                "type": "variable",
+                "name": "task"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Wait for task completion",
+        "returns_schema": {
+          "ok": "bool",
+          "value": "any",
+          "error": "string"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "name": "awaitTimeout",
+      "params": [
+        {
+          "name": "task",
+          "type": "map"
+        },
+        {
+          "name": "timeoutMs",
+          "type": "int"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "async.awaitTimeout",
+            "args": [
+              {
+                "type": "variable",
+                "name": "task"
+              },
+              {
+                "type": "variable",
+                "name": "timeoutMs"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Wait for task with timeout",
+        "returns_schema": {
+          "ok": "bool",
+          "value": "any",
+          "error": "string",
+          "timedOut": "bool"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "name": "parallel",
+      "params": [
+        {
+          "name": "tasks",
+          "type": "array"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "async.parallel",
+            "args": [
+              {
+                "type": "variable",
+                "name": "tasks"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Run tasks in parallel, wait for all",
+        "returns_schema": {
+          "ok": "bool",
+          "values": "array",
+          "errors": "array"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "name": "race",
+      "params": [
+        {
+          "name": "tasks",
+          "type": "array"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "async.race",
+            "args": [
+              {
+                "type": "variable",
+                "name": "tasks"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Run tasks in parallel, return first completion",
+        "returns_schema": {
+          "ok": "bool",
+          "value": "any",
+          "error": "string",
+          "winner": "int"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "name": "sleep",
+      "params": [
+        {
+          "name": "ms",
+          "type": "int"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "async.sleep",
+            "args": [
+              {
+                "type": "variable",
+                "name": "ms"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Sleep for specified milliseconds",
+        "returns_schema": {
+          "type": "task",
+          "id": "string",
+          "status": "string"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "name": "timeout",
+      "params": [
+        {
+          "name": "fn",
+          "type": "function"
+        },
+        {
+          "name": "timeoutMs",
+          "type": "int"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "async.timeout",
+            "args": [
+              {
+                "type": "variable",
+                "name": "fn"
+              },
+              {
+                "type": "variable",
+                "name": "timeoutMs"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Run function with timeout",
+        "returns_schema": {
+          "type": "task",
+          "id": "string",
+          "status": "string"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "name": "cancel",
+      "params": [
+        {
+          "name": "task",
+          "type": "map"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "async.cancel",
+            "args": [
+              {
+                "type": "variable",
+                "name": "task"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Cancel running task"
+      }
+    },
+    {
+      "type": "function",
+      "name": "isRunning",
+      "params": [
+        {
+          "name": "task",
+          "type": "map"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "async.isRunning",
+            "args": [
+              {
+                "type": "variable",
+                "name": "task"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if task is running"
+      }
+    },
+    {
+      "type": "function",
+      "name": "isCompleted",
+      "params": [
+        {
+          "name": "task",
+          "type": "map"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "async.isCompleted",
+            "args": [
+              {
+                "type": "variable",
+                "name": "task"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if task is completed"
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "Task",
+      "type": "map",
+      "schema": {
+        "type": "string",
+        "id": "string",
+        "status": "string"
+      },
+      "meta": {
+        "description": "Async task handle"
+      }
+    }
+  ],
+  "meta": {
+    "version": "0.1.0",
+    "description": "Standard async/concurrent execution for ALaS"
+  }
+}
