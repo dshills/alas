@@ -1,0 +1,511 @@
+{
+  "type": "module",
+  "name": "std.type",
+  "exports": [
+    "typeOf", "toString", "parseInt", "parseFloat", "parseBool",
+    "toInt", "toFloat", "toBool", "isString", "isInt", "isFloat",
+    "isBool", "isArray", "isMap", "isFunction", "isNull"
+  ],
+  "imports": [],
+  "functions": [
+    {
+      "type": "function",
+      "name": "typeOf",
+      "params": [
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "type.typeOf",
+            "args": [
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Get type name of value"
+      }
+    },
+    {
+      "type": "function",
+      "name": "toString",
+      "params": [
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "type.toString",
+            "args": [
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Convert value to string representation"
+      }
+    },
+    {
+      "type": "function",
+      "name": "parseInt",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "type.parseInt",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Parse string to integer",
+        "returns_schema": {
+          "ok": "bool",
+          "value": "int",
+          "error": "string"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "name": "parseFloat",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "type.parseFloat",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Parse string to float",
+        "returns_schema": {
+          "ok": "bool",
+          "value": "float",
+          "error": "string"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "name": "parseBool",
+      "params": [
+        {
+          "name": "str",
+          "type": "string"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "type.parseBool",
+            "args": [
+              {
+                "type": "variable",
+                "name": "str"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Parse string to boolean",
+        "returns_schema": {
+          "ok": "bool",
+          "value": "bool",
+          "error": "string"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "name": "toInt",
+      "params": [
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "type.toInt",
+            "args": [
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Convert value to integer",
+        "returns_schema": {
+          "ok": "bool",
+          "value": "int",
+          "error": "string"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "name": "toFloat",
+      "params": [
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "type.toFloat",
+            "args": [
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Convert value to float",
+        "returns_schema": {
+          "ok": "bool",
+          "value": "float",
+          "error": "string"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "name": "toBool",
+      "params": [
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "type.toBool",
+            "args": [
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Convert value to boolean",
+        "returns_schema": {
+          "ok": "bool",
+          "value": "bool",
+          "error": "string"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "name": "isString",
+      "params": [
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "type.isString",
+            "args": [
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if value is a string"
+      }
+    },
+    {
+      "type": "function",
+      "name": "isInt",
+      "params": [
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "type.isInt",
+            "args": [
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if value is an integer"
+      }
+    },
+    {
+      "type": "function",
+      "name": "isFloat",
+      "params": [
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "type.isFloat",
+            "args": [
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if value is a float"
+      }
+    },
+    {
+      "type": "function",
+      "name": "isBool",
+      "params": [
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "type.isBool",
+            "args": [
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if value is a boolean"
+      }
+    },
+    {
+      "type": "function",
+      "name": "isArray",
+      "params": [
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "type.isArray",
+            "args": [
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if value is an array"
+      }
+    },
+    {
+      "type": "function",
+      "name": "isMap",
+      "params": [
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "type.isMap",
+            "args": [
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if value is a map"
+      }
+    },
+    {
+      "type": "function",
+      "name": "isFunction",
+      "params": [
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "type.isFunction",
+            "args": [
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if value is a function"
+      }
+    },
+    {
+      "type": "function",
+      "name": "isNull",
+      "params": [
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "type.isNull",
+            "args": [
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if value is null"
+      }
+    }
+  ],
+  "types": [],
+  "meta": {
+    "version": "0.1.0",
+    "description": "Standard type operations for ALaS"
+  }
+}

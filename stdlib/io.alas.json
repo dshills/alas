@@ -1,0 +1,136 @@
+{
+  "type": "module",
+  "name": "std.io",
+  "exports": ["readFile", "writeFile", "print", "readLine"],
+  "imports": [],
+  "functions": [
+    {
+      "type": "function",
+      "name": "readFile",
+      "params": [
+        {
+          "name": "path",
+          "type": "string"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "io.readFile",
+            "args": [
+              {
+                "type": "variable",
+                "name": "path"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Read file contents from filesystem",
+        "returns_schema": {
+          "ok": "bool",
+          "data": "string",
+          "error": "string"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "name": "writeFile",
+      "params": [
+        {
+          "name": "path",
+          "type": "string"
+        },
+        {
+          "name": "data",
+          "type": "string"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "io.writeFile",
+            "args": [
+              {
+                "type": "variable",
+                "name": "path"
+              },
+              {
+                "type": "variable",
+                "name": "data"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Write data to file",
+        "returns_schema": {
+          "ok": "bool",
+          "error": "string"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "name": "print",
+      "params": [
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "void",
+      "body": [
+        {
+          "type": "expression",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "variable",
+                "name": "value"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Print value to stdout"
+      }
+    },
+    {
+      "type": "function",
+      "name": "readLine",
+      "params": [],
+      "returns": "string",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "io.readLine",
+            "args": []
+          }
+        }
+      ],
+      "meta": {
+        "description": "Read line from stdin"
+      }
+    }
+  ],
+  "types": [],
+  "meta": {
+    "version": "0.1.0",
+    "description": "Standard I/O operations for ALaS"
+  }
+}

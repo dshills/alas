@@ -88,4 +88,5 @@ clang factorial.o -o factorial
 ## Development Best Practices
 
 - Always run golangci-lint and fix issues
-- Do not commit to main. All features should be done in a branch and then commited, pushed and a PR created
+- Do not commit to main. All features should be done in a branch
+- Commit and push when feature complete lint and all tests pass

@@ -1,0 +1,398 @@
+{
+  "type": "module",
+  "name": "std.result",
+  "exports": [
+    "ok", "error", "isOk", "isError", "unwrap", "unwrapOr",
+    "unwrapOrElse", "map", "mapError", "andThen", "orElse"
+  ],
+  "imports": [],
+  "functions": [
+    {
+      "type": "function",
+      "name": "ok",
+      "params": [
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "literal",
+            "value": {
+              "ok": true,
+              "value": {
+                "type": "variable",
+                "name": "value"
+              },
+              "error": null
+            }
+          }
+        }
+      ],
+      "meta": {
+        "description": "Create successful Result"
+      }
+    },
+    {
+      "type": "function",
+      "name": "error",
+      "params": [
+        {
+          "name": "message",
+          "type": "string"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "literal",
+            "value": {
+              "ok": false,
+              "value": null,
+              "error": {
+                "type": "variable",
+                "name": "message"
+              }
+            }
+          }
+        }
+      ],
+      "meta": {
+        "description": "Create error Result"
+      }
+    },
+    {
+      "type": "function",
+      "name": "isOk",
+      "params": [
+        {
+          "name": "result",
+          "type": "map"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "result.isOk",
+            "args": [
+              {
+                "type": "variable",
+                "name": "result"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if Result is ok"
+      }
+    },
+    {
+      "type": "function",
+      "name": "isError",
+      "params": [
+        {
+          "name": "result",
+          "type": "map"
+        }
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "result.isError",
+            "args": [
+              {
+                "type": "variable",
+                "name": "result"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Check if Result is error"
+      }
+    },
+    {
+      "type": "function",
+      "name": "unwrap",
+      "params": [
+        {
+          "name": "result",
+          "type": "map"
+        }
+      ],
+      "returns": "any",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "result.unwrap",
+            "args": [
+              {
+                "type": "variable",
+                "name": "result"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Extract value from Result (panics on error)"
+      }
+    },
+    {
+      "type": "function",
+      "name": "unwrapOr",
+      "params": [
+        {
+          "name": "result",
+          "type": "map"
+        },
+        {
+          "name": "defaultValue",
+          "type": "any"
+        }
+      ],
+      "returns": "any",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "result.unwrapOr",
+            "args": [
+              {
+                "type": "variable",
+                "name": "result"
+              },
+              {
+                "type": "variable",
+                "name": "defaultValue"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Extract value from Result or return default"
+      }
+    },
+    {
+      "type": "function",
+      "name": "unwrapOrElse",
+      "params": [
+        {
+          "name": "result",
+          "type": "map"
+        },
+        {
+          "name": "errorFn",
+          "type": "function"
+        }
+      ],
+      "returns": "any",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "result.unwrapOrElse",
+            "args": [
+              {
+                "type": "variable",
+                "name": "result"
+              },
+              {
+                "type": "variable",
+                "name": "errorFn"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Extract value from Result or call error function"
+      }
+    },
+    {
+      "type": "function",
+      "name": "map",
+      "params": [
+        {
+          "name": "result",
+          "type": "map"
+        },
+        {
+          "name": "mapper",
+          "type": "function"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "result.map",
+            "args": [
+              {
+                "type": "variable",
+                "name": "result"
+              },
+              {
+                "type": "variable",
+                "name": "mapper"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Map Result value if ok"
+      }
+    },
+    {
+      "type": "function",
+      "name": "mapError",
+      "params": [
+        {
+          "name": "result",
+          "type": "map"
+        },
+        {
+          "name": "mapper",
+          "type": "function"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "result.mapError",
+            "args": [
+              {
+                "type": "variable",
+                "name": "result"
+              },
+              {
+                "type": "variable",
+                "name": "mapper"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Map Result error if error"
+      }
+    },
+    {
+      "type": "function",
+      "name": "andThen",
+      "params": [
+        {
+          "name": "result",
+          "type": "map"
+        },
+        {
+          "name": "fn",
+          "type": "function"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "result.andThen",
+            "args": [
+              {
+                "type": "variable",
+                "name": "result"
+              },
+              {
+                "type": "variable",
+                "name": "fn"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Chain Result operations (flatMap)"
+      }
+    },
+    {
+      "type": "function",
+      "name": "orElse",
+      "params": [
+        {
+          "name": "result",
+          "type": "map"
+        },
+        {
+          "name": "fn",
+          "type": "function"
+        }
+      ],
+      "returns": "map",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "builtin",
+            "name": "result.orElse",
+            "args": [
+              {
+                "type": "variable",
+                "name": "result"
+              },
+              {
+                "type": "variable",
+                "name": "fn"
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "description": "Provide alternative Result if error"
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "Result",
+      "type": "map",
+      "schema": {
+        "ok": "bool",
+        "value": "any",
+        "error": "string"
+      },
+      "meta": {
+        "description": "Result type for error handling"
+      }
+    }
+  ],
+  "meta": {
+    "version": "0.1.0",
+    "description": "Standard error handling for ALaS"
+  }
+}

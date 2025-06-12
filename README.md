@@ -9,6 +9,7 @@ ALaS is a general-purpose, Turing-complete programming language designed exclusi
 - **Turing-Complete**: Supports functions, conditionals, loops, and recursion
 - **Type System**: Basic types including int, float, string, bool, array, and map
 - **Module System**: Import/export capabilities with dependency resolution and encapsulation
+- **Standard Library**: Comprehensive set of modules for I/O, math, collections, strings, and more
 
 ## Project Structure
 
@@ -24,6 +25,7 @@ alas/
 │   ├── interpreter/    # Reference interpreter
 │   ├── codegen/        # LLVM IR code generator
 │   └── runtime/        # Runtime value types
+├── stdlib/             # Standard library modules
 ├── examples/
 │   ├── programs/       # Example ALaS programs
 │   └── modules/        # Example ALaS modules
@@ -178,6 +180,47 @@ Here's an example demonstrating array and map operations:
 }
 ```
 
+## Standard Library
+
+ALaS includes a comprehensive standard library with the following modules:
+
+- **`std.io`** - File operations and console I/O (readFile, writeFile, print, readLine)
+- **`std.math`** - Mathematical functions and constants (sin, cos, sqrt, PI, E, etc.)
+- **`std.collections`** - Array and map utilities (filter, map, reduce, sort, etc.)
+- **`std.string`** - String manipulation (split, join, replace, format, etc.)
+- **`std.type`** - Type checking and conversion (typeOf, parseInt, toString, etc.)
+- **`std.result`** - Structured error handling with Result types
+- **`std.async`** - Concurrent execution primitives (spawn, await, parallel, etc.)
+
+Standard library modules can be imported like any other module:
+
+```json
+{
+  "type": "module",
+  "name": "myProgram",
+  "imports": ["std.io", "std.math"],
+  "functions": [
+    {
+      "name": "main",
+      "body": [
+        {
+          "type": "assign",
+          "target": "data",
+          "value": {
+            "type": "module_call",
+            "module": "std.io",
+            "name": "readFile",
+            "args": [{"type": "literal", "value": "data.txt"}]
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+See the [stdlib/README.md](stdlib/README.md) for complete documentation.
+
 ## Language Features
 
 ### Statements
@@ -254,14 +297,15 @@ Current implementation includes:
 - ✅ Binary and unary operations
 - ✅ Arrays and maps with indexing
 - ✅ Module imports/exports with dependency resolution
+- ✅ Standard library specification (8 core modules)
 - ✅ Comprehensive test suite
 
 Future work:
-- ⏳ Standard library
 - ⏳ Plugin system
 - ⏳ Advanced LLVM IR optimizations
 - ⏳ Runtime garbage collection for arrays/maps
 - ⏳ Cross-module LLVM compilation and linking
+- ⏳ Standard library runtime implementation
 
 ## License
 
