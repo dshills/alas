@@ -57,6 +57,16 @@ func (v *Validator) ValidateModule(m *ast.Module) error {
 		}
 	}
 
+	// Validate imports are non-empty strings and don't include self
+	for _, importName := range m.Imports {
+		if importName == "" {
+			v.addError("import name cannot be empty")
+		}
+		if importName == m.Name {
+			v.addError("module cannot import itself")
+		}
+	}
+
 	if len(v.errors) > 0 {
 		return fmt.Errorf("validation errors:\n%s", strings.Join(v.errors, "\n"))
 	}
@@ -283,6 +293,20 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 		}
 		if err := v.validateExpression(expr.Index, scope); err != nil {
 			return fmt.Errorf("index: %v", err)
+		}
+
+	case ast.ExprModuleCall:
+		if expr.Module == "" {
+			return fmt.Errorf("module call expression must have a module name")
+		}
+		if expr.Name == "" {
+			return fmt.Errorf("module call expression must have a function name")
+		}
+		// Validate arguments
+		for i, arg := range expr.Args {
+			if err := v.validateExpression(&arg, scope); err != nil {
+				return fmt.Errorf("module call argument %d: %v", i, err)
+			}
 		}
 
 	default:

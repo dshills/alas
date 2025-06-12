@@ -57,6 +57,20 @@ func TestInterpreter(t *testing.T) {
 			args:     []runtime.Value{},
 			expected: runtime.NewInt(20),
 		},
+		{
+			name:     "Module Demo",
+			file:     "../examples/programs/module_demo.alas.json",
+			function: "main",
+			args:     []runtime.Value{},
+			expected: runtime.NewInt(30), // (10 + 5) * 2 = 30
+		},
+		{
+			name:     "Complex Modules",
+			file:     "../examples/programs/complex_modules.alas.json",
+			function: "main",
+			args:     []runtime.Value{},
+			expected: runtime.NewString("Number: 42"),
+		},
 	}
 
 	for _, tc := range tests {
@@ -352,5 +366,184 @@ func TestMapOperations(t *testing.T) {
 	expected := runtime.NewString("Alice")
 	if !valuesEqual(result, expected) {
 		t.Errorf("Expected %v, got %v", expected, result)
+	}
+}
+
+// TestModuleSystem tests module import/export functionality.
+func TestModuleSystem(t *testing.T) {
+	interp := interpreter.New()
+
+	// Create math_utils module
+	mathModule := &ast.Module{
+		Type:    "module",
+		Name:    "math_utils",
+		Exports: []string{"add", "multiply"},
+		Functions: []ast.Function{
+			{
+				Type:    "function",
+				Name:    "add",
+				Params:  []ast.Parameter{{Name: "a", Type: "int"}, {Name: "b", Type: "int"}},
+				Returns: "int",
+				Body: []ast.Statement{
+					{
+						Type: "return",
+						Value: &ast.Expression{
+							Type: ast.ExprBinary,
+							Op:   "+",
+							Left: &ast.Expression{Type: ast.ExprVariable, Name: "a"},
+							Right: &ast.Expression{Type: ast.ExprVariable, Name: "b"},
+						},
+					},
+				},
+			},
+			{
+				Type:    "function",
+				Name:    "multiply",
+				Params:  []ast.Parameter{{Name: "x", Type: "int"}, {Name: "y", Type: "int"}},
+				Returns: "int",
+				Body: []ast.Statement{
+					{
+						Type: "return",
+						Value: &ast.Expression{
+							Type: ast.ExprBinary,
+							Op:   "*",
+							Left: &ast.Expression{Type: ast.ExprVariable, Name: "x"},
+							Right: &ast.Expression{Type: ast.ExprVariable, Name: "y"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Create main module that imports math_utils
+	mainModule := &ast.Module{
+		Type:    "module",
+		Name:    "main",
+		Imports: []string{"math_utils"},
+		Functions: []ast.Function{
+			{
+				Type:    "function",
+				Name:    "test_module",
+				Params:  []ast.Parameter{},
+				Returns: "int",
+				Body: []ast.Statement{
+					{
+						Type:   "assign",
+						Target: "sum",
+						Value: &ast.Expression{
+							Type:   ast.ExprModuleCall,
+							Module: "math_utils",
+							Name:   "add",
+							Args: []ast.Expression{
+								{Type: ast.ExprLiteral, Value: float64(10)},
+								{Type: ast.ExprLiteral, Value: float64(5)},
+							},
+						},
+					},
+					{
+						Type: "return",
+						Value: &ast.Expression{
+							Type:   ast.ExprModuleCall,
+							Module: "math_utils",
+							Name:   "multiply",
+							Args: []ast.Expression{
+								{Type: ast.ExprVariable, Name: "sum"},
+								{Type: ast.ExprLiteral, Value: float64(2)},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Load math_utils first
+	if err := interp.LoadModule(mathModule); err != nil {
+		t.Fatalf("Failed to load math_utils module: %v", err)
+	}
+
+	// Load main module
+	if err := interp.LoadModule(mainModule); err != nil {
+		t.Fatalf("Failed to load main module: %v", err)
+	}
+
+	// Test module function call
+	result, err := interp.Run("test_module", []runtime.Value{})
+	if err != nil {
+		t.Fatalf("Runtime error: %v", err)
+	}
+
+	expected := runtime.NewInt(30) // (10 + 5) * 2 = 30
+	if !valuesEqual(result, expected) {
+		t.Errorf("Expected %v, got %v", expected, result)
+	}
+}
+
+// TestModuleExportValidation tests that non-exported functions cannot be called.
+func TestModuleExportValidation(t *testing.T) {
+	interp := interpreter.New()
+
+	// Create module with private function
+	mathModule := &ast.Module{
+		Type:    "module",
+		Name:    "math_utils",
+		Exports: []string{"add"}, // Only export add, not subtract
+		Functions: []ast.Function{
+			{
+				Type:    "function",
+				Name:    "add",
+				Params:  []ast.Parameter{{Name: "a", Type: "int"}, {Name: "b", Type: "int"}},
+				Returns: "int",
+				Body: []ast.Statement{
+					{
+						Type: "return",
+						Value: &ast.Expression{
+							Type: ast.ExprBinary,
+							Op:   "+",
+							Left: &ast.Expression{Type: ast.ExprVariable, Name: "a"},
+							Right: &ast.Expression{Type: ast.ExprVariable, Name: "b"},
+						},
+					},
+				},
+			},
+			{
+				Type:    "function",
+				Name:    "subtract", // Not exported
+				Params:  []ast.Parameter{{Name: "a", Type: "int"}, {Name: "b", Type: "int"}},
+				Returns: "int",
+				Body: []ast.Statement{
+					{
+						Type: "return",
+						Value: &ast.Expression{
+							Type: ast.ExprBinary,
+							Op:   "-",
+							Left: &ast.Expression{Type: ast.ExprVariable, Name: "a"},
+							Right: &ast.Expression{Type: ast.ExprVariable, Name: "b"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	if err := interp.LoadModule(mathModule); err != nil {
+		t.Fatalf("Failed to load module: %v", err)
+	}
+
+	// Try to call exported function - should work
+	_, err := interp.RunModuleFunction("math_utils", "add", []runtime.Value{
+		runtime.NewInt(10), runtime.NewInt(5),
+	})
+	if err != nil {
+		t.Errorf("Expected exported function to work, got error: %v", err)
+	}
+
+	// Try to call non-exported function - should fail
+	_, err = interp.RunModuleFunction("math_utils", "subtract", []runtime.Value{
+		runtime.NewInt(10), runtime.NewInt(5),
+	})
+	if err == nil {
+		t.Error("Expected non-exported function to fail, but it succeeded")
 	}
 }

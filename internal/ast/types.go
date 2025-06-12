@@ -43,6 +43,7 @@ type Expression struct {
 	Type     string       `json:"type"`
 	Value    interface{}  `json:"value,omitempty"`
 	Name     string       `json:"name,omitempty"`
+	Module   string       `json:"module,omitempty"` // For module function calls
 	Op       string       `json:"op,omitempty"`
 	Left     *Expression  `json:"left,omitempty"`
 	Right    *Expression  `json:"right,omitempty"`
@@ -71,15 +72,16 @@ const (
 
 // Expression types.
 const (
-	ExprLiteral  = "literal"
-	ExprVariable = "variable"
-	ExprBinary   = "binary"
-	ExprUnary    = "unary"
-	ExprCall     = "call"
-	ExprIndex    = "index"
-	ExprField    = "field"
-	ExprArrayLit = "array_literal"
-	ExprMapLit   = "map_literal"
+	ExprLiteral    = "literal"
+	ExprVariable   = "variable"
+	ExprBinary     = "binary"
+	ExprUnary      = "unary"
+	ExprCall       = "call"
+	ExprIndex      = "index"
+	ExprField      = "field"
+	ExprArrayLit   = "array_literal"
+	ExprMapLit     = "map_literal"
+	ExprModuleCall = "module_call"
 )
 
 // Binary operators.

@@ -1,0 +1,55 @@
+{
+  "type": "module",
+  "name": "format_utils",
+  "imports": ["string_utils", "math_utils"],
+  "exports": ["format_number"],
+  "functions": [
+    {
+      "type": "function",
+      "name": "format_number",
+      "params": [
+        {"name": "num", "type": "int"}
+      ],
+      "returns": "string",
+      "body": [
+        {
+          "type": "assign",
+          "target": "doubled",
+          "value": {
+            "type": "module_call",
+            "module": "math_utils",
+            "name": "multiply",
+            "args": [
+              {
+                "type": "variable",
+                "name": "num"
+              },
+              {
+                "type": "literal",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "type": "return",
+          "value": {
+            "type": "module_call",
+            "module": "string_utils",
+            "name": "concat",
+            "args": [
+              {
+                "type": "literal",
+                "value": "Number: "
+              },
+              {
+                "type": "literal",
+                "value": "42"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

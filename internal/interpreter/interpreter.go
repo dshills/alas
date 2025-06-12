@@ -1,7 +1,10 @@
 package interpreter
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/dshills/alas/internal/ast"
 	"github.com/dshills/alas/internal/runtime"
@@ -9,26 +12,112 @@ import (
 
 // Interpreter executes ALaS programs.
 type Interpreter struct {
-	modules   map[string]*ast.Module
-	functions map[string]*ast.Function
+	modules       map[string]*ast.Module
+	functions     map[string]*ast.Function
+	exportedFuncs map[string]map[string]*ast.Function // module -> function name -> function
+	moduleLoader  ModuleLoader
+}
+
+// ModuleLoader defines the interface for loading modules.
+type ModuleLoader interface {
+	LoadModuleByName(name string) (*ast.Module, error)
+}
+
+// FileModuleLoader loads modules from the filesystem.
+type FileModuleLoader struct {
+	searchPaths []string
+}
+
+// NewFileModuleLoader creates a new file-based module loader.
+func NewFileModuleLoader(searchPaths []string) *FileModuleLoader {
+	return &FileModuleLoader{
+		searchPaths: searchPaths,
+	}
+}
+
+// LoadModuleByName loads a module by name from the filesystem.
+func (l *FileModuleLoader) LoadModuleByName(name string) (*ast.Module, error) {
+	for _, searchPath := range l.searchPaths {
+		fileName := filepath.Join(searchPath, name+".alas.json")
+		if data, err := os.ReadFile(fileName); err == nil {
+			var module ast.Module
+			if err := json.Unmarshal(data, &module); err != nil {
+				return nil, fmt.Errorf("failed to parse module %s: %v", name, err)
+			}
+			return &module, nil
+		}
+	}
+	return nil, fmt.Errorf("module %s not found in search paths", name)
 }
 
 // New creates a new interpreter.
 func New() *Interpreter {
+	// Default search paths for modules (try both from current directory and from parent)
+	searchPaths := []string{".", "examples/modules", "../examples/modules"}
+
 	return &Interpreter{
-		modules:   make(map[string]*ast.Module),
-		functions: make(map[string]*ast.Function),
+		modules:       make(map[string]*ast.Module),
+		functions:     make(map[string]*ast.Function),
+		exportedFuncs: make(map[string]map[string]*ast.Function),
+		moduleLoader:  NewFileModuleLoader(searchPaths),
+	}
+}
+
+// NewWithLoader creates a new interpreter with a custom module loader.
+func NewWithLoader(loader ModuleLoader) *Interpreter {
+	return &Interpreter{
+		modules:       make(map[string]*ast.Module),
+		functions:     make(map[string]*ast.Function),
+		exportedFuncs: make(map[string]map[string]*ast.Function),
+		moduleLoader:  loader,
 	}
 }
 
 // LoadModule loads a module into the interpreter.
 func (i *Interpreter) LoadModule(module *ast.Module) error {
+	return i.LoadModuleWithDependencies(module)
+}
+
+// LoadModuleWithDependencies loads a module and all its dependencies.
+func (i *Interpreter) LoadModuleWithDependencies(module *ast.Module) error {
+	// Check if module is already loaded
+	if _, exists := i.modules[module.Name]; exists {
+		return nil // Already loaded
+	}
+
+	// Load all imported modules first
+	for _, importName := range module.Imports {
+		if _, exists := i.modules[importName]; !exists {
+			importedModule, err := i.moduleLoader.LoadModuleByName(importName)
+			if err != nil {
+				return fmt.Errorf("failed to load imported module %s: %v", importName, err)
+			}
+			if err := i.LoadModuleWithDependencies(importedModule); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Now load the current module
 	i.modules[module.Name] = module
 
-	// Register all functions
+	// Register all functions in global namespace (for local calls)
 	for idx := range module.Functions {
 		fn := &module.Functions[idx]
 		i.functions[fn.Name] = fn
+	}
+
+	// Register exported functions in module namespace
+	i.exportedFuncs[module.Name] = make(map[string]*ast.Function)
+	for _, exportName := range module.Exports {
+		// Find the function with this name
+		for idx := range module.Functions {
+			fn := &module.Functions[idx]
+			if fn.Name == exportName {
+				i.exportedFuncs[module.Name][exportName] = fn
+				break
+			}
+		}
 	}
 
 	return nil
@@ -89,6 +178,47 @@ func (i *Interpreter) Run(functionName string, args []runtime.Value) (runtime.Va
 	result, _, err := i.executeStatements(fn.Body, env)
 	if err != nil {
 		return runtime.NewVoid(), fmt.Errorf("error executing function '%s': %v", functionName, err)
+	}
+
+	return result, nil
+}
+
+// RunModuleFunction executes a function from a specific module.
+func (i *Interpreter) RunModuleFunction(moduleName, functionName string, args []runtime.Value) (runtime.Value, error) {
+	// Check if module exists
+	if _, exists := i.modules[moduleName]; !exists {
+		return runtime.NewVoid(), fmt.Errorf("module '%s' not found", moduleName)
+	}
+
+	// Check if function is exported from the module
+	moduleExports, exists := i.exportedFuncs[moduleName]
+	if !exists {
+		return runtime.NewVoid(), fmt.Errorf("module '%s' has no exports", moduleName)
+	}
+
+	fn, exists := moduleExports[functionName]
+	if !exists {
+		return runtime.NewVoid(), fmt.Errorf("function '%s' not exported from module '%s'", functionName, moduleName)
+	}
+
+	// Check argument count
+	if len(args) != len(fn.Params) {
+		return runtime.NewVoid(), fmt.Errorf("function '%s.%s' expects %d arguments, got %d",
+			moduleName, functionName, len(fn.Params), len(args))
+	}
+
+	// Create new environment for function execution
+	env := NewEnvironment(nil)
+
+	// Bind parameters
+	for idx, param := range fn.Params {
+		env.Set(param.Name, args[idx])
+	}
+
+	// Execute function body
+	result, _, err := i.executeStatements(fn.Body, env)
+	if err != nil {
+		return runtime.NewVoid(), fmt.Errorf("error executing function '%s.%s': %v", moduleName, functionName, err)
 	}
 
 	return result, nil
@@ -221,6 +351,18 @@ func (i *Interpreter) evaluateExpression(expr *ast.Expression, env *Environment)
 			args[idx] = val
 		}
 		return i.Run(expr.Name, args)
+
+	case ast.ExprModuleCall:
+		// Evaluate arguments for module function call
+		args := make([]runtime.Value, len(expr.Args))
+		for idx, arg := range expr.Args {
+			val, err := i.evaluateExpression(&arg, env)
+			if err != nil {
+				return runtime.NewVoid(), err
+			}
+			args[idx] = val
+		}
+		return i.RunModuleFunction(expr.Module, expr.Name, args)
 
 	case ast.ExprArrayLit:
 		// Evaluate array literal

@@ -1,0 +1,60 @@
+{
+  "type": "module",
+  "name": "module_demo",
+  "imports": ["math_utils"],
+  "functions": [
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "int",
+      "body": [
+        {
+          "type": "assign",
+          "target": "sum",
+          "value": {
+            "type": "module_call",
+            "module": "math_utils",
+            "name": "add",
+            "args": [
+              {
+                "type": "literal",
+                "value": 10
+              },
+              {
+                "type": "literal",
+                "value": 5
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "product",
+          "value": {
+            "type": "module_call",
+            "module": "math_utils",
+            "name": "multiply",
+            "args": [
+              {
+                "type": "variable",
+                "name": "sum"
+              },
+              {
+                "type": "literal",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "type": "return",
+          "value": {
+            "type": "variable",
+            "name": "product"
+          }
+        }
+      ]
+    }
+  ]
+}
