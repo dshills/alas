@@ -785,8 +785,8 @@ func (g *LLVMCodegen) generateIndexAccess(expr *ast.Expression) (value.Value, er
 
 	// Check if object is an array struct
 	objType := obj.Type()
-	if structType, ok := objType.(*types.StructType); ok && len(structType.Fields) == 2 {
-		// This looks like our array struct {i8*, i64}
+	if structType, ok := objType.(*types.StructType); ok && structType.Name() == "array_struct" {
+		// This is explicitly identified as our array struct
 		// Extract data pointer
 		dataPtr := g.builder.NewExtractValue(obj, 0)
 		dataPtr.SetName("array_data_ptr")
