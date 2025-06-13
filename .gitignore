@@ -45,6 +45,7 @@ test/testdata/*/output
 
 # locally built binaries
 bin/
+lib/
 build/
 tmp/
 
