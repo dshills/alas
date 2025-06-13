@@ -150,7 +150,18 @@ func (e *Environment) Get(name string) (runtime.Value, bool) {
 
 // Set sets a variable value.
 func (e *Environment) Set(name string, value runtime.Value) {
+	// Release old GC object if it exists
+	if oldVal, exists := e.vars[name]; exists {
+		oldVal.Release()
+	}
 	e.vars[name] = value
+}
+
+// Cleanup releases all garbage-collected objects in this environment.
+func (e *Environment) Cleanup() {
+	for _, val := range e.vars {
+		val.Release()
+	}
 }
 
 // Run executes a function by name.
@@ -176,6 +187,10 @@ func (i *Interpreter) Run(functionName string, args []runtime.Value) (runtime.Va
 
 	// Execute function body
 	result, _, err := i.executeStatements(fn.Body, env)
+
+	// Cleanup environment before returning
+	defer env.Cleanup()
+
 	if err != nil {
 		return runtime.NewVoid(), fmt.Errorf("error executing function '%s': %v", functionName, err)
 	}
@@ -217,6 +232,10 @@ func (i *Interpreter) RunModuleFunction(moduleName, functionName string, args []
 
 	// Execute function body
 	result, _, err := i.executeStatements(fn.Body, env)
+
+	// Cleanup environment before returning
+	defer env.Cleanup()
+
 	if err != nil {
 		return runtime.NewVoid(), fmt.Errorf("error executing function '%s.%s': %v", moduleName, functionName, err)
 	}
@@ -374,7 +393,7 @@ func (i *Interpreter) evaluateExpression(expr *ast.Expression, env *Environment)
 			}
 			elements[idx] = val
 		}
-		return runtime.NewArray(elements), nil
+		return runtime.NewGCArray(elements), nil
 
 	case ast.ExprMapLit:
 		// Evaluate map literal
@@ -395,7 +414,7 @@ func (i *Interpreter) evaluateExpression(expr *ast.Expression, env *Environment)
 			}
 			mapValue[keyStr] = value
 		}
-		return runtime.NewMap(mapValue), nil
+		return runtime.NewGCMap(mapValue), nil
 
 	case ast.ExprIndex:
 		// Evaluate indexing (array[index] or map[key])
@@ -423,6 +442,12 @@ func (i *Interpreter) evaluateLiteral(value interface{}) (runtime.Value, error) 
 			return runtime.NewInt(int64(v)), nil
 		}
 		return runtime.NewFloat(v), nil
+	case int:
+		// Handle Go int values (from programmatic AST creation)
+		return runtime.NewInt(int64(v)), nil
+	case int64:
+		// Handle Go int64 values
+		return runtime.NewInt(v), nil
 	case string:
 		return runtime.NewString(v), nil
 	case bool:

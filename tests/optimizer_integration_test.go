@@ -15,7 +15,7 @@ import (
 	"github.com/dshills/alas/internal/runtime"
 )
 
-// TestCompilerOptimizationIntegration tests the full compilation pipeline with optimizations
+// TestCompilerOptimizationIntegration tests the full compilation pipeline with optimizations.
 func TestCompilerOptimizationIntegration(t *testing.T) {
 	// Skip if LLVM tools are not available
 	if _, err := exec.LookPath("llc"); err != nil {
@@ -219,7 +219,7 @@ func TestCompilerOptimizationIntegration(t *testing.T) {
 	}
 }
 
-// TestOptimizationConsistency ensures all optimization levels produce the same results
+// TestOptimizationConsistency ensures all optimization levels produce the same results.
 func TestOptimizationConsistency(t *testing.T) {
 	// Load all example programs
 	exampleDir := "../examples/programs"
@@ -324,7 +324,7 @@ func TestOptimizationConsistency(t *testing.T) {
 	}
 }
 
-// TestOptimizationRegressions tests specific cases that have caused issues
+// TestOptimizationRegressions tests specific cases that have caused issues.
 func TestOptimizationRegressions(t *testing.T) {
 	testCases := []struct {
 		name        string
@@ -457,7 +457,7 @@ func TestOptimizationRegressions(t *testing.T) {
 	}
 }
 
-// Helper function to run command with timeout
+// Helper function to run command with timeout.
 func runCommandWithTimeout(cmd *exec.Cmd, _ int) (string, error) {
 	output, err := cmd.CombinedOutput()
 	return string(output), err

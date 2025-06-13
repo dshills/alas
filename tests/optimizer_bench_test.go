@@ -8,7 +8,7 @@ import (
 	"github.com/dshills/alas/internal/codegen"
 )
 
-// BenchmarkOptimizer measures the effectiveness of different optimization levels
+// BenchmarkOptimizer measures the effectiveness of different optimization levels.
 func BenchmarkOptimizer(b *testing.B) {
 	programs := []struct {
 		name string
@@ -73,7 +73,7 @@ func BenchmarkOptimizer(b *testing.B) {
 	}
 }
 
-// TestOptimizationEffectiveness measures the size reduction from optimizations
+// TestOptimizationEffectiveness measures the size reduction from optimizations.
 func TestOptimizationEffectiveness(t *testing.T) {
 	testCases := []struct {
 		name              string
@@ -159,7 +159,7 @@ func TestOptimizationEffectiveness(t *testing.T) {
 	}
 }
 
-// Helper function to generate a program with many constants
+// Helper function to generate a program with many constants.
 func generateConstantHeavyProgram() string {
 	return `{
 		"type": "module",
@@ -234,7 +234,7 @@ func generateConstantHeavyProgram() string {
 	}`
 }
 
-// Helper function to generate a program with lots of dead code
+// Helper function to generate a program with lots of dead code.
 func generateDeadCodeHeavyProgram() string {
 	return `{
 		"type": "module",
@@ -294,7 +294,7 @@ func generateDeadCodeHeavyProgram() string {
 	}`
 }
 
-// Helper function to generate a program with many small function calls
+// Helper function to generate a program with many small function calls.
 func generateFunctionCallHeavyProgram() string {
 	return `{
 		"type": "module",
@@ -394,7 +394,7 @@ func generateFunctionCallHeavyProgram() string {
 	}`
 }
 
-// Helper function to generate a program with loops
+// Helper function to generate a program with loops.
 func generateLoopHeavyProgram() string {
 	return `{
 		"type": "module",

@@ -8,7 +8,7 @@ import (
 )
 
 // PluginAwareInterpreter extends the base interpreter with plugin support.
-type PluginAwareInterpreter struct {
+type PluginAwareInterpreter struct { //nolint:revive // Name is intentional for clarity
 	*interpreter.Interpreter
 	registry        *Registry
 	builtinRegistry *BuiltinFunctionRegistry
@@ -140,7 +140,7 @@ func NewInterpreterPluginManager(base *interpreter.Interpreter) *InterpreterPlug
 	}
 }
 
-// Initialize sets up the plugin system
+// Initialize sets up the plugin system.
 func (m *InterpreterPluginManager) Initialize(pluginPaths []string) error {
 	// Add search paths
 	for _, path := range pluginPaths {
@@ -168,12 +168,12 @@ func (m *InterpreterPluginManager) Initialize(pluginPaths []string) error {
 	return nil
 }
 
-// GetInterpreter returns the plugin-aware interpreter
+// GetInterpreter returns the plugin-aware interpreter.
 func (m *InterpreterPluginManager) GetInterpreter() *PluginAwareInterpreter {
 	return m.interpreter
 }
 
-// GetRegistry returns the plugin registry
+// GetRegistry returns the plugin registry.
 func (m *InterpreterPluginManager) GetRegistry() *Registry {
 	return m.registry
 }

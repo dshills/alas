@@ -103,7 +103,8 @@ linters:
     govet:
       enable-all: true
       disable:
-        - shadow  # Can be noisy
+        - shadow        # Can be noisy
+        - fieldalignment # Struct field alignment optimization suggestions
         
   # Exclusion rules
   exclusions:

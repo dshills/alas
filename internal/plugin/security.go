@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// SecurityContext provides security constraints and monitoring for plugin execution
+// SecurityContext provides security constraints and monitoring for plugin execution.
 type SecurityContext struct {
 	MaxMemory    int64         // Maximum memory usage in bytes
 	MaxCPU       time.Duration // Maximum CPU time
@@ -17,7 +17,7 @@ type SecurityContext struct {
 	capabilities map[Capability]bool
 }
 
-// NewSecurityContext creates a new security context from a security policy
+// NewSecurityContext creates a new security context from a security policy.
 func NewSecurityContext(policy SecurityPolicy) (*SecurityContext, error) {
 	ctx := &SecurityContext{
 		AllowedAPIs:  policy.AllowedAPIs,
@@ -55,7 +55,7 @@ func NewSecurityContext(policy SecurityPolicy) (*SecurityContext, error) {
 	return ctx, nil
 }
 
-// SetCapabilities sets the allowed capabilities for this context
+// SetCapabilities sets the allowed capabilities for this context.
 func (sc *SecurityContext) SetCapabilities(caps []Capability) {
 	sc.capabilities = make(map[Capability]bool)
 	for _, cap := range caps {
@@ -63,12 +63,12 @@ func (sc *SecurityContext) SetCapabilities(caps []Capability) {
 	}
 }
 
-// HasCapability checks if a capability is allowed
+// HasCapability checks if a capability is allowed.
 func (sc *SecurityContext) HasCapability(cap Capability) bool {
 	return sc.capabilities[cap]
 }
 
-// CheckAPIAccess verifies if access to an API module is allowed
+// CheckAPIAccess verifies if access to an API module is allowed.
 func (sc *SecurityContext) CheckAPIAccess(module string) error {
 	if len(sc.AllowedAPIs) == 0 {
 		return nil // No restrictions
@@ -83,7 +83,7 @@ func (sc *SecurityContext) CheckAPIAccess(module string) error {
 	return fmt.Errorf("access to API module %s not allowed", module)
 }
 
-// ExecutionMonitor monitors plugin execution for resource usage and security violations
+// ExecutionMonitor monitors plugin execution for resource usage and security violations.
 type ExecutionMonitor struct {
 	ctx        context.Context
 	cancel     context.CancelFunc
@@ -93,7 +93,7 @@ type ExecutionMonitor struct {
 	violations []string
 }
 
-// NewExecutionMonitor creates a new execution monitor
+// NewExecutionMonitor creates a new execution monitor.
 func NewExecutionMonitor(security *SecurityContext) *ExecutionMonitor {
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -114,25 +114,25 @@ func NewExecutionMonitor(security *SecurityContext) *ExecutionMonitor {
 	}
 }
 
-// Start begins monitoring plugin execution
+// Start begins monitoring plugin execution.
 func (em *ExecutionMonitor) Start() {
 	if em.security.MaxMemory > 0 || em.security.MaxCPU > 0 {
 		go em.monitorResources()
 	}
 }
 
-// Stop stops monitoring and returns any violations
+// Stop stops monitoring and returns any violations.
 func (em *ExecutionMonitor) Stop() []string {
 	em.cancel()
 	return em.violations
 }
 
-// Context returns the cancellation context
+// Context returns the cancellation context.
 func (em *ExecutionMonitor) Context() context.Context {
 	return em.ctx
 }
 
-// monitorResources continuously monitors resource usage
+// monitorResources continuously monitors resource usage.
 func (em *ExecutionMonitor) monitorResources() {
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
@@ -147,7 +147,7 @@ func (em *ExecutionMonitor) monitorResources() {
 	}
 }
 
-// checkResourceLimits checks if resource limits are exceeded
+// checkResourceLimits checks if resource limits are exceeded.
 func (em *ExecutionMonitor) checkResourceLimits() {
 	// Check memory usage
 	if em.security.MaxMemory > 0 {
@@ -155,7 +155,7 @@ func (em *ExecutionMonitor) checkResourceLimits() {
 		runtime.ReadMemStats(&memStats)
 		currentMem := memStats.Alloc - em.startMem
 
-		if em.security.MaxMemory > 0 && currentMem > uint64(em.security.MaxMemory) {
+		if em.security.MaxMemory > 0 && int64(currentMem) > em.security.MaxMemory { //nolint:gosec // Safe conversion for memory limit check
 			em.violations = append(em.violations,
 				fmt.Sprintf("memory limit exceeded: %d bytes (limit: %d)",
 					currentMem, em.security.MaxMemory))
@@ -177,13 +177,13 @@ func (em *ExecutionMonitor) checkResourceLimits() {
 	}
 }
 
-// Sandbox provides an isolated execution environment for plugins
+// Sandbox provides an isolated execution environment for plugins.
 type Sandbox struct {
 	security   *SecurityContext
 	restricted map[string]bool
 }
 
-// NewSandbox creates a new sandbox environment
+// NewSandbox creates a new sandbox environment.
 func NewSandbox(security *SecurityContext) *Sandbox {
 	return &Sandbox{
 		security:   security,
@@ -191,12 +191,12 @@ func NewSandbox(security *SecurityContext) *Sandbox {
 	}
 }
 
-// RestrictAPI marks an API as restricted in the sandbox
+// RestrictAPI marks an API as restricted in the sandbox.
 func (sb *Sandbox) RestrictAPI(api string) {
 	sb.restricted[api] = true
 }
 
-// CheckAPICall validates an API call against sandbox restrictions
+// CheckAPICall validates an API call against sandbox restrictions.
 func (sb *Sandbox) CheckAPICall(module, function string) error {
 	if !sb.security.Sandbox {
 		return nil // Sandboxing disabled
@@ -211,7 +211,7 @@ func (sb *Sandbox) CheckAPICall(module, function string) error {
 	return sb.security.CheckAPIAccess(module)
 }
 
-// parseMemoryLimit parses memory limit strings like "100MB", "1GB"
+// parseMemoryLimit parses memory limit strings like "100MB", "1GB".
 func parseMemoryLimit(limit string) (int64, error) {
 	if limit == "" {
 		return 0, nil
@@ -239,15 +239,15 @@ func parseMemoryLimit(limit string) (int64, error) {
 	return 0, fmt.Errorf("unsupported memory unit in: %s", limit)
 }
 
-// SecurityValidator validates plugin security configurations
+// SecurityValidator validates plugin security configurations.
 type SecurityValidator struct{}
 
-// NewSecurityValidator creates a new security validator
+// NewSecurityValidator creates a new security validator.
 func NewSecurityValidator() *SecurityValidator {
 	return &SecurityValidator{}
 }
 
-// ValidateManifest validates the security configuration in a plugin manifest
+// ValidateManifest validates the security configuration in a plugin manifest.
 func (sv *SecurityValidator) ValidateManifest(manifest *Manifest) error {
 	// Validate security policy
 	if manifest.Security.MaxMemory != "" {
@@ -285,13 +285,13 @@ func (sv *SecurityValidator) ValidateManifest(manifest *Manifest) error {
 	return nil
 }
 
-// SecurityManager coordinates security enforcement across the plugin system
+// SecurityManager coordinates security enforcement across the plugin system.
 type SecurityManager struct {
 	validator *SecurityValidator
 	policies  map[string]*SecurityContext
 }
 
-// NewSecurityManager creates a new security manager
+// NewSecurityManager creates a new security manager.
 func NewSecurityManager() *SecurityManager {
 	return &SecurityManager{
 		validator: NewSecurityValidator(),
@@ -299,7 +299,7 @@ func NewSecurityManager() *SecurityManager {
 	}
 }
 
-// RegisterPlugin registers a plugin's security policy
+// RegisterPlugin registers a plugin's security policy.
 func (sm *SecurityManager) RegisterPlugin(manifest *Manifest) error {
 	if err := sm.validator.ValidateManifest(manifest); err != nil {
 		return fmt.Errorf("security validation failed for plugin %s: %w", manifest.Name, err)
@@ -316,13 +316,13 @@ func (sm *SecurityManager) RegisterPlugin(manifest *Manifest) error {
 	return nil
 }
 
-// GetSecurityContext returns the security context for a plugin
+// GetSecurityContext returns the security context for a plugin.
 func (sm *SecurityManager) GetSecurityContext(pluginName string) (*SecurityContext, bool) {
 	ctx, exists := sm.policies[pluginName]
 	return ctx, exists
 }
 
-// CreateExecutionMonitor creates a new execution monitor for a plugin
+// CreateExecutionMonitor creates a new execution monitor for a plugin.
 func (sm *SecurityManager) CreateExecutionMonitor(pluginName string) (*ExecutionMonitor, error) {
 	ctx, exists := sm.policies[pluginName]
 	if !exists {

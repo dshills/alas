@@ -11,7 +11,7 @@ import (
 	"github.com/dshills/alas/internal/runtime"
 )
 
-// TestOptimizerCorrectness ensures that optimizations don't change program behavior
+// TestOptimizerCorrectness ensures that optimizations don't change program behavior.
 func TestOptimizerCorrectness(t *testing.T) {
 	testCases := []struct {
 		name      string
@@ -339,7 +339,7 @@ func TestOptimizerCorrectness(t *testing.T) {
 	}
 }
 
-// TestOptimizerLLVMGeneration tests that optimized LLVM IR is valid
+// TestOptimizerLLVMGeneration tests that optimized LLVM IR is valid.
 func TestOptimizerLLVMGeneration(t *testing.T) {
 	testCases := []struct {
 		name     string
@@ -501,7 +501,7 @@ func TestOptimizerLLVMGeneration(t *testing.T) {
 	}
 }
 
-// TestOptimizerEdgeCases tests edge cases and error conditions
+// TestOptimizerEdgeCases tests edge cases and error conditions.
 func TestOptimizerEdgeCases(t *testing.T) {
 	testCases := []struct {
 		name       string
