@@ -1,4 +1,4 @@
-.PHONY: all build test clean validate-example run-example
+.PHONY: all build test clean validate-example run-example build-stdlib
 
 # Build all binaries
 all: build
@@ -8,6 +8,12 @@ build:
 	go build -o bin/alas-run ./cmd/alas-run
 	go build -o bin/alas-compile ./cmd/alas-compile
 	go build -o bin/alas-plugin ./cmd/alas-plugin
+	go build -o bin/alas-compile-multi ./cmd/alas-compile-multi
+
+# Build the standard library as a shared library
+build-stdlib:
+	go build -buildmode=c-shared -o lib/libalas_stdlib.so ./cmd/alas-stdlib
+	@echo "Built shared library: lib/libalas_stdlib.so"
 
 # Run tests
 test:
@@ -44,6 +50,12 @@ compile-examples: build
 	@./bin/alas-compile -file examples/programs/factorial.alas.json -o examples/programs/factorial.ll
 	@./bin/alas-compile -file examples/programs/loops.alas.json -o examples/programs/loops.ll
 	@echo "LLVM IR files generated in examples/programs/"
+
+# Test LLVM builtin compilation
+test-llvm-builtin: build
+	@echo "Testing LLVM builtin support..."
+	@./bin/alas-compile -file examples/programs/llvm_builtin_test.alas.json -o examples/programs/llvm_builtin_test.ll
+	@echo "Generated LLVM IR for builtin test"
 
 # Install dependencies
 deps:
