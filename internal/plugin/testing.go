@@ -49,12 +49,12 @@ type TestStep struct {
 
 // TestResult represents the result of running a test
 type TestResult struct {
-	Name      string        `json:"name"`
-	Passed    bool          `json:"passed"`
-	Duration  time.Duration `json:"duration"`
-	Error     string        `json:"error,omitempty"`
-	Output    interface{}   `json:"output,omitempty"`
-	Logs      []string      `json:"logs,omitempty"`
+	Name     string        `json:"name"`
+	Passed   bool          `json:"passed"`
+	Duration time.Duration `json:"duration"`
+	Error    string        `json:"error,omitempty"`
+	Output   interface{}   `json:"output,omitempty"`
+	Logs     []string      `json:"logs,omitempty"`
 }
 
 // TestRunner executes plugin tests
@@ -465,7 +465,7 @@ func RunGoTest(t *testing.T, testSuitePath string, registry *Registry, manager *
 	summary := runner.GetSummary()
 	if summary.Failed > 0 {
 		t.Errorf("Plugin tests failed: %d passed, %d failed", summary.Passed, summary.Failed)
-		
+
 		for _, result := range runner.GetResults() {
 			if !result.Passed {
 				t.Errorf("Test '%s' failed: %s", result.Name, result.Error)
@@ -477,24 +477,24 @@ func RunGoTest(t *testing.T, testSuitePath string, registry *Registry, manager *
 // DiscoverTestSuites finds all test suite files in a directory
 func DiscoverTestSuites(dir string) ([]string, error) {
 	var testSuites []string
-	
+
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		
+
 		if !info.IsDir() && (filepath.Ext(path) == ".json") {
 			// Check if it's a test suite file by looking for "test" in the name
 			base := filepath.Base(path)
-			if filepath.Ext(base) == ".json" && 
-			   (filepath.Base(filepath.Dir(path)) == "tests" || 
-			    strings.Contains(base, "test")) {
+			if filepath.Ext(base) == ".json" &&
+				(filepath.Base(filepath.Dir(path)) == "tests" ||
+					strings.Contains(base, "test")) {
 				testSuites = append(testSuites, path)
 			}
 		}
-		
+
 		return nil
 	})
-	
+
 	return testSuites, err
 }

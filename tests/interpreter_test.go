@@ -388,9 +388,9 @@ func TestModuleSystem(t *testing.T) {
 					{
 						Type: "return",
 						Value: &ast.Expression{
-							Type: ast.ExprBinary,
-							Op:   "+",
-							Left: &ast.Expression{Type: ast.ExprVariable, Name: "a"},
+							Type:  ast.ExprBinary,
+							Op:    "+",
+							Left:  &ast.Expression{Type: ast.ExprVariable, Name: "a"},
 							Right: &ast.Expression{Type: ast.ExprVariable, Name: "b"},
 						},
 					},
@@ -405,9 +405,9 @@ func TestModuleSystem(t *testing.T) {
 					{
 						Type: "return",
 						Value: &ast.Expression{
-							Type: ast.ExprBinary,
-							Op:   "*",
-							Left: &ast.Expression{Type: ast.ExprVariable, Name: "x"},
+							Type:  ast.ExprBinary,
+							Op:    "*",
+							Left:  &ast.Expression{Type: ast.ExprVariable, Name: "x"},
 							Right: &ast.Expression{Type: ast.ExprVariable, Name: "y"},
 						},
 					},
@@ -499,9 +499,9 @@ func TestModuleExportValidation(t *testing.T) {
 					{
 						Type: "return",
 						Value: &ast.Expression{
-							Type: ast.ExprBinary,
-							Op:   "+",
-							Left: &ast.Expression{Type: ast.ExprVariable, Name: "a"},
+							Type:  ast.ExprBinary,
+							Op:    "+",
+							Left:  &ast.Expression{Type: ast.ExprVariable, Name: "a"},
 							Right: &ast.Expression{Type: ast.ExprVariable, Name: "b"},
 						},
 					},
@@ -516,9 +516,9 @@ func TestModuleExportValidation(t *testing.T) {
 					{
 						Type: "return",
 						Value: &ast.Expression{
-							Type: ast.ExprBinary,
-							Op:   "-",
-							Left: &ast.Expression{Type: ast.ExprVariable, Name: "a"},
+							Type:  ast.ExprBinary,
+							Op:    "-",
+							Left:  &ast.Expression{Type: ast.ExprVariable, Name: "a"},
 							Right: &ast.Expression{Type: ast.ExprVariable, Name: "b"},
 						},
 					},
