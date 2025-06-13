@@ -68,15 +68,20 @@ compile-to-native: build build-stdlib
 	@echo "Compiling ALaS to native executable..."
 	@./bin/alas-compile -file examples/programs/simple_builtin_test.alas.json -o examples/programs/simple_builtin_test_raw.ll
 	@echo "Generated LLVM IR"
-	@cp examples/programs/simple_builtin_test_corrected.ll examples/programs/simple_builtin_test_clean.ll
-	@echo "Using pre-corrected LLVM IR"
-	@clang examples/programs/simple_builtin_test_clean.ll -L./lib -lalas_stdlib -o examples/programs/simple_builtin_test_exe
+	@echo "Cleaning up LLVM IR syntax..."
+	@sed 's/declare \([^(]*\) (\([^)]*\)) \(@[^(]*\)()/declare \1 \3(\2)/g' examples/programs/simple_builtin_test_raw.ll | \
+	 sed 's/define void () @main()/define void @main()/' | \
+	 sed 's/%[0-9]* = call void.*@alas_builtin_io_print/call void @alas_builtin_io_print/g' | \
+	 sed 's/bitcast i8\* (i8\*)/bitcast i8*/g' | \
+	 sed 's/call i8\* (i8\*)/call i8*/g' > examples/programs/simple_builtin_test_clean.ll
+	@echo "Cleaned LLVM IR syntax"
+	@clang examples/programs/simple_builtin_test_clean.ll -L. -lalas_runtime -o examples/programs/simple_builtin_test_exe
 	@echo "Linked native executable"
 
 # Run compiled executable
 run-compiled: compile-to-native
 	@echo "Running compiled executable:"
-	@cd examples/programs && DYLD_LIBRARY_PATH=../../lib ./simple_builtin_test_exe
+	@cd examples/programs && DYLD_LIBRARY_PATH=../.. ./simple_builtin_test_exe
 
 # Compare interpreter vs compiled output
 compare-output: build run-compiled
