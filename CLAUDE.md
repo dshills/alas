@@ -90,3 +90,4 @@ clang factorial.o -o factorial
 - Always run golangci-lint and fix issues
 - Do not commit to main. All features should be done in a branch
 - Commit and push when feature complete lint and all tests pass
+- When creating tests, cleanup *.ll and executables after testing is complete

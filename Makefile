@@ -22,6 +22,9 @@ test:
 # Clean build artifacts
 clean:
 	rm -rf bin/
+	rm -f examples/programs/*.ll
+	rm -f examples/programs/*_exe
+	rm -f *.ll
 
 # Validate an example program
 validate-example:
@@ -51,32 +54,40 @@ compile-examples: build
 	@./bin/alas-compile -file examples/programs/loops.alas.json -o examples/programs/loops.ll
 	@echo "LLVM IR files generated in examples/programs/"
 
+compile-examples-clean:
+	@rm -f examples/programs/hello.ll
+	@rm -f examples/programs/fibonacci.ll
+	@rm -f examples/programs/factorial.ll
+	@rm -f examples/programs/loops.ll
+
 # Test LLVM builtin compilation
 test-llvm-builtin: build
 	@echo "Testing LLVM builtin support..."
 	@./bin/alas-compile -file examples/programs/llvm_builtin_test.alas.json -o examples/programs/llvm_builtin_test.ll
 	@echo "Generated LLVM IR for builtin test"
+	@rm -f examples/programs/llvm_builtin_test.ll
 
 # Test comprehensive LLVM builtin compilation
 test-llvm-comprehensive: build
 	@echo "Testing comprehensive LLVM builtin support..."
 	@./bin/alas-compile -file examples/programs/comprehensive_builtin_test.alas.json -o examples/programs/comprehensive_builtin_test.ll
 	@echo "Generated comprehensive LLVM IR for all builtin functions"
+	@rm -f examples/programs/comprehensive_builtin_test.ll
 
 # Compile ALaS to native executable via LLVM
 compile-to-native: build build-stdlib
 	@echo "Compiling ALaS to native executable..."
-	@./bin/alas-compile -file examples/programs/simple_builtin_test.alas.json -o examples/programs/simple_builtin_test_raw.ll
+	@./bin/alas-compile -file examples/programs/simple_builtin_test.alas.json -o examples/programs/simple_builtin_test.ll
 	@echo "Generated LLVM IR"
-	@echo "Cleaning up LLVM IR syntax..."
-	@./scripts/clean_llvm_ir.sh examples/programs/simple_builtin_test_raw.ll examples/programs/simple_builtin_test_clean.ll
-	@clang examples/programs/simple_builtin_test_clean.ll -L. -lalas_runtime -o examples/programs/simple_builtin_test_exe
+	@clang examples/programs/simple_builtin_test.ll -L. -lalas_runtime -o examples/programs/simple_builtin_test_exe
 	@echo "Linked native executable"
 
 # Run compiled executable
 run-compiled: compile-to-native
 	@echo "Running compiled executable:"
 	@cd examples/programs && DYLD_LIBRARY_PATH=../.. ./simple_builtin_test_exe
+	@rm -f examples/programs/simple_builtin_test.ll
+	@rm -f examples/programs/simple_builtin_test_exe
 
 # Compare interpreter vs compiled output
 compare-output: build run-compiled
