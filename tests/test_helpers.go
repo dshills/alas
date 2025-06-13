@@ -5,7 +5,7 @@ import (
 	"github.com/dshills/alas/internal/runtime"
 )
 
-// Helper to get string representation of optimization level
+// Helper to get string representation of optimization level.
 func getOptLevelString(o codegen.OptimizationLevel) string {
 	switch o {
 	case codegen.OptNone:
@@ -21,7 +21,7 @@ func getOptLevelString(o codegen.OptimizationLevel) string {
 	}
 }
 
-// Helper to convert Go value to runtime.Value
+// Helper to convert Go value to runtime.Value.
 func toRuntimeValue(v interface{}) runtime.Value {
 	switch val := v.(type) {
 	case int:
@@ -39,7 +39,7 @@ func toRuntimeValue(v interface{}) runtime.Value {
 	}
 }
 
-// Helper to convert runtime.Value to Go value
+// Helper to convert runtime.Value to Go value.
 func fromRuntimeValue(v runtime.Value) interface{} {
 	switch v.Type {
 	case runtime.ValueTypeInt:
@@ -71,7 +71,7 @@ func fromRuntimeValue(v runtime.Value) interface{} {
 	}
 }
 
-// Helper to compare runtime values with Go values
+// Helper to compare runtime values with Go values.
 func compareRuntimeValue(rv runtime.Value, expected interface{}) bool {
 	actual := fromRuntimeValue(rv)
 	return actual == expected

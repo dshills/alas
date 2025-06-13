@@ -7,16 +7,16 @@ import (
 	"sync"
 )
 
-// Plugin represents a loaded plugin
+// Plugin represents a loaded plugin.
 type Plugin struct {
 	Manifest *Manifest
+	Loader   PluginLoader
 	Path     string
 	State    PluginState
-	Loader   PluginLoader
 }
 
-// PluginState represents the current state of a plugin
-type PluginState string
+// PluginState represents the current state of a plugin.
+type PluginState string //nolint:revive // Name is intentional for clarity
 
 const (
 	StateUnloaded PluginState = "unloaded"
@@ -25,15 +25,15 @@ const (
 	StateError    PluginState = "error"
 )
 
-// Registry manages all plugins in the system
+// Registry manages all plugins in the system.
 type Registry struct {
-	mu      sync.RWMutex
 	plugins map[string]*Plugin
-	paths   []string
 	loaders map[PluginType]PluginLoader
+	paths   []string
+	mu      sync.RWMutex
 }
 
-// NewRegistry creates a new plugin registry
+// NewRegistry creates a new plugin registry.
 func NewRegistry() *Registry {
 	return &Registry{
 		plugins: make(map[string]*Plugin),
@@ -42,21 +42,21 @@ func NewRegistry() *Registry {
 	}
 }
 
-// AddSearchPath adds a directory to search for plugins
+// AddSearchPath adds a directory to search for plugins.
 func (r *Registry) AddSearchPath(path string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.paths = append(r.paths, path)
 }
 
-// RegisterLoader registers a plugin loader for a specific plugin type
+// RegisterLoader registers a plugin loader for a specific plugin type.
 func (r *Registry) RegisterLoader(pluginType PluginType, loader PluginLoader) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.loaders[pluginType] = loader
 }
 
-// Discover scans search paths for plugins and loads their manifests
+// Discover scans search paths for plugins and loads their manifests.
 func (r *Registry) Discover() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -70,7 +70,7 @@ func (r *Registry) Discover() error {
 	return nil
 }
 
-// discoverInPath scans a single directory for plugins
+// discoverInPath scans a single directory for plugins.
 func (r *Registry) discoverInPath(searchPath string) error {
 	matches, err := filepath.Glob(filepath.Join(searchPath, "*", "plugin.json"))
 	if err != nil {
@@ -109,7 +109,7 @@ func (r *Registry) discoverInPath(searchPath string) error {
 	return nil
 }
 
-// Register manually registers a plugin
+// Register manually registers a plugin.
 func (r *Registry) Register(manifest *Manifest, path string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -132,7 +132,7 @@ func (r *Registry) Register(manifest *Manifest, path string) error {
 	return nil
 }
 
-// Load loads a plugin by name
+// Load loads a plugin by name.
 func (r *Registry) Load(name string) error {
 	r.mu.Lock()
 	plugin, exists := r.plugins[name]
@@ -145,7 +145,7 @@ func (r *Registry) Load(name string) error {
 	return r.loadPlugin(plugin)
 }
 
-// LoadAll loads all discovered plugins
+// LoadAll loads all discovered plugins.
 func (r *Registry) LoadAll() error {
 	r.mu.RLock()
 	plugins := make([]*Plugin, 0, len(r.plugins))
@@ -164,7 +164,7 @@ func (r *Registry) LoadAll() error {
 	return nil
 }
 
-// loadPlugin loads a single plugin
+// loadPlugin loads a single plugin.
 func (r *Registry) loadPlugin(plugin *Plugin) error {
 	if plugin.State == StateLoaded {
 		return nil
@@ -188,7 +188,7 @@ func (r *Registry) loadPlugin(plugin *Plugin) error {
 	return nil
 }
 
-// Unload unloads a plugin by name
+// Unload unloads a plugin by name.
 func (r *Registry) Unload(name string) error {
 	r.mu.Lock()
 	plugin, exists := r.plugins[name]
@@ -213,7 +213,7 @@ func (r *Registry) Unload(name string) error {
 	return nil
 }
 
-// Get returns a plugin by name
+// Get returns a plugin by name.
 func (r *Registry) Get(name string) (*Plugin, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -221,7 +221,7 @@ func (r *Registry) Get(name string) (*Plugin, bool) {
 	return plugin, exists
 }
 
-// List returns all registered plugins
+// List returns all registered plugins.
 func (r *Registry) List() []*Plugin {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -239,7 +239,7 @@ func (r *Registry) List() []*Plugin {
 	return plugins
 }
 
-// ListByCapability returns plugins that have a specific capability
+// ListByCapability returns plugins that have a specific capability.
 func (r *Registry) ListByCapability(cap Capability) []*Plugin {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -258,7 +258,7 @@ func (r *Registry) ListByCapability(cap Capability) []*Plugin {
 	return plugins
 }
 
-// GetFunction finds a function across all loaded plugins
+// GetFunction finds a function across all loaded plugins.
 func (r *Registry) GetFunction(module, name string) (*Plugin, *FunctionDef, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -278,7 +278,7 @@ func (r *Registry) GetFunction(module, name string) (*Plugin, *FunctionDef, erro
 	return nil, nil, fmt.Errorf("function %s.%s not found in any loaded plugin", module, name)
 }
 
-// HasModule checks if a module is provided by any loaded plugin
+// HasModule checks if a module is provided by any loaded plugin.
 func (r *Registry) HasModule(module string) bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -292,7 +292,7 @@ func (r *Registry) HasModule(module string) bool {
 	return false
 }
 
-// GetStats returns registry statistics
+// GetStats returns registry statistics.
 func (r *Registry) GetStats() RegistryStats {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -319,7 +319,7 @@ func (r *Registry) GetStats() RegistryStats {
 	return stats
 }
 
-// RegistryStats contains statistics about the plugin registry
+// RegistryStats contains statistics about the plugin registry.
 type RegistryStats struct {
 	SearchPaths   int
 	Loaders       int

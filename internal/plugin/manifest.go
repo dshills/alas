@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 )
 
-// Manifest defines the structure of a plugin manifest file
+// Manifest defines the structure of a plugin manifest file.
 type Manifest struct {
 	// Plugin metadata
 	Name        string `json:"name"`
@@ -37,8 +37,8 @@ type Manifest struct {
 	Runtime  RuntimeConfig  `json:"runtime"`
 }
 
-// PluginType defines the type of plugin
-type PluginType string
+// PluginType defines the type of plugin.
+type PluginType string //nolint:revive // Name is intentional for clarity
 
 const (
 	PluginTypeNative  PluginType = "native"  // Compiled shared library
@@ -47,7 +47,7 @@ const (
 	PluginTypeBuiltin PluginType = "builtin" // Built into the runtime
 )
 
-// Capability defines what the plugin can do
+// Capability defines what the plugin can do.
 type Capability string
 
 const (
@@ -62,7 +62,7 @@ const (
 	CapabilityProcess    Capability = "process"    // Process execution
 )
 
-// FunctionDef defines a function provided by the plugin
+// FunctionDef defines a function provided by the plugin.
 type FunctionDef struct {
 	Name        string     `json:"name"`
 	Params      []ParamDef `json:"params"`
@@ -72,13 +72,13 @@ type FunctionDef struct {
 	Async       bool       `json:"async,omitempty"`
 }
 
-// ParamDef defines a function parameter
+// ParamDef defines a function parameter.
 type ParamDef struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
 }
 
-// TypeDef defines a custom type provided by the plugin
+// TypeDef defines a custom type provided by the plugin.
 type TypeDef struct {
 	Name     string                 `json:"name"`
 	Kind     string                 `json:"kind"` // struct, enum, alias
@@ -88,13 +88,13 @@ type TypeDef struct {
 	Meta     map[string]interface{} `json:"meta,omitempty"`
 }
 
-// FieldDef defines a field in a struct type
+// FieldDef defines a field in a struct type.
 type FieldDef struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
 }
 
-// Implementation defines how the plugin is implemented
+// Implementation defines how the plugin is implemented.
 type Implementation struct {
 	Language   string            `json:"language"`   // go, rust, c, alas
 	EntryPoint string            `json:"entrypoint"` // main function or shared library path
@@ -104,7 +104,7 @@ type Implementation struct {
 	Config     map[string]string `json:"config,omitempty"`
 }
 
-// SecurityPolicy defines security constraints for the plugin
+// SecurityPolicy defines security constraints for the plugin.
 type SecurityPolicy struct {
 	Sandbox     bool     `json:"sandbox"`
 	AllowedAPIs []string `json:"allowed_apis,omitempty"`
@@ -113,7 +113,7 @@ type SecurityPolicy struct {
 	Timeout     string   `json:"timeout,omitempty"`
 }
 
-// RuntimeConfig defines runtime behavior
+// RuntimeConfig defines runtime behavior.
 type RuntimeConfig struct {
 	Lazy        bool              `json:"lazy"`       // Load on first use
 	Persistent  bool              `json:"persistent"` // Keep loaded between calls
@@ -121,7 +121,7 @@ type RuntimeConfig struct {
 	Environment map[string]string `json:"environment,omitempty"`
 }
 
-// LoadManifest loads a plugin manifest from a file
+// LoadManifest loads a plugin manifest from a file.
 func LoadManifest(path string) (*Manifest, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -145,7 +145,7 @@ func LoadManifest(path string) (*Manifest, error) {
 	return &manifest, nil
 }
 
-// SaveManifest saves a plugin manifest to a file
+// SaveManifest saves a plugin manifest to a file.
 func (m *Manifest) SaveManifest(path string) error {
 	data, err := json.MarshalIndent(m, "", "  ")
 	if err != nil {
@@ -164,7 +164,7 @@ func (m *Manifest) SaveManifest(path string) error {
 	return nil
 }
 
-// Validate checks if the manifest is valid
+// Validate checks if the manifest is valid.
 func (m *Manifest) Validate() error {
 	if m.Name == "" {
 		return fmt.Errorf("plugin name is required")
@@ -216,7 +216,7 @@ func (m *Manifest) Validate() error {
 	return nil
 }
 
-// HasCapability checks if the plugin has a specific capability
+// HasCapability checks if the plugin has a specific capability.
 func (m *Manifest) HasCapability(cap Capability) bool {
 	for _, c := range m.Capabilities {
 		if c == cap {
@@ -226,7 +226,7 @@ func (m *Manifest) HasCapability(cap Capability) bool {
 	return false
 }
 
-// GetFunction returns a function definition by name
+// GetFunction returns a function definition by name.
 func (m *Manifest) GetFunction(name string) (*FunctionDef, bool) {
 	for _, fn := range m.Functions {
 		if fn.Name == name {

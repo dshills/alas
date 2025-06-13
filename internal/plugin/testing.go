@@ -12,7 +12,7 @@ import (
 	"github.com/dshills/alas/internal/runtime"
 )
 
-// TestSuite represents a plugin test suite
+// TestSuite represents a plugin test suite.
 type TestSuite struct {
 	Name        string     `json:"name"`
 	Description string     `json:"description"`
@@ -22,7 +22,7 @@ type TestSuite struct {
 	Teardown    []TestStep `json:"teardown,omitempty"`
 }
 
-// TestCase represents a single test case
+// TestCase represents a single test case.
 type TestCase struct {
 	Name        string                 `json:"name"`
 	Description string                 `json:"description"`
@@ -37,7 +37,7 @@ type TestCase struct {
 	Meta        map[string]interface{} `json:"meta,omitempty"`
 }
 
-// TestStep represents a setup or teardown step
+// TestStep represents a setup or teardown step.
 type TestStep struct {
 	Type     string                 `json:"type"`
 	Function string                 `json:"function,omitempty"`
@@ -47,7 +47,7 @@ type TestStep struct {
 	Meta     map[string]interface{} `json:"meta,omitempty"`
 }
 
-// TestResult represents the result of running a test
+// TestResult represents the result of running a test.
 type TestResult struct {
 	Name     string        `json:"name"`
 	Passed   bool          `json:"passed"`
@@ -57,7 +57,7 @@ type TestResult struct {
 	Logs     []string      `json:"logs,omitempty"`
 }
 
-// TestRunner executes plugin tests
+// TestRunner executes plugin tests.
 type TestRunner struct {
 	registry *Registry
 	manager  *SecurityManager
@@ -65,7 +65,7 @@ type TestRunner struct {
 	verbose  bool
 }
 
-// NewTestRunner creates a new test runner
+// NewTestRunner creates a new test runner.
 func NewTestRunner(registry *Registry, manager *SecurityManager) *TestRunner {
 	return &TestRunner{
 		registry: registry,
@@ -75,12 +75,12 @@ func NewTestRunner(registry *Registry, manager *SecurityManager) *TestRunner {
 	}
 }
 
-// SetVerbose enables verbose output
+// SetVerbose enables verbose output.
 func (tr *TestRunner) SetVerbose(verbose bool) {
 	tr.verbose = verbose
 }
 
-// LoadTestSuite loads a test suite from a file
+// LoadTestSuite loads a test suite from a file.
 func (tr *TestRunner) LoadTestSuite(path string) (*TestSuite, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -95,7 +95,7 @@ func (tr *TestRunner) LoadTestSuite(path string) (*TestSuite, error) {
 	return &suite, nil
 }
 
-// RunTestSuite executes all tests in a test suite
+// RunTestSuite executes all tests in a test suite.
 func (tr *TestRunner) RunTestSuite(suite *TestSuite) error {
 	if tr.verbose {
 		fmt.Printf("Running test suite: %s\n", suite.Name)
@@ -146,7 +146,7 @@ func (tr *TestRunner) RunTestSuite(suite *TestSuite) error {
 	return nil
 }
 
-// runTestCase executes a single test case
+// runTestCase executes a single test case.
 func (tr *TestRunner) runTestCase(plugin *Plugin, testCase *TestCase) TestResult {
 	start := time.Now()
 	result := TestResult{
@@ -243,7 +243,7 @@ func (tr *TestRunner) runTestCase(plugin *Plugin, testCase *TestCase) TestResult
 	return result
 }
 
-// runSteps executes a sequence of test steps
+// runSteps executes a sequence of test steps.
 func (tr *TestRunner) runSteps(steps []TestStep, context string) error {
 	for i, step := range steps {
 		if err := tr.runStep(&step); err != nil {
@@ -253,7 +253,7 @@ func (tr *TestRunner) runSteps(steps []TestStep, context string) error {
 	return nil
 }
 
-// runStep executes a single test step
+// runStep executes a single test step.
 func (tr *TestRunner) runStep(step *TestStep) error {
 	switch step.Type {
 	case "call":
@@ -276,7 +276,7 @@ func (tr *TestRunner) runStep(step *TestStep) error {
 	}
 }
 
-// toRuntimeValue converts a test value to a runtime value
+// toRuntimeValue converts a test value to a runtime value.
 func (tr *TestRunner) toRuntimeValue(value interface{}) runtime.Value {
 	switch v := value.(type) {
 	case nil:
@@ -308,7 +308,7 @@ func (tr *TestRunner) toRuntimeValue(value interface{}) runtime.Value {
 	}
 }
 
-// fromRuntimeValue converts a runtime value to a test value
+// fromRuntimeValue converts a runtime value to a test value.
 func (tr *TestRunner) fromRuntimeValue(value runtime.Value) interface{} {
 	switch value.Type {
 	case runtime.ValueTypeVoid:
@@ -356,13 +356,13 @@ func (tr *TestRunner) fromRuntimeValue(value runtime.Value) interface{} {
 	}
 }
 
-// compareValues compares a runtime value with an expected test value
+// compareValues compares a runtime value with an expected test value.
 func (tr *TestRunner) compareValues(actual runtime.Value, expected interface{}) bool {
 	expectedValue := tr.toRuntimeValue(expected)
 	return tr.valuesEqual(actual, expectedValue)
 }
 
-// valuesEqual checks if two runtime values are equal
+// valuesEqual checks if two runtime values are equal.
 func (tr *TestRunner) valuesEqual(a, b runtime.Value) bool {
 	if a.Type != b.Type {
 		return false
@@ -417,12 +417,12 @@ func (tr *TestRunner) valuesEqual(a, b runtime.Value) bool {
 	}
 }
 
-// GetResults returns the test results
+// GetResults returns the test results.
 func (tr *TestRunner) GetResults() []TestResult {
 	return tr.results
 }
 
-// GetSummary returns a test summary
+// GetSummary returns a test summary.
 func (tr *TestRunner) GetSummary() TestSummary {
 	summary := TestSummary{
 		Total: len(tr.results),
@@ -440,7 +440,7 @@ func (tr *TestRunner) GetSummary() TestSummary {
 	return summary
 }
 
-// TestSummary represents a summary of test results
+// TestSummary represents a summary of test results.
 type TestSummary struct {
 	Total    int           `json:"total"`
 	Passed   int           `json:"passed"`
@@ -448,7 +448,7 @@ type TestSummary struct {
 	Duration time.Duration `json:"duration"`
 }
 
-// RunGoTest integrates with Go's testing framework
+// RunGoTest integrates with Go's testing framework.
 func RunGoTest(t *testing.T, testSuitePath string, registry *Registry, manager *SecurityManager) {
 	runner := NewTestRunner(registry, manager)
 	runner.SetVerbose(testing.Verbose())
@@ -474,7 +474,7 @@ func RunGoTest(t *testing.T, testSuitePath string, registry *Registry, manager *
 	}
 }
 
-// DiscoverTestSuites finds all test suite files in a directory
+// DiscoverTestSuites finds all test suite files in a directory.
 func DiscoverTestSuites(dir string) ([]string, error) {
 	var testSuites []string
 
