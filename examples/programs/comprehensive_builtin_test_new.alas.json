@@ -1,0 +1,81 @@
+{
+  "type": "module",
+  "name": "comprehensive_builtin_test",
+  "functions": [
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "void",
+      "body": [
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "Testing builtin functions:"
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "sqrt_result",
+          "value": {
+            "type": "builtin",
+            "name": "math.sqrt",
+            "args": [
+              {
+                "type": "literal",
+                "value": 25.0
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "variable",
+                "name": "sqrt_result"
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "abs_result",
+          "value": {
+            "type": "builtin",
+            "name": "math.abs",
+            "args": [
+              {
+                "type": "literal",
+                "value": -7.5
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "variable",
+                "name": "abs_result"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

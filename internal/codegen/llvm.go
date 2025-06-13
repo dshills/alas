@@ -832,11 +832,18 @@ func (g *LLVMCodegen) generateBuiltinCall(expr *ast.Expression) (value.Value, er
 
 	// Convert to CValue - check if it's already a CValue* (i8*)
 	var cval value.Value
-	if ptrType, isPtr := argVal.Type().(*types.PointerType); isPtr && ptrType.ElemType.Equal(types.I8) {
-		// Already a CValue* (i8*), use directly
-		cval = argVal
+	
+	// Check if this is already an i8* (CValue pointer)
+	if ptrType, isPtr := argVal.Type().(*types.PointerType); isPtr {
+		if ptrType.ElemType.Equal(types.I8) {
+			// Already a CValue* (i8*), use directly
+			cval = argVal
+		} else {
+			// Other pointer type, convert to CValue
+			cval = g.convertToCValue(argVal)
+		}
 	} else {
-		// Convert to CValue
+		// Not a pointer type, convert to CValue
 		cval = g.convertToCValue(argVal)
 	}
 	
@@ -873,6 +880,14 @@ func (g *LLVMCodegen) generateBuiltinCall(expr *ast.Expression) (value.Value, er
 
 // convertToCValue converts an LLVM value to a CValue pointer.
 func (g *LLVMCodegen) convertToCValue(val value.Value) value.Value {
+	// Check if this is already a CValue* (i8*) from a previous builtin function call
+	if ptrType, isPtr := val.Type().(*types.PointerType); isPtr {
+		if ptrType.ElemType.Equal(types.I8) {
+			// This is already a CValue*, return it directly
+			return val
+		}
+	}
+	
 	// Create CValue type directly to match our CGO definition
 	cvalueType := types.NewStruct(
 		types.I32, // type field
