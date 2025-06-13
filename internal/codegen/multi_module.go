@@ -203,11 +203,14 @@ func (m *MultiModuleCodegen) DeclareExternalFunction(targetModule *ir.Module, mo
 		return extFunc.LLVMFunc, nil
 	}
 
-	// Create function signature
-	sig := types.NewFunc(returnType, paramTypes...)
-
-	// Declare the function as external
-	llvmFunc := targetModule.NewFunc(qualifiedName, sig)
+	// Declare the function as external with return type
+	llvmFunc := targetModule.NewFunc(qualifiedName, returnType)
+	
+	// Add parameters to the function signature
+	for i, paramType := range paramTypes {
+		param := ir.NewParam(fmt.Sprintf("arg%d", i), paramType)
+		llvmFunc.Params = append(llvmFunc.Params, param)
+	}
 
 	// Store the external function info
 	m.externalFunctions[qualifiedName] = &ExternalFunction{

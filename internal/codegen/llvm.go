@@ -61,42 +61,23 @@ func (g *LLVMCodegen) GenerateModule(module *ast.Module) (*ir.Module, error) {
 
 // declareFunction declares a function signature in LLVM IR.
 func (g *LLVMCodegen) declareFunction(fn *ast.Function) error {
-	// Convert parameter types
-	paramTypes := make([]types.Type, len(fn.Params))
-	for i, param := range fn.Params {
-		paramType, err := g.convertType(param.Type)
-		if err != nil {
-			return fmt.Errorf("invalid parameter type %s: %v", param.Type, err)
-		}
-		paramTypes[i] = paramType
-	}
-
 	// Convert return type
 	returnType, err := g.convertType(fn.Returns)
 	if err != nil {
 		return fmt.Errorf("invalid return type %s: %v", fn.Returns, err)
 	}
 
-	// Create function signature
-	sig := types.NewFunc(returnType, paramTypes...)
+	// Create function with return type only
+	llvmFunc := g.module.NewFunc(fn.Name, returnType)
 
-	// Create function
-	llvmFunc := g.module.NewFunc(fn.Name, sig)
-
-	// Create parameters manually if they don't exist
-	if len(llvmFunc.Params) == 0 && len(fn.Params) > 0 {
-		for _, param := range fn.Params {
-			paramType, _ := g.convertType(param.Type)
-			llvmParam := ir.NewParam(param.Name, paramType)
-			llvmFunc.Params = append(llvmFunc.Params, llvmParam)
+	// Add parameters
+	for _, param := range fn.Params {
+		paramType, err := g.convertType(param.Type)
+		if err != nil {
+			return fmt.Errorf("invalid parameter type %s: %v", param.Type, err)
 		}
-	}
-
-	// Set parameter names
-	for i, param := range fn.Params {
-		if i < len(llvmFunc.Params) {
-			llvmFunc.Params[i].SetName(param.Name)
-		}
+		llvmParam := ir.NewParam(param.Name, paramType)
+		llvmFunc.Params = append(llvmFunc.Params, llvmParam)
 	}
 
 	g.functions[fn.Name] = llvmFunc
@@ -118,7 +99,15 @@ func (g *LLVMCodegen) generateFunction(fn *ast.Function) error {
 	// Add parameters to variable scope
 	for i, param := range fn.Params {
 		if i < len(llvmFunc.Params) {
-			g.variables[param.Name] = llvmFunc.Params[i]
+			// Create alloca for the parameter
+			paramAlloca := g.builder.NewAlloca(llvmFunc.Params[i].Type())
+			paramAlloca.SetName(param.Name + "_ptr")
+			
+			// Store the parameter value into the alloca
+			g.builder.NewStore(llvmFunc.Params[i], paramAlloca)
+			
+			// Store the alloca in variables map
+			g.variables[param.Name] = paramAlloca
 		}
 	}
 
@@ -708,48 +697,46 @@ func (g *LLVMCodegen) declareGCFunctions() {
 	valuePtrType := types.NewPointer(types.I8)
 
 	// Array allocation: alas_gc_alloc_array(values *Value, count i64) -> *GCObject
-	arrayAllocType := types.NewFunc(
-		gcObjectPtrType, // return *GCObject
-		valuePtrType,
-		types.I64,
-	)
-	g.gcFunctions["alas_gc_alloc_array"] = g.module.NewFunc("alas_gc_alloc_array", arrayAllocType)
+	arrayAllocFunc := g.module.NewFunc("alas_gc_alloc_array", gcObjectPtrType)
+	arrayAllocFunc.Params = append(arrayAllocFunc.Params, 
+		ir.NewParam("", valuePtrType),
+		ir.NewParam("", types.I64))
+	g.gcFunctions["alas_gc_alloc_array"] = arrayAllocFunc
 
 	// Map allocation: alas_gc_alloc_map(pairs *MapPair, count i64) -> *GCObject
-	mapAllocType := types.NewFunc(
-		gcObjectPtrType, // return *GCObject
-		valuePtrType,
-		types.I64,
-	)
-	g.gcFunctions["alas_gc_alloc_map"] = g.module.NewFunc("alas_gc_alloc_map", mapAllocType)
+	mapAllocFunc := g.module.NewFunc("alas_gc_alloc_map", gcObjectPtrType)
+	mapAllocFunc.Params = append(mapAllocFunc.Params,
+		ir.NewParam("", valuePtrType),
+		ir.NewParam("", types.I64))
+	g.gcFunctions["alas_gc_alloc_map"] = mapAllocFunc
 
 	// Reference counting: alas_gc_retain(id ObjectID) -> void
-	retainType := types.NewFunc(types.Void, objectIDType)
-	g.gcFunctions["alas_gc_retain"] = g.module.NewFunc("alas_gc_retain", retainType)
+	retainFunc := g.module.NewFunc("alas_gc_retain", types.Void)
+	retainFunc.Params = append(retainFunc.Params, ir.NewParam("", objectIDType))
+	g.gcFunctions["alas_gc_retain"] = retainFunc
 
 	// Reference counting: alas_gc_release(id ObjectID) -> void
-	releaseType := types.NewFunc(types.Void, objectIDType)
-	g.gcFunctions["alas_gc_release"] = g.module.NewFunc("alas_gc_release", releaseType)
+	releaseFunc := g.module.NewFunc("alas_gc_release", types.Void)
+	releaseFunc.Params = append(releaseFunc.Params, ir.NewParam("", objectIDType))
+	g.gcFunctions["alas_gc_release"] = releaseFunc
 
 	// Array access: alas_gc_array_get(obj *GCObject, index i64) -> *Value
-	arrayGetType := types.NewFunc(
-		valuePtrType,
-		gcObjectPtrType,
-		types.I64,
-	)
-	g.gcFunctions["alas_gc_array_get"] = g.module.NewFunc("alas_gc_array_get", arrayGetType)
+	arrayGetFunc := g.module.NewFunc("alas_gc_array_get", valuePtrType)
+	arrayGetFunc.Params = append(arrayGetFunc.Params,
+		ir.NewParam("", gcObjectPtrType),
+		ir.NewParam("", types.I64))
+	g.gcFunctions["alas_gc_array_get"] = arrayGetFunc
 
 	// Map access: alas_gc_map_get(obj *GCObject, key *Value) -> *Value
-	mapGetType := types.NewFunc(
-		valuePtrType,
-		gcObjectPtrType,
-		valuePtrType,
-	)
-	g.gcFunctions["alas_gc_map_get"] = g.module.NewFunc("alas_gc_map_get", mapGetType)
+	mapGetFunc := g.module.NewFunc("alas_gc_map_get", valuePtrType)
+	mapGetFunc.Params = append(mapGetFunc.Params,
+		ir.NewParam("", gcObjectPtrType),
+		ir.NewParam("", valuePtrType))
+	g.gcFunctions["alas_gc_map_get"] = mapGetFunc
 
 	// Force GC: alas_gc_run() -> void
-	runGCType := types.NewFunc(types.Void)
-	g.gcFunctions["alas_gc_run"] = g.module.NewFunc("alas_gc_run", runGCType)
+	runGCFunc := g.module.NewFunc("alas_gc_run", types.Void)
+	g.gcFunctions["alas_gc_run"] = runGCFunc
 }
 
 // declareBuiltinFunctions declares external builtin standard library functions.
@@ -764,26 +751,37 @@ func (g *LLVMCodegen) declareBuiltinFunctions() {
 
 	// I/O functions
 	// void alas_builtin_io_print(void* val)
-	printType := types.NewFunc(types.Void, cvalueArgType)
-	g.builtinFunctions["io.print"] = g.module.NewFunc("alas_builtin_io_print", printType)
+	printFunc := g.module.NewFunc("alas_builtin_io_print", types.Void)
+	printFunc.Params = append(printFunc.Params, ir.NewParam("", cvalueArgType))
+	g.builtinFunctions["io.print"] = printFunc
 
 	// Math functions  
 	// void* alas_builtin_math_sqrt(void* val) - simplified for C compatibility
-	mathUnaryType := types.NewFunc(cvalueReturnType, cvalueArgType)
-	g.builtinFunctions["math.sqrt"] = g.module.NewFunc("alas_builtin_math_sqrt", mathUnaryType)
-	g.builtinFunctions["math.abs"] = g.module.NewFunc("alas_builtin_math_abs", mathUnaryType)
+	sqrtFunc := g.module.NewFunc("alas_builtin_math_sqrt", cvalueReturnType)
+	sqrtFunc.Params = append(sqrtFunc.Params, ir.NewParam("", cvalueArgType))
+	g.builtinFunctions["math.sqrt"] = sqrtFunc
+	
+	absFunc := g.module.NewFunc("alas_builtin_math_abs", cvalueReturnType)
+	absFunc.Params = append(absFunc.Params, ir.NewParam("", cvalueArgType))
+	g.builtinFunctions["math.abs"] = absFunc
 
 	// Collections functions
 	// void* alas_builtin_collections_length(void* val)
-	g.builtinFunctions["collections.length"] = g.module.NewFunc("alas_builtin_collections_length", mathUnaryType)
+	lengthFunc := g.module.NewFunc("alas_builtin_collections_length", cvalueReturnType)
+	lengthFunc.Params = append(lengthFunc.Params, ir.NewParam("", cvalueArgType))
+	g.builtinFunctions["collections.length"] = lengthFunc
 
 	// String functions
 	// void* alas_builtin_string_toUpper(void* val)
-	g.builtinFunctions["string.toUpper"] = g.module.NewFunc("alas_builtin_string_toUpper", mathUnaryType)
+	toUpperFunc := g.module.NewFunc("alas_builtin_string_toUpper", cvalueReturnType)
+	toUpperFunc.Params = append(toUpperFunc.Params, ir.NewParam("", cvalueArgType))
+	g.builtinFunctions["string.toUpper"] = toUpperFunc
 
 	// Type functions
 	// void* alas_builtin_type_typeOf(void* val)
-	g.builtinFunctions["type.typeOf"] = g.module.NewFunc("alas_builtin_type_typeOf", mathUnaryType)
+	typeOfFunc := g.module.NewFunc("alas_builtin_type_typeOf", cvalueReturnType)
+	typeOfFunc.Params = append(typeOfFunc.Params, ir.NewParam("", cvalueArgType))
+	g.builtinFunctions["type.typeOf"] = typeOfFunc
 
 	// TODO: Add more builtin functions as needed
 }
