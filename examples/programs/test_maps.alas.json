@@ -1,0 +1,35 @@
+{
+  "type": "module",
+  "name": "test_maps",
+  "functions": [
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "int",
+      "body": [
+        {
+          "type": "assign",
+          "target": "m",
+          "value": {
+            "type": "map_literal",
+            "pairs": [
+              {
+                "key": {"type": "literal", "value": 1},
+                "value": {"type": "literal", "value": 100}
+              },
+              {
+                "key": {"type": "literal", "value": 2},
+                "value": {"type": "literal", "value": 200}
+              }
+            ]
+          }
+        },
+        {
+          "type": "return",
+          "value": {"type": "literal", "value": 42}
+        }
+      ]
+    }
+  ]
+}

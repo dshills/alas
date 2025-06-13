@@ -188,6 +188,9 @@ func (g *LLVMCodegen) generateStatement(stmt *ast.Statement) (value.Value, bool,
 	case ast.StmtWhile:
 		return g.generateWhile(stmt)
 
+	case ast.StmtFor:
+		return g.generateFor(stmt)
+
 	default:
 		return nil, false, fmt.Errorf("unsupported statement type: %s", stmt.Type)
 	}
@@ -536,6 +539,44 @@ func (g *LLVMCodegen) generateWhile(stmt *ast.Statement) (value.Value, bool, err
 	return nil, false, nil
 }
 
+// generateFor generates LLVM IR for for loops.
+// ALaS for loops are similar to while loops with a condition and body.
+// Traditional for(init; cond; update) can be desugared to init + while(cond) { body; update }
+func (g *LLVMCodegen) generateFor(stmt *ast.Statement) (value.Value, bool, error) {
+	currentFunc := g.builder.Parent
+	condBlock := currentFunc.NewBlock("for.cond")
+	bodyBlock := currentFunc.NewBlock("for.body")
+	endBlock := currentFunc.NewBlock("for.end")
+
+	// Jump to condition block
+	g.builder.NewBr(condBlock)
+
+	// Generate condition block
+	g.builder = condBlock
+	cond, err := g.generateExpression(stmt.Cond)
+	if err != nil {
+		return nil, false, err
+	}
+	g.builder.NewCondBr(cond, bodyBlock, endBlock)
+
+	// Generate body block
+	g.builder = bodyBlock
+	for _, s := range stmt.Body {
+		_, isReturn, err := g.generateStatement(&s)
+		if err != nil {
+			return nil, false, err
+		}
+		if isReturn {
+			return nil, true, nil
+		}
+	}
+	g.builder.NewBr(condBlock) // Loop back to condition
+
+	// Continue with end block
+	g.builder = endBlock
+	return nil, false, nil
+}
+
 // convertType converts ALaS type to LLVM type.
 func (g *LLVMCodegen) convertType(alasType string) (types.Type, error) {
 	switch alasType {
@@ -589,53 +630,184 @@ func (g *LLVMCodegen) getZeroValue(t types.Type) value.Value {
 	}
 }
 
-// generateArrayLiteral generates LLVM IR for array literals using GC allocation.
+// generateArrayLiteral generates LLVM IR for array literals.
 func (g *LLVMCodegen) generateArrayLiteral(expr *ast.Expression) (value.Value, error) {
 	// Generate all element expressions first
 	elementCount := int64(len(expr.Elements))
-
-	// For now, return simplified array representation
-	// The GC integration is designed but not fully implemented in LLVM backend
+	elements := make([]value.Value, elementCount)
+	
+	// Determine element type from first element (assume homogeneous arrays)
+	var elemType types.Type
+	if elementCount > 0 {
+		firstElem, err := g.generateExpression(&expr.Elements[0])
+		if err != nil {
+			return nil, err
+		}
+		elements[0] = firstElem
+		elemType = firstElem.Type()
+		
+		// Generate remaining elements
+		for i := 1; i < int(elementCount); i++ {
+			elem, err := g.generateExpression(&expr.Elements[i])
+			if err != nil {
+				return nil, err
+			}
+			elements[i] = elem
+		}
+	} else {
+		// Empty array, default to i64
+		elemType = types.I64
+	}
+	
+	// Allocate array on stack
+	arrayAlloca := g.builder.NewAlloca(types.NewArray(uint64(elementCount), elemType))
+	arrayAlloca.SetName("array_literal")
+	
+	// Store elements
+	for i, elem := range elements {
+		// Get pointer to element
+		elemPtr := g.builder.NewGetElementPtr(
+			types.NewArray(uint64(elementCount), elemType),
+			arrayAlloca,
+			constant.NewInt(types.I32, 0),
+			constant.NewInt(types.I32, int64(i)),
+		)
+		// Store element value
+		g.builder.NewStore(elem, elemPtr)
+	}
+	
+	// Create array struct: {data*, length}
 	arrayType, _ := g.convertType(ast.TypeArray)
 	structType := arrayType.(*types.StructType)
-
-	// Create simplified struct: {null, length}
-	dataPtr := constant.NewNull(types.NewPointer(types.I8))
-	countValue := constant.NewInt(types.I64, elementCount)
-	fields := []constant.Constant{dataPtr, countValue}
-	return constant.NewStruct(structType, fields...), nil
+	
+	// Allocate struct on stack
+	structAlloca := g.builder.NewAlloca(structType)
+	structAlloca.SetName("array_struct")
+	
+	// Store data pointer
+	dataFieldPtr := g.builder.NewGetElementPtr(
+		structType,
+		structAlloca,
+		constant.NewInt(types.I32, 0),
+		constant.NewInt(types.I32, 0),
+	)
+	// Cast array pointer to i8*
+	castedPtr := g.builder.NewBitCast(arrayAlloca, types.NewPointer(types.I8))
+	g.builder.NewStore(castedPtr, dataFieldPtr)
+	
+	// Store length
+	lengthFieldPtr := g.builder.NewGetElementPtr(
+		structType,
+		structAlloca,
+		constant.NewInt(types.I32, 0),
+		constant.NewInt(types.I32, 1),
+	)
+	g.builder.NewStore(constant.NewInt(types.I64, elementCount), lengthFieldPtr)
+	
+	// Load and return the struct
+	return g.builder.NewLoad(structType, structAlloca), nil
 }
 
-// generateMapLiteral generates LLVM IR for map literals using GC allocation.
+// generateMapLiteral generates LLVM IR for map literals.
+// This is a simplified implementation - a full implementation would need a proper hash table.
 func (g *LLVMCodegen) generateMapLiteral(expr *ast.Expression) (value.Value, error) {
-	// For now, return null pointer (simplified implementation)
-	// The GC integration is designed but not fully implemented in LLVM backend
-	// A full implementation would generate GC allocation calls
-	_ = expr.Pairs // Acknowledge we're not using the pairs in this simplified implementation
+	// For a basic implementation, we'll create a simple linear array of key-value pairs
+	// A real implementation would use a hash table structure
+	
+	pairCount := len(expr.Pairs)
+	
+	// Define a key-value pair struct type {i64 key, i64 value}
+	// In a real implementation, this would be more generic
+	kvPairType := types.NewStruct(types.I64, types.I64)
+	
+	// Allocate array of pairs
+	pairsAlloca := g.builder.NewAlloca(types.NewArray(uint64(pairCount), kvPairType))
+	pairsAlloca.SetName("map_pairs")
+	
+	// Store key-value pairs
+	for i, pair := range expr.Pairs {
+		// Generate key and value
+		key, err := g.generateExpression(&pair.Key)
+		if err != nil {
+			return nil, err
+		}
+		val, err := g.generateExpression(&pair.Value)
+		if err != nil {
+			return nil, err
+		}
+		
+		// Get pointer to pair
+		pairPtr := g.builder.NewGetElementPtr(
+			types.NewArray(uint64(pairCount), kvPairType),
+			pairsAlloca,
+			constant.NewInt(types.I32, 0),
+			constant.NewInt(types.I32, int64(i)),
+		)
+		
+		// Store key
+		keyPtr := g.builder.NewGetElementPtr(
+			kvPairType,
+			pairPtr,
+			constant.NewInt(types.I32, 0),
+			constant.NewInt(types.I32, 0),
+		)
+		g.builder.NewStore(key, keyPtr)
+		
+		// Store value
+		valPtr := g.builder.NewGetElementPtr(
+			kvPairType,
+			pairPtr,
+			constant.NewInt(types.I32, 0),
+			constant.NewInt(types.I32, 1),
+		)
+		g.builder.NewStore(val, valPtr)
+	}
+	
+	// For now, just return the pointer to the pairs array
+	// A real map would have a more complex structure with hash buckets, etc.
 	mapType, _ := g.convertType(ast.TypeMap)
-	return constant.NewNull(mapType.(*types.PointerType)), nil
+	return g.builder.NewBitCast(pairsAlloca, mapType.(*types.PointerType)), nil
 }
 
 // generateIndexAccess generates LLVM IR for array/map indexing.
-// This is a simplified implementation that would need runtime support.
 func (g *LLVMCodegen) generateIndexAccess(expr *ast.Expression) (value.Value, error) {
-	// Generate object and index expressions
-	_, err := g.generateExpression(expr.Object)
+	// Generate object expression
+	obj, err := g.generateExpression(expr.Object)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = g.generateExpression(expr.Index)
+	// Generate index expression
+	index, err := g.generateExpression(expr.Index)
 	if err != nil {
 		return nil, err
 	}
 
-	// For now, return a placeholder zero value
-	// A full implementation would need to:
-	// 1. Check if object is array or map
-	// 2. Generate appropriate indexing logic
-	// 3. Handle bounds checking for arrays
-	// 4. Handle key lookup for maps
+	// Check if object is an array struct
+	objType := obj.Type()
+	if structType, ok := objType.(*types.StructType); ok && len(structType.Fields) == 2 {
+		// This looks like our array struct {i8*, i64}
+		// Extract data pointer
+		dataPtr := g.builder.NewExtractValue(obj, 0)
+		dataPtr.SetName("array_data_ptr")
+		
+		// TODO: Add bounds checking here using the length field
+		// length := g.builder.NewExtractValue(obj, 1)
+		
+		// For now, assume the array contains i64 elements (should be determined from context)
+		// Cast i8* back to proper element type pointer
+		elemType := types.I64
+		typedPtr := g.builder.NewBitCast(dataPtr, types.NewPointer(elemType))
+		
+		// Calculate element address
+		elemPtr := g.builder.NewGetElementPtr(elemType, typedPtr, index)
+		elemPtr.SetName("elem_ptr")
+		
+		// Load and return element value
+		return g.builder.NewLoad(elemType, elemPtr), nil
+	}
+	
+	// For maps or other types, return placeholder for now
 	return constant.NewInt(types.I64, 0), nil
 }
 
