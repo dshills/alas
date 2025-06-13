@@ -17,23 +17,24 @@ ALaS is a general-purpose, Turing-complete programming language designed exclusi
 ```
 alas/
 ├── cmd/
-│   ├── alas-validate/   # AST validation tool
-│   ├── alas-run/        # Reference interpreter
-│   ├── alas-compile/    # LLVM IR compiler with optimization
-│   └── alas-plugin/     # Plugin management tool
+│   ├── alas-validate/      # AST validation tool
+│   ├── alas-run/           # Reference interpreter
+│   ├── alas-compile/       # Single-module LLVM IR compiler
+│   ├── alas-compile-multi/ # Multi-module LLVM IR compiler with linking
+│   └── alas-plugin/        # Plugin management tool
 ├── internal/
-│   ├── ast/            # AST type definitions
-│   ├── validator/      # AST validation logic
-│   ├── interpreter/    # Reference interpreter
-│   ├── codegen/        # LLVM IR code generator and optimizer
-│   ├── plugin/         # Plugin system implementation
-│   └── runtime/        # Runtime value types
-├── stdlib/             # Standard library modules
+│   ├── ast/               # AST type definitions
+│   ├── validator/         # AST validation logic
+│   ├── interpreter/       # Reference interpreter
+│   ├── codegen/           # LLVM IR code generator, optimizer, and multi-module system
+│   ├── plugin/            # Plugin system implementation
+│   └── runtime/           # Runtime value types
+├── stdlib/                # Standard library modules
 ├── examples/
-│   ├── programs/       # Example ALaS programs
-│   ├── modules/        # Example ALaS modules
-│   └── plugins/        # Example plugin implementations
-├── tests/              # Test suite with optimization tests
+│   ├── programs/          # Example ALaS programs
+│   ├── modules/           # Example ALaS modules (math_utils, format_utils)
+│   └── plugins/           # Example plugin implementations
+├── tests/                 # Test suite with optimization and multi-module tests
 └── docs/
     └── alas_lang_spec.md  # Language specification
 ```
@@ -50,10 +51,11 @@ alas/
 make build
 ```
 
-This creates four binaries in the `bin/` directory:
+This creates five binaries in the `bin/` directory:
 - `alas-validate` - Validates ALaS JSON programs
 - `alas-run` - Executes ALaS programs
-- `alas-compile` - Compiles ALaS programs to LLVM IR
+- `alas-compile` - Compiles single ALaS programs to LLVM IR
+- `alas-compile-multi` - Compiles multi-module ALaS programs with cross-module linking
 - `alas-plugin` - Manages plugins (list, install, create, etc.)
 
 ### Running Examples
@@ -84,11 +86,17 @@ make run-all-examples
 ### Compiling to LLVM IR
 
 ```bash
-# Compile to LLVM IR (unoptimized)
+# Single-module compilation
 ./bin/alas-compile -file examples/programs/factorial.alas.json
+
+# Multi-module compilation with cross-module linking
+./bin/alas-compile-multi -file examples/programs/complex_modules.alas.json -module-path examples
 
 # Compile with optimizations
 ./bin/alas-compile -file examples/programs/factorial.alas.json -O 2
+
+# Multi-module linking modes
+./bin/alas-compile-multi -file examples/programs/module_demo.alas.json -module-path examples -link all -o linked_program.ll
 
 # Available optimization levels:
 # -O 0  No optimizations (default)
@@ -365,6 +373,131 @@ go test ./tests -bench=BenchmarkOptimizer
 go test ./tests -run TestOptimizationEffectiveness -v
 ```
 
+## Cross-Module LLVM Compilation and Linking
+
+ALaS features a comprehensive cross-module compilation system that enables separate compilation of modules and intelligent linking of dependencies. This system supports both separate module compilation and whole-program linking scenarios.
+
+### Key Features
+
+- **Dependency Resolution**: Automatic topological sorting of module dependencies using Kahn's algorithm
+- **External Function Declarations**: Proper LLVM IR generation with external function declarations
+- **Function Name Mangling**: Qualified naming (`module__function`) prevents symbol collisions
+- **Module Loaders**: Flexible system for discovering and loading module dependencies
+- **Linking Modes**: Support for both separate compilation and whole-program linking
+
+### Multi-Module Compiler Usage
+
+```bash
+# Basic multi-module compilation
+./bin/alas-compile-multi -file main_program.alas.json -module-path ./modules
+
+# Separate compilation mode (default)
+./bin/alas-compile-multi -file program.alas.json -module-path examples -o output
+
+# Whole-program linking mode  
+./bin/alas-compile-multi -file program.alas.json -module-path examples -link all -o linked_program.ll
+
+# Specify optimization level for multi-module compilation
+./bin/alas-compile-multi -file program.alas.json -module-path examples -O 2 -link all
+```
+
+### Module Search Paths
+
+The multi-module compiler searches for dependencies in the following locations:
+- `{module-path}/{module_name}.alas.json`
+- `{module-path}/modules/{module_name}.alas.json`  
+- `{module-path}/lib/{module_name}.alas.json`
+
+### Cross-Module Function Calls
+
+When a module imports another module, it can call exported functions using the `module_call` expression:
+
+```json
+{
+  "type": "module",
+  "name": "main_program",
+  "imports": ["math_utils"],
+  "functions": [{
+    "name": "calculate",
+    "body": [{
+      "type": "assign",
+      "target": "result", 
+      "value": {
+        "type": "module_call",
+        "module": "math_utils",
+        "name": "add",
+        "args": [
+          {"type": "literal", "value": 10},
+          {"type": "literal", "value": 5}
+        ]
+      }
+    }]
+  }]
+}
+```
+
+### LLVM IR Generation
+
+The cross-module system generates proper LLVM IR with:
+- **External function declarations** for imported functions
+- **Qualified function names** to prevent symbol conflicts
+- **Dependency-ordered compilation** ensuring all dependencies are available
+- **Linking support** for combining multiple modules into single executables
+
+### Architecture Components
+
+- **`MultiModuleCodegen`** - Core compilation orchestrator
+- **`ModuleLoader`** - Pluggable module discovery system  
+- **`ExternalFunction`** - Cross-module function metadata
+- **Dependency resolver** - Topological sorting with circular dependency detection
+- **LLVM integration** - Enhanced code generator with external function support
+
+### Example Module Structure
+
+**math_utils.alas.json:**
+```json
+{
+  "type": "module",
+  "name": "math_utils", 
+  "exports": ["add", "multiply"],
+  "functions": [
+    {
+      "name": "add",
+      "params": [
+        {"name": "a", "type": "int"},
+        {"name": "b", "type": "int"}
+      ],
+      "returns": "int",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "binary",
+            "op": "+",
+            "left": {"type": "variable", "name": "a"},
+            "right": {"type": "variable", "name": "b"}
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Testing
+
+The cross-module compilation system includes comprehensive tests:
+```bash
+# Run cross-module compilation tests
+go test ./internal/codegen -run TestMultiModule -v
+
+# Test dependency resolution
+go test ./internal/codegen -run TestMultiModuleCodegen_ResolveDependencies
+
+# Test circular dependency detection  
+go test ./internal/codegen -run TestMultiModuleCodegen_CircularDependency
+```
+
 ## Language Features
 
 ### Statements
@@ -453,10 +586,15 @@ Recent additions:
   - **O3**: Aggressive optimizations (adds function inlining, loop invariant code motion)
 - ✅ **Optimization Test Suite** - Unit tests, benchmarks, and integration tests
 - ✅ **Performance Improvements** - 16-63% code size reduction with optimizations
+- ✅ **Cross-module LLVM Compilation and Linking** - Complete multi-module compilation system
+  - **Dependency Resolution**: Topological sorting with circular dependency detection
+  - **External Function Declarations**: Proper LLVM IR with qualified function names
+  - **Module Loaders**: Flexible module discovery and loading system
+  - **Linking Modes**: Both separate compilation and whole-program linking
+  - **Multi-Module CLI**: New `alas-compile-multi` tool with comprehensive options
 
 Future work:
 - ⏳ Runtime garbage collection for arrays/maps
-- ⏳ Cross-module LLVM compilation and linking
 - ⏳ Standard library runtime implementation
 - ⏳ Plugin marketplace and hot reloading
 - ⏳ Additional optimization passes (vectorization, dead store elimination)

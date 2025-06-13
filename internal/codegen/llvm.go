@@ -14,20 +14,22 @@ import (
 
 // LLVMCodegen generates LLVM IR from ALaS AST.
 type LLVMCodegen struct {
-	module      *ir.Module
-	builder     *ir.Block
-	functions   map[string]*ir.Func
-	variables   map[string]value.Value
-	gcFunctions map[string]*ir.Func
+	module            *ir.Module
+	builder           *ir.Block
+	functions         map[string]*ir.Func
+	variables         map[string]value.Value
+	gcFunctions       map[string]*ir.Func
+	externalFunctions map[string]*ir.Func // External functions from other modules
 }
 
 // NewLLVMCodegen creates a new LLVM code generator.
 func NewLLVMCodegen() *LLVMCodegen {
 	g := &LLVMCodegen{
-		module:      ir.NewModule(),
-		functions:   make(map[string]*ir.Func),
-		variables:   make(map[string]value.Value),
-		gcFunctions: make(map[string]*ir.Func),
+		module:            ir.NewModule(),
+		functions:         make(map[string]*ir.Func),
+		variables:         make(map[string]value.Value),
+		gcFunctions:       make(map[string]*ir.Func),
+		externalFunctions: make(map[string]*ir.Func),
 	}
 	g.declareGCFunctions()
 	return g
@@ -624,22 +626,49 @@ func (g *LLVMCodegen) generateIndexAccess(expr *ast.Expression) (value.Value, er
 }
 
 // generateModuleCall generates LLVM IR for module function calls.
-// For simplicity, treats module calls as regular function calls with mangled names.
 func (g *LLVMCodegen) generateModuleCall(expr *ast.Expression) (value.Value, error) {
-	// Create mangled function name: module_name__function_name
-	_ = expr.Module + "__" + expr.Name // Acknowledge mangled name creation but not using it yet
+	// Create qualified function name: module_name__function_name
+	qualifiedName := fmt.Sprintf("%s__%s", expr.Module, expr.Name)
 
-	// For now, generate a simplified call that returns a constant
-	// A full implementation would need to:
-	// 1. Manage cross-module function declarations
-	// 2. Handle module linking at compile time
-	// 3. Generate proper external function calls
+	// Look up the external function
+	externalFunc, exists := g.externalFunctions[qualifiedName]
+	if !exists {
+		return nil, fmt.Errorf("external function %s not declared", qualifiedName)
+	}
 
-	// Acknowledge that we're using the expression parameters but not implementing full functionality
-	_ = expr.Args // Not using args in this simplified implementation
+	// Generate arguments
+	args := make([]value.Value, len(expr.Args))
+	for i, arg := range expr.Args {
+		argVal, err := g.generateExpression(&arg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate argument %d for %s: %v", i, qualifiedName, err)
+		}
+		args[i] = argVal
+	}
 
-	// Return a placeholder constant for now
-	return constant.NewInt(types.I64, 42), nil
+	// Generate the function call
+	return g.builder.NewCall(externalFunc, args...), nil
+}
+
+// DeclareExternalFunction declares an external function from another module.
+func (g *LLVMCodegen) DeclareExternalFunction(moduleName, functionName string, paramTypes []types.Type, returnType types.Type) (*ir.Func, error) {
+	qualifiedName := fmt.Sprintf("%s__%s", moduleName, functionName)
+
+	// Check if already declared
+	if existing, exists := g.externalFunctions[qualifiedName]; exists {
+		return existing, nil
+	}
+
+	// Create function signature
+	sig := types.NewFunc(returnType, paramTypes...)
+
+	// Declare the function as external in this module
+	externalFunc := g.module.NewFunc(qualifiedName, sig)
+
+	// Store the external function
+	g.externalFunctions[qualifiedName] = externalFunc
+
+	return externalFunc, nil
 }
 
 // declareGCFunctions declares external GC runtime functions for LLVM IR.
