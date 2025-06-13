@@ -57,6 +57,12 @@ test-llvm-builtin: build
 	@./bin/alas-compile -file examples/programs/llvm_builtin_test.alas.json -o examples/programs/llvm_builtin_test.ll
 	@echo "Generated LLVM IR for builtin test"
 
+# Test comprehensive LLVM builtin compilation
+test-llvm-comprehensive: build
+	@echo "Testing comprehensive LLVM builtin support..."
+	@./bin/alas-compile -file examples/programs/comprehensive_builtin_test.alas.json -o examples/programs/comprehensive_builtin_test.ll
+	@echo "Generated comprehensive LLVM IR for all builtin functions"
+
 # Install dependencies
 deps:
 	go mod tidy
