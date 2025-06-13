@@ -181,6 +181,24 @@ func (v *Validator) validateStatement(stmt *ast.Statement, scope map[string]bool
 			}
 		}
 
+	case ast.StmtFor:
+		if stmt.Cond == nil {
+			return fmt.Errorf("for statement must have a condition")
+		}
+		if err := v.validateExpression(stmt.Cond, scope); err != nil {
+			return fmt.Errorf("for condition: %v", err)
+		}
+		if len(stmt.Body) == 0 {
+			return fmt.Errorf("for statement must have a body")
+		}
+		// Validate body
+		bodyScope := copyScope(scope)
+		for i, s := range stmt.Body {
+			if err := v.validateStatement(&s, bodyScope); err != nil {
+				return fmt.Errorf("for body statement %d: %v", i, err)
+			}
+		}
+
 	case ast.StmtReturn:
 		if stmt.Value != nil {
 			if err := v.validateExpression(stmt.Value, scope); err != nil {
