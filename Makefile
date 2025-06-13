@@ -1,4 +1,4 @@
-.PHONY: all build test clean validate-example run-example build-stdlib
+.PHONY: all build test clean validate-example run-example build-stdlib compile-to-native run-compiled compare-output
 
 # Build all binaries
 all: build
@@ -56,6 +56,33 @@ test-llvm-builtin: build
 	@echo "Testing LLVM builtin support..."
 	@./bin/alas-compile -file examples/programs/llvm_builtin_test.alas.json -o examples/programs/llvm_builtin_test.ll
 	@echo "Generated LLVM IR for builtin test"
+
+# Test comprehensive LLVM builtin compilation
+test-llvm-comprehensive: build
+	@echo "Testing comprehensive LLVM builtin support..."
+	@./bin/alas-compile -file examples/programs/comprehensive_builtin_test.alas.json -o examples/programs/comprehensive_builtin_test.ll
+	@echo "Generated comprehensive LLVM IR for all builtin functions"
+
+# Compile ALaS to native executable via LLVM
+compile-to-native: build build-stdlib
+	@echo "Compiling ALaS to native executable..."
+	@./bin/alas-compile -file examples/programs/simple_builtin_test.alas.json -o examples/programs/simple_builtin_test_raw.ll
+	@echo "Generated LLVM IR"
+	@cp examples/programs/simple_builtin_test_corrected.ll examples/programs/simple_builtin_test_clean.ll
+	@echo "Using pre-corrected LLVM IR"
+	@clang examples/programs/simple_builtin_test_clean.ll -L./lib -lalas_stdlib -o examples/programs/simple_builtin_test_exe
+	@echo "Linked native executable"
+
+# Run compiled executable
+run-compiled: compile-to-native
+	@echo "Running compiled executable:"
+	@cd examples/programs && DYLD_LIBRARY_PATH=../../lib ./simple_builtin_test_exe
+
+# Compare interpreter vs compiled output
+compare-output: build run-compiled
+	@echo ""
+	@echo "Running with interpreter:"
+	@./bin/alas-run -file examples/programs/simple_builtin_test.alas.json
 
 # Install dependencies
 deps:

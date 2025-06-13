@@ -1,0 +1,40 @@
+{
+  "type": "module",
+  "name": "simple_number_test",
+  "functions": [
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "void",
+      "body": [
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "First line"
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": 4.0
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

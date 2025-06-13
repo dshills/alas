@@ -1,0 +1,27 @@
+{
+  "type": "module",
+  "name": "simple_builtin_test",
+  "functions": [
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "void",
+      "body": [
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "Hello from LLVM!"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
