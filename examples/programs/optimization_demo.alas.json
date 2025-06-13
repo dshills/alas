@@ -1,0 +1,61 @@
+{
+  "type": "module",
+  "name": "optimization_demo",
+  "functions": [
+    {
+      "type": "function",
+      "name": "constant_folding_demo",
+      "params": [],
+      "returns": "int",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "binary",
+            "op": "+",
+            "left": {
+              "type": "binary",
+              "op": "*",
+              "left": {
+                "type": "literal",
+                "value": 10
+              },
+              "right": {
+                "type": "literal",
+                "value": 5
+              }
+            },
+            "right": {
+              "type": "binary",
+              "op": "-",
+              "left": {
+                "type": "literal",
+                "value": 20
+              },
+              "right": {
+                "type": "literal",
+                "value": 5
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "int",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "call",
+            "name": "constant_folding_demo",
+            "args": []
+          }
+        }
+      ]
+    }
+  ]
+}

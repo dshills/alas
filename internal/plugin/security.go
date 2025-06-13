@@ -96,7 +96,7 @@ type ExecutionMonitor struct {
 // NewExecutionMonitor creates a new execution monitor
 func NewExecutionMonitor(security *SecurityContext) *ExecutionMonitor {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	if security.Timeout > 0 {
 		ctx, cancel = context.WithTimeout(context.Background(), security.Timeout)
 	}
@@ -155,9 +155,9 @@ func (em *ExecutionMonitor) checkResourceLimits() {
 		runtime.ReadMemStats(&memStats)
 		currentMem := memStats.Alloc - em.startMem
 
-		if int64(currentMem) > em.security.MaxMemory {
-			em.violations = append(em.violations, 
-				fmt.Sprintf("memory limit exceeded: %d bytes (limit: %d)", 
+		if em.security.MaxMemory > 0 && currentMem > uint64(em.security.MaxMemory) {
+			em.violations = append(em.violations,
+				fmt.Sprintf("memory limit exceeded: %d bytes (limit: %d)",
 					currentMem, em.security.MaxMemory))
 			em.cancel()
 			return
@@ -168,8 +168,8 @@ func (em *ExecutionMonitor) checkResourceLimits() {
 	if em.security.MaxCPU > 0 {
 		elapsed := time.Since(em.startTime)
 		if elapsed > em.security.MaxCPU {
-			em.violations = append(em.violations, 
-				fmt.Sprintf("CPU time limit exceeded: %v (limit: %v)", 
+			em.violations = append(em.violations,
+				fmt.Sprintf("CPU time limit exceeded: %v (limit: %v)",
 					elapsed, em.security.MaxCPU))
 			em.cancel()
 			return

@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"fmt"
+
 	"github.com/dshills/alas/internal/runtime"
 )
 
@@ -143,16 +144,16 @@ func (l *NativeLoader) Call(plugin *Plugin, function string, args []runtime.Valu
 
 // HybridLoader loads hybrid plugins (ALaS modules with native functions)
 type HybridLoader struct {
-	moduleLoader *ModuleLoader
-	nativeLoader *NativeLoader
+	moduleLoader    *ModuleLoader
+	nativeLoader    *NativeLoader
 	builtinRegistry *BuiltinFunctionRegistry
 }
 
 // NewHybridLoader creates a new hybrid loader
 func NewHybridLoader(moduleLoader *ModuleLoader, nativeLoader *NativeLoader, builtinRegistry *BuiltinFunctionRegistry) *HybridLoader {
 	return &HybridLoader{
-		moduleLoader: moduleLoader,
-		nativeLoader: nativeLoader,
+		moduleLoader:    moduleLoader,
+		nativeLoader:    nativeLoader,
 		builtinRegistry: builtinRegistry,
 	}
 }
@@ -177,11 +178,14 @@ func (l *HybridLoader) Load(plugin *Plugin) error {
 
 	// Register any native functions as built-ins
 	for _, fn := range plugin.Manifest.Functions {
-		if fn.Native {
-			// TODO: Create built-in function wrapper
-			// builtinFn := createNativeWrapper(plugin, fn)
-			// l.builtinRegistry.Register(builtinFn)
-		}
+		_ = fn // TODO: Implement function registration
+		// if fn.Native {
+		//     // TODO: Create built-in function wrapper
+		//     // builtinFn := createNativeWrapper(plugin, fn)
+		//     // l.builtinRegistry.Register(builtinFn)
+		// } else {
+		//     // Non-native functions are handled through module loading
+		// }
 	}
 
 	return nil

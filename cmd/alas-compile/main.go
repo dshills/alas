@@ -18,9 +18,11 @@ func main() {
 	var input string
 	var output string
 	var format string
+	var optLevel string
 	flag.StringVar(&input, "file", "", "ALaS JSON file to compile (reads from stdin if not provided)")
 	flag.StringVar(&output, "o", "", "Output file (default: input file with .ll extension)")
 	flag.StringVar(&format, "format", "ll", "Output format: ll (LLVM IR text) or bc (LLVM bitcode)")
+	flag.StringVar(&optLevel, "O", "1", "Optimization level: 0 (none), 1 (basic), 2 (standard), 3 (aggressive)")
 	flag.Parse()
 
 	var data []byte
@@ -55,12 +57,37 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Parse optimization level
+	var optimizationLevel codegen.OptimizationLevel
+	switch optLevel {
+	case "0":
+		optimizationLevel = codegen.OptNone
+	case "1":
+		optimizationLevel = codegen.OptBasic
+	case "2":
+		optimizationLevel = codegen.OptStandard
+	case "3":
+		optimizationLevel = codegen.OptAggressive
+	default:
+		fmt.Fprintf(os.Stderr, "Invalid optimization level: %s (use 0, 1, 2, or 3)\n", optLevel)
+		os.Exit(1)
+	}
+
 	// Generate LLVM IR
-	codegen := codegen.NewLLVMCodegen()
-	llvmModule, err := codegen.GenerateModule(&module)
+	codegenInstance := codegen.NewLLVMCodegen()
+	llvmModule, err := codegenInstance.GenerateModule(&module)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Code generation failed: %v\n", err)
 		os.Exit(1)
+	}
+
+	// Apply optimizations
+	if optimizationLevel > codegen.OptNone {
+		optimizer := codegen.NewOptimizer(optimizationLevel)
+		if err := optimizer.OptimizeModule(llvmModule); err != nil {
+			fmt.Fprintf(os.Stderr, "Optimization failed: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	// Determine output filename

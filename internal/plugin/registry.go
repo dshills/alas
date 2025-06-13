@@ -79,7 +79,7 @@ func (r *Registry) discoverInPath(searchPath string) error {
 
 	for _, manifestPath := range matches {
 		pluginDir := filepath.Dir(manifestPath)
-		
+
 		manifest, err := LoadManifest(manifestPath)
 		if err != nil {
 			// Log error but continue discovering other plugins
@@ -309,6 +309,10 @@ func (r *Registry) GetStats() RegistryStats {
 			stats.LoadedPlugins++
 		case StateError:
 			stats.ErrorPlugins++
+		case StateUnloaded:
+			// Unloaded plugins are counted in total but not in any other category
+		case StateLoading:
+			// Loading plugins are counted in total but not in any other category
 		}
 	}
 

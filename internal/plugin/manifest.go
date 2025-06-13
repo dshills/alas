@@ -21,17 +21,17 @@ type Manifest struct {
 	Capabilities []Capability `json:"capabilities"`
 
 	// Module and function definitions
-	Module    string            `json:"module"`
-	Functions []FunctionDef     `json:"functions"`
-	Types     []TypeDef         `json:"types,omitempty"`
-	
+	Module    string        `json:"module"`
+	Functions []FunctionDef `json:"functions"`
+	Types     []TypeDef     `json:"types,omitempty"`
+
 	// Dependencies and compatibility
-	AlasVersion   string            `json:"alas_version"`
-	Dependencies  []string          `json:"dependencies,omitempty"`
-	
+	AlasVersion  string   `json:"alas_version"`
+	Dependencies []string `json:"dependencies,omitempty"`
+
 	// Implementation details
 	Implementation Implementation `json:"implementation"`
-	
+
 	// Security and runtime settings
 	Security SecurityPolicy `json:"security"`
 	Runtime  RuntimeConfig  `json:"runtime"`
@@ -41,35 +41,35 @@ type Manifest struct {
 type PluginType string
 
 const (
-	PluginTypeNative   PluginType = "native"   // Compiled shared library
-	PluginTypeModule   PluginType = "module"   // Pure ALaS module
-	PluginTypeHybrid   PluginType = "hybrid"   // ALaS module with native functions
-	PluginTypeBuiltin  PluginType = "builtin"  // Built into the runtime
+	PluginTypeNative  PluginType = "native"  // Compiled shared library
+	PluginTypeModule  PluginType = "module"  // Pure ALaS module
+	PluginTypeHybrid  PluginType = "hybrid"  // ALaS module with native functions
+	PluginTypeBuiltin PluginType = "builtin" // Built into the runtime
 )
 
 // Capability defines what the plugin can do
 type Capability string
 
 const (
-	CapabilityFunction    Capability = "function"     // Provides functions
-	CapabilityType        Capability = "type"         // Provides custom types
-	CapabilityModule      Capability = "module"       // Provides modules
-	CapabilityCodegen     Capability = "codegen"      // Extends code generation
-	CapabilityValidation  Capability = "validation"   // Extends validation
-	CapabilityIO          Capability = "io"           // Performs I/O operations
-	CapabilityNetwork     Capability = "network"      // Network access
-	CapabilityFileSystem  Capability = "filesystem"   // File system access
-	CapabilityProcess     Capability = "process"      // Process execution
+	CapabilityFunction   Capability = "function"   // Provides functions
+	CapabilityType       Capability = "type"       // Provides custom types
+	CapabilityModule     Capability = "module"     // Provides modules
+	CapabilityCodegen    Capability = "codegen"    // Extends code generation
+	CapabilityValidation Capability = "validation" // Extends validation
+	CapabilityIO         Capability = "io"         // Performs I/O operations
+	CapabilityNetwork    Capability = "network"    // Network access
+	CapabilityFileSystem Capability = "filesystem" // File system access
+	CapabilityProcess    Capability = "process"    // Process execution
 )
 
 // FunctionDef defines a function provided by the plugin
 type FunctionDef struct {
-	Name        string      `json:"name"`
-	Params      []ParamDef  `json:"params"`
-	Returns     string      `json:"returns"`
-	Description string      `json:"description"`
-	Native      bool        `json:"native,omitempty"`
-	Async       bool        `json:"async,omitempty"`
+	Name        string     `json:"name"`
+	Params      []ParamDef `json:"params"`
+	Returns     string     `json:"returns"`
+	Description string     `json:"description"`
+	Native      bool       `json:"native,omitempty"`
+	Async       bool       `json:"async,omitempty"`
 }
 
 // ParamDef defines a function parameter
@@ -80,12 +80,12 @@ type ParamDef struct {
 
 // TypeDef defines a custom type provided by the plugin
 type TypeDef struct {
-	Name        string                 `json:"name"`
-	Kind        string                 `json:"kind"` // struct, enum, alias
-	Fields      []FieldDef             `json:"fields,omitempty"`
-	Values      []string               `json:"values,omitempty"`
-	BaseType    string                 `json:"base_type,omitempty"`
-	Meta        map[string]interface{} `json:"meta,omitempty"`
+	Name     string                 `json:"name"`
+	Kind     string                 `json:"kind"` // struct, enum, alias
+	Fields   []FieldDef             `json:"fields,omitempty"`
+	Values   []string               `json:"values,omitempty"`
+	BaseType string                 `json:"base_type,omitempty"`
+	Meta     map[string]interface{} `json:"meta,omitempty"`
 }
 
 // FieldDef defines a field in a struct type
@@ -115,9 +115,9 @@ type SecurityPolicy struct {
 
 // RuntimeConfig defines runtime behavior
 type RuntimeConfig struct {
-	Lazy        bool              `json:"lazy"`         // Load on first use
-	Persistent  bool              `json:"persistent"`   // Keep loaded between calls
-	Parallel    bool              `json:"parallel"`     // Allow parallel execution
+	Lazy        bool              `json:"lazy"`       // Load on first use
+	Persistent  bool              `json:"persistent"` // Keep loaded between calls
+	Parallel    bool              `json:"parallel"`   // Allow parallel execution
 	Environment map[string]string `json:"environment,omitempty"`
 }
 
@@ -137,7 +137,7 @@ func LoadManifest(path string) (*Manifest, error) {
 	if manifest.Type == "" {
 		manifest.Type = PluginTypeModule
 	}
-	
+
 	if manifest.AlasVersion == "" {
 		manifest.AlasVersion = ">=0.1.0"
 	}
@@ -157,7 +157,7 @@ func (m *Manifest) SaveManifest(path string) error {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
 
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	if err := os.WriteFile(path, data, 0600); err != nil {
 		return fmt.Errorf("failed to write manifest file: %w", err)
 	}
 
@@ -169,11 +169,11 @@ func (m *Manifest) Validate() error {
 	if m.Name == "" {
 		return fmt.Errorf("plugin name is required")
 	}
-	
+
 	if m.Version == "" {
 		return fmt.Errorf("plugin version is required")
 	}
-	
+
 	if m.Module == "" {
 		return fmt.Errorf("plugin module name is required")
 	}
@@ -190,8 +190,8 @@ func (m *Manifest) Validate() error {
 	for _, cap := range m.Capabilities {
 		switch cap {
 		case CapabilityFunction, CapabilityType, CapabilityModule, CapabilityCodegen,
-			 CapabilityValidation, CapabilityIO, CapabilityNetwork, CapabilityFileSystem,
-			 CapabilityProcess:
+			CapabilityValidation, CapabilityIO, CapabilityNetwork, CapabilityFileSystem,
+			CapabilityProcess:
 			// Valid
 		default:
 			return fmt.Errorf("invalid capability: %s", cap)

@@ -2,18 +2,19 @@ package plugin
 
 import (
 	"fmt"
+
 	"github.com/dshills/alas/internal/interpreter"
 	"github.com/dshills/alas/internal/runtime"
 )
 
-// PluginAwareInterpreter extends the base interpreter with plugin support
+// PluginAwareInterpreter extends the base interpreter with plugin support.
 type PluginAwareInterpreter struct {
 	*interpreter.Interpreter
 	registry        *Registry
 	builtinRegistry *BuiltinFunctionRegistry
 }
 
-// NewPluginAwareInterpreter creates a new plugin-aware interpreter
+// NewPluginAwareInterpreter creates a new plugin-aware interpreter.
 func NewPluginAwareInterpreter(base *interpreter.Interpreter, registry *Registry) *PluginAwareInterpreter {
 	return &PluginAwareInterpreter{
 		Interpreter:     base,
@@ -22,7 +23,7 @@ func NewPluginAwareInterpreter(base *interpreter.Interpreter, registry *Registry
 	}
 }
 
-// CallBuiltinFunction calls a built-in function by name with pre-evaluated arguments
+// CallBuiltinFunction calls a built-in function by name with pre-evaluated arguments.
 func (i *PluginAwareInterpreter) CallBuiltinFunction(functionName string, args []runtime.Value) (runtime.Value, error) {
 	// Parse module.function format
 	module, function, err := parseBuiltinName(functionName)
@@ -55,27 +56,27 @@ func (i *PluginAwareInterpreter) CallBuiltinFunction(functionName string, args [
 	return runtime.NewVoid(), fmt.Errorf("plugin %s not loaded", plugin.Manifest.Name)
 }
 
-// RegisterBuiltinFunction registers a builtin function
+// RegisterBuiltinFunction registers a builtin function.
 func (i *PluginAwareInterpreter) RegisterBuiltinFunction(fn BuiltinFunction) error {
 	return i.builtinRegistry.Register(fn)
 }
 
-// UnregisterBuiltinFunction unregisters a builtin function
+// UnregisterBuiltinFunction unregisters a builtin function.
 func (i *PluginAwareInterpreter) UnregisterBuiltinFunction(module, name string) {
 	i.builtinRegistry.Unregister(module, name)
 }
 
-// GetBuiltinFunction retrieves a builtin function
+// GetBuiltinFunction retrieves a builtin function.
 func (i *PluginAwareInterpreter) GetBuiltinFunction(module, name string) (BuiltinFunction, bool) {
 	return i.builtinRegistry.Get(module, name)
 }
 
-// LoadPlugin loads a plugin and registers its functions
+// LoadPlugin loads a plugin and registers its functions.
 func (i *PluginAwareInterpreter) LoadPlugin(name string) error {
 	return i.registry.Load(name)
 }
 
-// UnloadPlugin unloads a plugin and unregisters its functions
+// UnloadPlugin unloads a plugin and unregisters its functions.
 func (i *PluginAwareInterpreter) UnloadPlugin(name string) error {
 	plugin, exists := i.registry.Get(name)
 	if !exists {
@@ -92,12 +93,12 @@ func (i *PluginAwareInterpreter) UnloadPlugin(name string) error {
 	return i.registry.Unload(name)
 }
 
-// GetRegistry returns the plugin registry
+// GetRegistry returns the plugin registry.
 func (i *PluginAwareInterpreter) GetRegistry() *Registry {
 	return i.registry
 }
 
-// parseBuiltinName parses a builtin function name in module.function format
+// parseBuiltinName parses a builtin function name in module.function format.
 func parseBuiltinName(name string) (module, function string, err error) {
 	// Find the last dot to separate module from function
 	lastDot := -1
@@ -122,13 +123,13 @@ func parseBuiltinName(name string) (module, function string, err error) {
 	return module, function, nil
 }
 
-// InterpreterPluginManager manages the integration between the interpreter and plugins
+// InterpreterPluginManager manages the integration between the interpreter and plugins.
 type InterpreterPluginManager struct {
 	interpreter *PluginAwareInterpreter
 	registry    *Registry
 }
 
-// NewInterpreterPluginManager creates a new interpreter plugin manager
+// NewInterpreterPluginManager creates a new interpreter plugin manager.
 func NewInterpreterPluginManager(base *interpreter.Interpreter) *InterpreterPluginManager {
 	registry := NewRegistry()
 	pluginInterpreter := NewPluginAwareInterpreter(base, registry)
@@ -151,7 +152,7 @@ func (m *InterpreterPluginManager) Initialize(pluginPaths []string) error {
 		// This would integrate with the base interpreter's module loading
 		return nil, fmt.Errorf("module loading integration needed")
 	})
-	
+
 	nativeLoader := NewNativeLoader()
 	hybridLoader := NewHybridLoader(moduleLoader, nativeLoader, m.interpreter.builtinRegistry)
 

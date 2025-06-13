@@ -67,34 +67,34 @@ func printUsage() {
 
 func getRegistry(searchPath string) *plugin.Registry {
 	registry := plugin.NewRegistry()
-	
+
 	if searchPath == "" {
 		searchPath = "./plugins"
 	}
-	
+
 	registry.AddSearchPath(searchPath)
-	
+
 	// Discover plugins
 	if err := registry.Discover(); err != nil {
 		fmt.Printf("Error discovering plugins: %v\n", err)
 		os.Exit(1)
 	}
-	
+
 	return registry
 }
 
 func listCommand() {
 	var formatFlag string
 	var pathFlag string
-	
+
 	fs := flag.NewFlagSet("list", flag.ExitOnError)
 	fs.StringVar(&formatFlag, "format", "table", "Output format (table, json)")
 	fs.StringVar(&pathFlag, "path", "./plugins", "Plugin search path")
 	fs.Parse(os.Args[2:])
-	
+
 	registry := getRegistry(pathFlag)
 	plugins := registry.List()
-	
+
 	if formatFlag == "json" {
 		printPluginsJSON(plugins)
 	} else {
@@ -106,7 +106,7 @@ func printPluginsTable(plugins []*plugin.Plugin) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "NAME\tVERSION\tTYPE\tSTATE\tMODULE\tDESCRIPTION")
 	fmt.Fprintln(w, "----\t-------\t----\t-----\t------\t-----------")
-	
+
 	for _, p := range plugins {
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
 			p.Manifest.Name,
@@ -116,7 +116,7 @@ func printPluginsTable(plugins []*plugin.Plugin) {
 			p.Manifest.Module,
 			truncateString(p.Manifest.Description, 50))
 	}
-	
+
 	w.Flush()
 }
 
@@ -131,27 +131,26 @@ func printPluginsJSON(plugins []*plugin.Plugin) {
 
 func infoCommand() {
 	var pathFlag string
-	
+
 	fs := flag.NewFlagSet("info", flag.ExitOnError)
 	fs.StringVar(&pathFlag, "path", "./plugins", "Plugin search path")
 	fs.Parse(os.Args[2:])
-	
+
 	args := fs.Args()
 	if len(args) < 1 {
 		fmt.Println("Usage: alas-plugin info <plugin>")
 		os.Exit(1)
 	}
-	
+
 	pluginName := args[0]
 	registry := getRegistry(pathFlag)
-	
-	
+
 	p, exists := registry.Get(pluginName)
 	if !exists {
 		fmt.Printf("Plugin '%s' not found\n", pluginName)
 		os.Exit(1)
 	}
-	
+
 	printPluginInfo(p)
 }
 
@@ -166,27 +165,27 @@ func printPluginInfo(p *plugin.Plugin) {
 	fmt.Printf("License: %s\n", p.Manifest.License)
 	fmt.Printf("Path: %s\n", p.Path)
 	fmt.Printf("ALaS Version: %s\n", p.Manifest.AlasVersion)
-	
+
 	if len(p.Manifest.Capabilities) > 0 {
 		fmt.Printf("Capabilities: %s\n", strings.Join(capabilitiesToStrings(p.Manifest.Capabilities), ", "))
 	}
-	
+
 	if len(p.Manifest.Dependencies) > 0 {
 		fmt.Printf("Dependencies: %s\n", strings.Join(p.Manifest.Dependencies, ", "))
 	}
-	
+
 	if len(p.Manifest.Functions) > 0 {
 		fmt.Println("\nFunctions:")
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 		fmt.Fprintln(w, "  NAME\tPARAMS\tRETURNS\tNATIVE\tDESCRIPTION")
 		fmt.Fprintln(w, "  ----\t------\t-------\t------\t-----------")
-		
+
 		for _, fn := range p.Manifest.Functions {
 			params := make([]string, len(fn.Params))
 			for i, param := range fn.Params {
 				params[i] = fmt.Sprintf("%s:%s", param.Name, param.Type)
 			}
-			
+
 			fmt.Fprintf(w, "  %s\t%s\t%s\t%v\t%s\n",
 				fn.Name,
 				strings.Join(params, ", "),
@@ -196,11 +195,11 @@ func printPluginInfo(p *plugin.Plugin) {
 		}
 		w.Flush()
 	}
-	
+
 	fmt.Printf("\nImplementation:\n")
 	fmt.Printf("  Language: %s\n", p.Manifest.Implementation.Language)
 	fmt.Printf("  Entry Point: %s\n", p.Manifest.Implementation.EntryPoint)
-	
+
 	fmt.Printf("\nSecurity:\n")
 	fmt.Printf("  Sandbox: %v\n", p.Manifest.Security.Sandbox)
 	if p.Manifest.Security.MaxMemory != "" {
@@ -216,9 +215,9 @@ func installCommand() {
 		fmt.Println("Usage: alas-plugin install <path>")
 		os.Exit(1)
 	}
-	
+
 	sourcePath := os.Args[2]
-	
+
 	// TODO: Implement plugin installation
 	// This would copy the plugin to the plugins directory and register it
 	fmt.Printf("Installing plugin from %s...\n", sourcePath)
@@ -230,9 +229,9 @@ func uninstallCommand() {
 		fmt.Println("Usage: alas-plugin uninstall <plugin>")
 		os.Exit(1)
 	}
-	
+
 	pluginName := os.Args[2]
-	
+
 	// TODO: Implement plugin uninstallation
 	fmt.Printf("Uninstalling plugin %s...\n", pluginName)
 	fmt.Println("Plugin uninstallation not yet implemented")
@@ -243,26 +242,26 @@ func createCommand() {
 		fmt.Println("Usage: alas-plugin create <name>")
 		os.Exit(1)
 	}
-	
+
 	pluginName := os.Args[2]
-	
+
 	// Create plugin directory
 	pluginDir := filepath.Join(".", pluginName)
 	if err := os.MkdirAll(pluginDir, 0755); err != nil {
 		fmt.Printf("Error creating plugin directory: %v\n", err)
 		os.Exit(1)
 	}
-	
+
 	// Create manifest template
 	manifest := &plugin.Manifest{
-		Name:        pluginName,
-		Version:     "0.1.0",
-		Description: fmt.Sprintf("ALaS plugin: %s", pluginName),
-		Author:      "Your Name",
-		License:     "MIT",
-		Type:        plugin.PluginTypeModule,
+		Name:         pluginName,
+		Version:      "0.1.0",
+		Description:  fmt.Sprintf("ALaS plugin: %s", pluginName),
+		Author:       "Your Name",
+		License:      "MIT",
+		Type:         plugin.PluginTypeModule,
 		Capabilities: []plugin.Capability{plugin.CapabilityFunction},
-		Module:      pluginName,
+		Module:       pluginName,
 		Functions: []plugin.FunctionDef{
 			{
 				Name:        "hello",
@@ -284,14 +283,14 @@ func createCommand() {
 			Persistent: false,
 		},
 	}
-	
+
 	// Save manifest
 	manifestPath := filepath.Join(pluginDir, "plugin.json")
 	if err := manifest.SaveManifest(manifestPath); err != nil {
 		fmt.Printf("Error saving manifest: %v\n", err)
 		os.Exit(1)
 	}
-	
+
 	// Create example ALaS module
 	modulePath := filepath.Join(pluginDir, pluginName+".alas.json")
 	moduleContent := fmt.Sprintf(`{
@@ -329,12 +328,12 @@ func createCommand() {
     }
   ]
 }`, pluginName)
-	
-	if err := os.WriteFile(modulePath, []byte(moduleContent), 0644); err != nil {
+
+	if err := os.WriteFile(modulePath, []byte(moduleContent), 0600); err != nil {
 		fmt.Printf("Error writing module file: %v\n", err)
 		os.Exit(1)
 	}
-	
+
 	fmt.Printf("Created plugin template in %s/\n", pluginDir)
 	fmt.Printf("  - plugin.json (manifest)\n")
 	fmt.Printf("  - %s.alas.json (module)\n", pluginName)
@@ -345,69 +344,57 @@ func validateCommand() {
 		fmt.Println("Usage: alas-plugin validate <path>")
 		os.Exit(1)
 	}
-	
+
 	manifestPath := os.Args[2]
-	
+
 	manifest, err := plugin.LoadManifest(manifestPath)
 	if err != nil {
 		fmt.Printf("Error loading manifest: %v\n", err)
 		os.Exit(1)
 	}
-	
+
 	if err := manifest.Validate(); err != nil {
 		fmt.Printf("Validation failed: %v\n", err)
 		os.Exit(1)
 	}
-	
+
 	fmt.Printf("Plugin manifest is valid\n")
 }
 
-func loadCommand() {
+func pluginOperation(operation string, action func(*plugin.Registry, string) error) {
 	var pathFlag string
-	
-	fs := flag.NewFlagSet("load", flag.ExitOnError)
+
+	fs := flag.NewFlagSet(operation, flag.ExitOnError)
 	fs.StringVar(&pathFlag, "path", "./plugins", "Plugin search path")
 	fs.Parse(os.Args[2:])
-	
+
 	args := fs.Args()
 	if len(args) < 1 {
-		fmt.Println("Usage: alas-plugin load <plugin>")
+		fmt.Printf("Usage: alas-plugin %s <plugin>\n", operation)
 		os.Exit(1)
 	}
-	
+
 	pluginName := args[0]
 	registry := getRegistry(pathFlag)
-	
-	if err := registry.Load(pluginName); err != nil {
-		fmt.Printf("Error loading plugin: %v\n", err)
+
+	if err := action(registry, pluginName); err != nil {
+		fmt.Printf("Error %sing plugin: %v\n", operation, err)
 		os.Exit(1)
 	}
-	
-	fmt.Printf("Plugin %s loaded successfully\n", pluginName)
+
+	fmt.Printf("Plugin %s %sed successfully\n", pluginName, operation)
+}
+
+func loadCommand() {
+	pluginOperation("load", func(registry *plugin.Registry, name string) error {
+		return registry.Load(name)
+	})
 }
 
 func unloadCommand() {
-	var pathFlag string
-	
-	fs := flag.NewFlagSet("unload", flag.ExitOnError)
-	fs.StringVar(&pathFlag, "path", "./plugins", "Plugin search path")
-	fs.Parse(os.Args[2:])
-	
-	args := fs.Args()
-	if len(args) < 1 {
-		fmt.Println("Usage: alas-plugin unload <plugin>")
-		os.Exit(1)
-	}
-	
-	pluginName := args[0]
-	registry := getRegistry(pathFlag)
-	
-	if err := registry.Unload(pluginName); err != nil {
-		fmt.Printf("Error unloading plugin: %v\n", err)
-		os.Exit(1)
-	}
-	
-	fmt.Printf("Plugin %s unloaded successfully\n", pluginName)
+	pluginOperation("unload", func(registry *plugin.Registry, name string) error {
+		return registry.Unload(name)
+	})
 }
 
 func truncateString(s string, maxLen int) string {
