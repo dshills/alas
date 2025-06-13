@@ -5,6 +5,7 @@
 # with standard LLVM toolchain
 
 set -e
+set -o pipefail
 
 input_file="$1"
 output_file="$2"
