@@ -8,6 +8,7 @@ import (
 
 	"github.com/dshills/alas/internal/ast"
 	"github.com/dshills/alas/internal/runtime"
+	"github.com/dshills/alas/internal/stdlib"
 )
 
 // Interpreter executes ALaS programs.
@@ -16,6 +17,7 @@ type Interpreter struct {
 	functions     map[string]*ast.Function
 	exportedFuncs map[string]map[string]*ast.Function // module -> function name -> function
 	moduleLoader  ModuleLoader
+	stdlib        *stdlib.Registry
 }
 
 // ModuleLoader defines the interface for loading modules.
@@ -53,13 +55,14 @@ func (l *FileModuleLoader) LoadModuleByName(name string) (*ast.Module, error) {
 // New creates a new interpreter.
 func New() *Interpreter {
 	// Default search paths for modules (try both from current directory and from parent)
-	searchPaths := []string{".", "examples/modules", "../examples/modules"}
+	searchPaths := []string{".", "examples/modules", "../examples/modules", "stdlib"}
 
 	return &Interpreter{
 		modules:       make(map[string]*ast.Module),
 		functions:     make(map[string]*ast.Function),
 		exportedFuncs: make(map[string]map[string]*ast.Function),
 		moduleLoader:  NewFileModuleLoader(searchPaths),
+		stdlib:        stdlib.NewRegistry(),
 	}
 }
 
@@ -70,6 +73,7 @@ func NewWithLoader(loader ModuleLoader) *Interpreter {
 		functions:     make(map[string]*ast.Function),
 		exportedFuncs: make(map[string]map[string]*ast.Function),
 		moduleLoader:  loader,
+		stdlib:        stdlib.NewRegistry(),
 	}
 }
 
@@ -121,6 +125,12 @@ func (i *Interpreter) LoadModuleWithDependencies(module *ast.Module) error {
 	}
 
 	return nil
+}
+
+// CallBuiltinFunction calls a builtin standard library function directly.
+// This is mainly used for testing purposes.
+func (i *Interpreter) CallBuiltinFunction(name string, args []runtime.Value) (runtime.Value, error) {
+	return i.stdlib.Call(name, args)
 }
 
 // Environment represents the execution environment.
@@ -427,6 +437,19 @@ func (i *Interpreter) evaluateExpression(expr *ast.Expression, env *Environment)
 			return runtime.NewVoid(), err
 		}
 		return i.evaluateIndexAccess(object, index)
+
+	case ast.ExprBuiltin:
+		// Handle builtin function calls (standard library functions)
+		args := make([]runtime.Value, len(expr.Args))
+		for idx, arg := range expr.Args {
+			val, err := i.evaluateExpression(&arg, env)
+			if err != nil {
+				return runtime.NewVoid(), err
+			}
+			args[idx] = val
+		}
+
+		return i.stdlib.Call(expr.Name, args)
 
 	default:
 		return runtime.NewVoid(), fmt.Errorf("unknown expression type: %s", expr.Type)

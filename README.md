@@ -9,7 +9,7 @@ ALaS is a general-purpose, Turing-complete programming language designed exclusi
 - **Turing-Complete**: Supports functions, conditionals, loops, and recursion
 - **Type System**: Basic types including int, float, string, bool, array, and map
 - **Module System**: Import/export capabilities with dependency resolution and encapsulation
-- **Standard Library**: Comprehensive set of modules for I/O, math, collections, strings, and more
+- **Standard Library**: Comprehensive runtime implementation for I/O, math, collections, strings, and more
 - **Plugin System**: Dynamic extensibility with security, sandboxing, and multiple plugin types
 
 ## Project Structure
@@ -28,7 +28,8 @@ alas/
 │   ├── interpreter/       # Reference interpreter
 │   ├── codegen/           # LLVM IR code generator, optimizer, and multi-module system
 │   ├── plugin/            # Plugin system implementation
-│   └── runtime/           # Runtime value types
+│   ├── runtime/           # Runtime value types
+│   └── stdlib/            # Standard library runtime implementation
 ├── stdlib/                # Standard library modules
 ├── examples/
 │   ├── programs/          # Example ALaS programs
@@ -208,35 +209,86 @@ Here's an example demonstrating array and map operations:
 
 ## Standard Library
 
-ALaS includes a comprehensive standard library with the following modules:
+ALaS includes a comprehensive standard library with native runtime implementations for all core functionality:
 
-- **`std.io`** - File operations and console I/O (readFile, writeFile, print, readLine)
-- **`std.math`** - Mathematical functions and constants (sin, cos, sqrt, PI, E, etc.)
-- **`std.collections`** - Array and map utilities (filter, map, reduce, sort, etc.)
-- **`std.string`** - String manipulation (split, join, replace, format, etc.)
-- **`std.type`** - Type checking and conversion (typeOf, parseInt, toString, etc.)
-- **`std.result`** - Structured error handling with Result types
-- **`std.async`** - Concurrent execution primitives (spawn, await, parallel, etc.)
+### Core Modules
 
-Standard library modules can be imported like any other module:
+- **`std.io`** - File operations and console I/O
+  - `readFile(path)` - Read file contents, returns Result type
+  - `writeFile(path, data)` - Write data to file, returns Result type
+  - `print(value)` - Print any value to stdout
+  - `readLine()` - Read line from stdin
+
+- **`std.math`** - Mathematical functions (all use floating-point)
+  - Basic: `abs`, `min`, `max`, `pow`, `sqrt`
+  - Trigonometric: `sin`, `cos`, `tan`, `asin`, `acos`, `atan`
+  - Rounding: `floor`, `ceil`, `round`
+  - Random: `random()`, `randomInt(min, max)` - Cryptographically secure
+
+- **`std.collections`** - Array and map utilities
+  - `length(collection)` - Get length of array, map, or string
+  - `append(array, value)` - Returns new array with appended value
+  - `contains(collection, value)` - Check if value exists in collection
+  - `indexOf(collection, value)` - Find index of value (-1 if not found)
+  - `slice(collection, start, end?)` - Extract portion of array or string
+
+- **`std.string`** - String manipulation
+  - `length(str)` - Get string length
+  - `split(str, separator)` - Split string into array
+  - `join(array, separator)` - Join array elements into string
+  - `toUpper(str)`, `toLower(str)` - Case conversion
+  - `trim(str)` - Remove leading/trailing whitespace
+  - `replace(str, old, new)` - Replace all occurrences
+
+- **`std.type`** - Type checking and conversion
+  - `typeOf(value)` - Get type name as string
+  - `toString(value)` - Convert any value to string
+  - `parseInt(str)`, `parseFloat(str)` - Parse numbers from strings
+  - Type predicates: `isInt`, `isFloat`, `isString`, `isBool`, `isArray`, `isMap`
+
+- **`std.result`** - Structured error handling
+  - `ok(value)` - Create success Result
+  - `error(message)` - Create error Result
+  - `isOk(result)`, `isError(result)` - Check Result status
+  - `getValue(result)`, `getError(result)` - Extract Result contents
+
+### Using Standard Library Functions
+
+Standard library functions are called using the `builtin` expression type:
 
 ```json
 {
   "type": "module",
-  "name": "myProgram",
-  "imports": ["std.io", "std.math"],
+  "name": "example",
   "functions": [
     {
       "name": "main",
+      "params": [],
+      "returns": "void",
       "body": [
         {
-          "type": "assign",
-          "target": "data",
+          "type": "expr",
           "value": {
-            "type": "module_call",
-            "module": "std.io",
-            "name": "readFile",
-            "args": [{"type": "literal", "value": "data.txt"}]
+            "type": "builtin",
+            "name": "io.print",
+            "args": [{"type": "literal", "value": "Hello from standard library!"}]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "result",
+          "value": {
+            "type": "builtin",
+            "name": "math.sqrt",
+            "args": [{"type": "literal", "value": 16.0}]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [{"type": "variable", "name": "result"}]
           }
         }
       ]
@@ -245,7 +297,23 @@ Standard library modules can be imported like any other module:
 }
 ```
 
-See the [stdlib/README.md](stdlib/README.md) for complete documentation.
+### Example: Using Standard Library
+
+```bash
+# Run example with standard library functions
+./bin/alas-run -file examples/programs/stdlib_comprehensive_test.alas.json
+
+# Output:
+=== ALaS Standard Library Test ===
+Array length: 3
+Original: hello world
+Uppercase: HELLO WORLD
+max(5.5, 3.2) = 5.5
+type of 42: int
+=== Test Complete ===
+```
+
+See the [stdlib/README.md](stdlib/README.md) for complete module specifications.
 
 ## Plugin System
 
@@ -514,6 +582,7 @@ go test ./internal/codegen -run TestMultiModuleCodegen_CircularDependency
 - `unary` - Unary operations (!, -)
 - `call` - Function calls
 - `module_call` - Cross-module function calls (module.function)
+- `builtin` - Standard library function calls (e.g., io.print, math.sqrt)
 - `array_literal` - Array literals with elements
 - `map_literal` - Map literals with key-value pairs
 - `index` - Array/map indexing operations
@@ -574,7 +643,7 @@ Current implementation includes:
 - ✅ Binary and unary operations
 - ✅ Arrays and maps with indexing
 - ✅ Module imports/exports with dependency resolution
-- ✅ Standard library specification (8 core modules)
+- ✅ Standard library runtime implementation (6 core modules)
 - ✅ Plugin system with security and multi-type support
 - ✅ Comprehensive test suite with optimization testing
 
@@ -592,10 +661,18 @@ Recent additions:
   - **Module Loaders**: Flexible module discovery and loading system
   - **Linking Modes**: Both separate compilation and whole-program linking
   - **Multi-Module CLI**: New `alas-compile-multi` tool with comprehensive options
+- ✅ **Standard Library Runtime Implementation** - Native Go implementations for all core modules
+  - **std.io**: File operations and console I/O with Result types
+  - **std.math**: Mathematical functions with cryptographically secure random
+  - **std.collections**: Array and map utilities with slice operations
+  - **std.string**: String manipulation with split/join/replace
+  - **std.type**: Type checking and conversion utilities
+  - **std.result**: Structured error handling pattern
 
 Future work:
 - ⏳ Runtime garbage collection for arrays/maps
-- ⏳ Standard library runtime implementation
+- ⏳ LLVM backend support for builtin expressions (standard library in compiled code)
+- ⏳ std.async module implementation
 - ⏳ Plugin marketplace and hot reloading
 - ⏳ Additional optimization passes (vectorization, dead store elimination)
 

@@ -1,0 +1,132 @@
+{
+  "type": "module",
+  "name": "stdlib_test",
+  "imports": ["std.io", "std.math"],
+  "functions": [
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "void",
+      "body": [
+        {
+          "type": "assign",
+          "target": "message",
+          "value": {
+            "type": "literal",
+            "value": "Hello from ALaS Standard Library!"
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "module_call",
+            "module": "std.io",
+            "name": "print",
+            "args": [
+              {
+                "type": "variable",
+                "name": "message"
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "pi_value",
+          "value": {
+            "type": "module_call",
+            "module": "std.math",
+            "name": "PI",
+            "args": []
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "module_call",
+            "module": "std.io",
+            "name": "print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "\nPI = "
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "module_call",
+            "module": "std.io",
+            "name": "print",
+            "args": [
+              {
+                "type": "variable",
+                "name": "pi_value"
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "sqrt_result",
+          "value": {
+            "type": "module_call",
+            "module": "std.math",
+            "name": "sqrt",
+            "args": [
+              {
+                "type": "literal",
+                "value": 16.0
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "module_call",
+            "module": "std.io",
+            "name": "print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "\nsqrt(16) = "
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "module_call",
+            "module": "std.io",
+            "name": "print",
+            "args": [
+              {
+                "type": "variable",
+                "name": "sqrt_result"
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "module_call",
+            "module": "std.io",
+            "name": "print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "\n"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
