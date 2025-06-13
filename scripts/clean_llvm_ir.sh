@@ -22,9 +22,8 @@ if command -v opt &> /dev/null; then
 else
     # Fallback to sed-based cleaning with more robust patterns
     # These transformations handle specific ALaS codegen quirks
-    cat "$input_file" | \
     # Fix function declaration syntax
-    sed -E 's/declare ([^(]*) \(([^)]*)\) (@[^(]*)\(\)/declare \1 \3(\2)/g' | \
+    sed -E 's/declare ([^(]*) \(([^)]*)\) (@[^(]*)\(\)/declare \1 \3(\2)/g' "$input_file" | \
     # Fix main function definition
     sed -E 's/define void \(\) @main\(\)/define void @main()/' | \
     # Remove unnecessary assignment from void calls
