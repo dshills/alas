@@ -55,10 +55,7 @@ compile-examples: build
 	@echo "LLVM IR files generated in examples/programs/"
 
 compile-examples-clean:
-	@rm -f examples/programs/hello.ll
-	@rm -f examples/programs/fibonacci.ll
-	@rm -f examples/programs/factorial.ll
-	@rm -f examples/programs/loops.ll
+	@rm -f examples/programs/*.ll
 
 # Test LLVM builtin compilation
 test-llvm-builtin: build
