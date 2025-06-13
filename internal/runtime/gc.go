@@ -12,6 +12,7 @@ type GCManager struct {
 	nextID      int64
 	gcThreshold int64
 	enabled     bool
+	gcRunning   int32 // Atomic flag to prevent concurrent GC runs
 }
 
 // ObjectID uniquely identifies a garbage-collected object.
@@ -192,7 +193,13 @@ func (gc *GCManager) checkGCThreshold() {
 	gc.mu.RUnlock()
 
 	if objectCount > gc.gcThreshold {
-		go gc.RunGC()
+		// Ensure only one GC run is in progress
+		if atomic.CompareAndSwapInt32(&gc.gcRunning, 0, 1) {
+			go func() {
+				gc.RunGC()
+				atomic.StoreInt32(&gc.gcRunning, 0) // Reset flag after GC completes
+			}()
+		}
 	}
 }
 

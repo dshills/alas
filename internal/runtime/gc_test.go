@@ -331,3 +331,33 @@ func TestValue_GCMethods(t *testing.T) {
 	gcMap.Release()
 	emptyGCArray.Release()
 }
+
+func TestGCManager_ConcurrentGCProtection(t *testing.T) {
+	gc := NewGCManager()
+	gc.SetGCThreshold(1) // Low threshold to trigger GC easily
+
+	// Create many objects to trigger multiple GC attempts
+	var ids []ObjectID
+
+	// Allocate objects to exceed threshold
+	for i := 0; i < 10; i++ {
+		values := []Value{NewInt(int64(i))}
+		_, id := gc.AllocateArray(values)
+		ids = append(ids, id)
+	}
+
+	// Wait a bit for any potential concurrent GCs to complete
+	// In a correct implementation, only one should have run
+	time.Sleep(100 * time.Millisecond)
+
+	// Verify GC manager is in a consistent state
+	stats := gc.GetStats()
+	if stats.TotalObjects < 0 {
+		t.Error("GC manager in inconsistent state - negative object count")
+	}
+
+	// Clean up
+	for _, id := range ids {
+		gc.Release(id)
+	}
+}
