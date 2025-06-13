@@ -100,7 +100,7 @@ func convertGoValueToC(val runtime.Value) C.CValue {
 // convertGoValueToCPtr converts a Go runtime.Value to a pointer to C Value
 // This allocates memory that the caller must free
 func convertGoValueToCPtr(val runtime.Value) *C.CValue {
-	cval := (*C.CValue)(C.malloc(C.size_t(unsafe.Sizeof(C.CValue{}))))
+	cval := (*C.CValue)(C.calloc(1, C.size_t(unsafe.Sizeof(C.CValue{}))))
 	
 	switch val.Type {
 	case runtime.ValueTypeInt:
