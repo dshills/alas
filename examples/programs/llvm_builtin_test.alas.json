@@ -1,0 +1,62 @@
+{
+  "type": "module",
+  "name": "llvm_builtin_test",
+  "functions": [
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "void",
+      "body": [
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "Testing LLVM builtin support!"
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "x",
+          "value": {
+            "type": "literal",
+            "value": 16.0
+          }
+        },
+        {
+          "type": "assign",
+          "target": "result",
+          "value": {
+            "type": "builtin",
+            "name": "math.sqrt",
+            "args": [
+              {
+                "type": "variable",
+                "name": "x"
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "variable",
+                "name": "result"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
