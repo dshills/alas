@@ -309,6 +309,17 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 			}
 		}
 
+	case ast.ExprBuiltin:
+		if expr.Name == "" {
+			return fmt.Errorf("builtin call expression must have a function name")
+		}
+		// Validate arguments
+		for i, arg := range expr.Args {
+			if err := v.validateExpression(&arg, scope); err != nil {
+				return fmt.Errorf("builtin call argument %d: %v", i, err)
+			}
+		}
+
 	default:
 		return fmt.Errorf("unknown expression type: %s", expr.Type)
 	}

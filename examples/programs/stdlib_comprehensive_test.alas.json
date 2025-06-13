@@ -1,0 +1,251 @@
+{
+  "type": "module",
+  "name": "stdlib_comprehensive_test",
+  "imports": [],
+  "functions": [
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "void",
+      "body": [
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "=== ALaS Standard Library Test ===\n"
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "numbers",
+          "value": {
+            "type": "array_literal",
+            "elements": [
+              {"type": "literal", "value": 1},
+              {"type": "literal", "value": 2},
+              {"type": "literal", "value": 3}
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "array_length",
+          "value": {
+            "type": "builtin",
+            "name": "collections.length",
+            "args": [
+              {
+                "type": "variable",
+                "name": "numbers"
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "Array length: "
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "variable",
+                "name": "array_length"
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "text",
+          "value": {
+            "type": "literal",
+            "value": "hello world"
+          }
+        },
+        {
+          "type": "assign",
+          "target": "text_upper",
+          "value": {
+            "type": "builtin",
+            "name": "string.toUpper",
+            "args": [
+              {
+                "type": "variable",
+                "name": "text"
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "\nOriginal: "
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "variable",
+                "name": "text"
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "\nUppercase: "
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "variable",
+                "name": "text_upper"
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "max_result",
+          "value": {
+            "type": "builtin",
+            "name": "math.max",
+            "args": [
+              {
+                "type": "literal",
+                "value": 5.5
+              },
+              {
+                "type": "literal",
+                "value": 3.2
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "\nmax(5.5, 3.2) = "
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "variable",
+                "name": "max_result"
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "type_info",
+          "value": {
+            "type": "builtin",
+            "name": "type.typeOf",
+            "args": [
+              {
+                "type": "literal",
+                "value": 42
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "\ntype of 42: "
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "variable",
+                "name": "type_info"
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "\n=== Test Complete ===\n"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
