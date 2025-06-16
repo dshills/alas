@@ -1,5 +1,5 @@
-- Insure all tests pass if failing for items unrelated to current work update TASK.md with the issues
-- Insure all linter tests pass if  failing for items unrelated to current work update TASK.md with the issues
+- Ensure all tests pass if failing for items unrelated to current work update TASK.md with the issues
+- Ensure all linter tests pass if  failing for items unrelated to current work update TASK.md with the issues
 - Check if README.md needs updating for this change
 - Update TASK.md if working from the task list
 - If currently in main branch create a new branch.
