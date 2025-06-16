@@ -19,7 +19,8 @@ type Interpreter struct {
 	exportedFuncs map[string]map[string]*ast.Function // module -> function name -> function
 	moduleLoader  ModuleLoader
 	stdlib        *stdlib.Registry
-	importMap     map[string]string // maps import alias to actual module name
+	importMap     map[string]string              // maps import alias to actual module name
+	customTypes   map[string]*ast.TypeDefinition // type name -> type definition
 }
 
 // ModuleLoader defines the interface for loading modules.
@@ -85,6 +86,7 @@ func New() *Interpreter {
 		moduleLoader:  NewFileModuleLoader(searchPaths),
 		stdlib:        stdlib.NewRegistry(),
 		importMap:     make(map[string]string),
+		customTypes:   make(map[string]*ast.TypeDefinition),
 	}
 }
 
@@ -97,6 +99,7 @@ func NewWithLoader(loader ModuleLoader) *Interpreter {
 		moduleLoader:  loader,
 		stdlib:        stdlib.NewRegistry(),
 		importMap:     make(map[string]string),
+		customTypes:   make(map[string]*ast.TypeDefinition),
 	}
 }
 
@@ -144,6 +147,12 @@ func (i *Interpreter) LoadModuleWithDependencies(module *ast.Module) error {
 
 	// Now load the current module
 	i.modules[module.Name] = module
+
+	// Register custom types
+	for idx := range module.Types {
+		typeDef := &module.Types[idx]
+		i.customTypes[typeDef.Name] = typeDef
+	}
 
 	// Register all functions in global namespace (for local calls)
 	for idx := range module.Functions {
@@ -536,8 +545,16 @@ func (i *Interpreter) evaluateExpression(expr *ast.Expression, env *Environment)
 
 		return i.stdlib.Call(expr.Name, args)
 
+	case ast.ExprField:
+		// Evaluate field access (object.field)
+		object, err := i.evaluateExpression(expr.Object, env)
+		if err != nil {
+			return runtime.NewVoid(), err
+		}
+		return i.evaluateFieldAccess(object, expr.Field)
+
 	default:
-		return runtime.NewVoid(), fmt.Errorf("unknown expression type: %s", expr.Type)
+		return runtime.NewVoid(), fmt.Errorf("unknown expression type: %s (available types: literal, variable, binary, unary, call, array_literal, map_literal, index, module_call, builtin, field)", expr.Type)
 	}
 }
 
@@ -808,5 +825,28 @@ func (i *Interpreter) evaluateIndexAccess(object, index runtime.Value) (runtime.
 		return runtime.NewVoid(), fmt.Errorf("cannot index into %v", object.Type)
 	default:
 		return runtime.NewVoid(), fmt.Errorf("cannot index into %v", object.Type)
+	}
+}
+
+// evaluateFieldAccess handles field access on objects (maps).
+func (i *Interpreter) evaluateFieldAccess(object runtime.Value, field string) (runtime.Value, error) {
+	switch object.Type {
+	case runtime.ValueTypeMap:
+		m, err := object.AsMap()
+		if err != nil {
+			return runtime.NewVoid(), err
+		}
+
+		if val, ok := m[field]; ok {
+			return val, nil
+		}
+
+		return runtime.NewVoid(), fmt.Errorf("field not found: %s", field)
+
+	case runtime.ValueTypeInt, runtime.ValueTypeFloat, runtime.ValueTypeString,
+		runtime.ValueTypeBool, runtime.ValueTypeArray, runtime.ValueTypeVoid:
+		return runtime.NewVoid(), fmt.Errorf("cannot access field on %v", object.Type)
+	default:
+		return runtime.NewVoid(), fmt.Errorf("cannot access field on %v", object.Type)
 	}
 }

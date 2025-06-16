@@ -7,7 +7,7 @@ type Module struct {
 	Exports   []string               `json:"exports,omitempty"`
 	Imports   []string               `json:"imports,omitempty"`
 	Functions []Function             `json:"functions"`
-	Types     []interface{}          `json:"types,omitempty"`
+	Types     []TypeDefinition       `json:"types,omitempty"`
 	Meta      map[string]interface{} `json:"meta,omitempty"`
 }
 
@@ -60,6 +60,25 @@ type Expression struct {
 type MapPair struct {
 	Key   Expression `json:"key"`
 	Value Expression `json:"value"`
+}
+
+// TypeDefinition represents a custom type definition.
+type TypeDefinition struct {
+	Name       string            `json:"name"`
+	Definition TypeDefinitionDef `json:"definition"`
+}
+
+// TypeDefinitionDef represents the definition of a custom type.
+type TypeDefinitionDef struct {
+	Kind   string      `json:"kind"` // "struct" or "enum"
+	Fields []TypeField `json:"fields,omitempty"`
+	Values []string    `json:"values,omitempty"`
+}
+
+// TypeField represents a field in a struct type.
+type TypeField struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
 }
 
 // Statement types.
@@ -119,4 +138,10 @@ const (
 	TypeArray  = "array"
 	TypeMap    = "map"
 	TypeVoid   = "void"
+)
+
+// Custom type kinds.
+const (
+	TypeKindStruct = "struct"
+	TypeKindEnum   = "enum"
 )

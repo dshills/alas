@@ -261,7 +261,7 @@ func TestValidateFunction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := New()
-			err := v.validateFunction(&tt.fn)
+			err := v.validateFunction(&tt.fn, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("validateFunction() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -425,7 +425,7 @@ func TestValidateStatement(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := New()
-			err := v.validateStatement(&tt.stmt, tt.scope)
+			err := v.validateStatement(&tt.stmt, tt.scope, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("validateStatement() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -707,7 +707,7 @@ func TestValidateExpression(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := New()
-			err := v.validateExpression(&tt.expr, tt.scope)
+			err := v.validateExpression(&tt.expr, tt.scope, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("validateExpression() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -781,12 +781,12 @@ func TestHelperFunctions(t *testing.T) {
 			ast.TypeArray, ast.TypeMap, ast.TypeVoid, "CustomType",
 		}
 		for _, typ := range validTypes {
-			if !isValidType(typ) {
+			if !isValidType(typ, nil) {
 				t.Errorf("isValidType(%s) = false, want true", typ)
 			}
 		}
 
-		if isValidType("") {
+		if isValidType("", nil) {
 			t.Error("isValidType('') = true, want false")
 		}
 	})
@@ -1037,5 +1037,430 @@ func TestScopeManagement(t *testing.T) {
 	err := v.ValidateModule(&module)
 	if err != nil {
 		t.Errorf("Scope management test failed: %v", err)
+	}
+}
+
+func TestValidateCustomTypes(t *testing.T) {
+	tests := []struct {
+		name    string
+		module  *ast.Module
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid struct type",
+			module: &ast.Module{
+				Type: "module",
+				Name: "test_module",
+				Types: []ast.TypeDefinition{
+					{
+						Name: "Person",
+						Definition: ast.TypeDefinitionDef{
+							Kind: ast.TypeKindStruct,
+							Fields: []ast.TypeField{
+								{Name: "name", Type: "string"},
+								{Name: "age", Type: "int"},
+							},
+						},
+					},
+				},
+				Functions: []ast.Function{
+					{
+						Type:    "function",
+						Name:    "main",
+						Params:  []ast.Parameter{},
+						Returns: "int",
+						Body:    []ast.Statement{},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid enum type",
+			module: &ast.Module{
+				Type: "module",
+				Name: "test_module",
+				Types: []ast.TypeDefinition{
+					{
+						Name: "Status",
+						Definition: ast.TypeDefinitionDef{
+							Kind:   ast.TypeKindEnum,
+							Values: []string{"active", "inactive", "pending"},
+						},
+					},
+				},
+				Functions: []ast.Function{
+					{
+						Type:    "function",
+						Name:    "main",
+						Params:  []ast.Parameter{},
+						Returns: "int",
+						Body:    []ast.Statement{},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "struct with duplicate field names",
+			module: &ast.Module{
+				Type: "module",
+				Name: "test_module",
+				Types: []ast.TypeDefinition{
+					{
+						Name: "Person",
+						Definition: ast.TypeDefinitionDef{
+							Kind: ast.TypeKindStruct,
+							Fields: []ast.TypeField{
+								{Name: "name", Type: "string"},
+								{Name: "name", Type: "int"},
+							},
+						},
+					},
+				},
+				Functions: []ast.Function{
+					{
+						Type:    "function",
+						Name:    "main",
+						Params:  []ast.Parameter{},
+						Returns: "int",
+						Body:    []ast.Statement{},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "duplicate field name: name",
+		},
+		{
+			name: "enum with duplicate values",
+			module: &ast.Module{
+				Type: "module",
+				Name: "test_module",
+				Types: []ast.TypeDefinition{
+					{
+						Name: "Status",
+						Definition: ast.TypeDefinitionDef{
+							Kind:   ast.TypeKindEnum,
+							Values: []string{"active", "inactive", "active"},
+						},
+					},
+				},
+				Functions: []ast.Function{
+					{
+						Type:    "function",
+						Name:    "main",
+						Params:  []ast.Parameter{},
+						Returns: "int",
+						Body:    []ast.Statement{},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "duplicate enum value: active",
+		},
+		{
+			name: "empty struct",
+			module: &ast.Module{
+				Type: "module",
+				Name: "test_module",
+				Types: []ast.TypeDefinition{
+					{
+						Name: "Empty",
+						Definition: ast.TypeDefinitionDef{
+							Kind:   ast.TypeKindStruct,
+							Fields: []ast.TypeField{},
+						},
+					},
+				},
+				Functions: []ast.Function{
+					{
+						Type:    "function",
+						Name:    "main",
+						Params:  []ast.Parameter{},
+						Returns: "int",
+						Body:    []ast.Statement{},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "struct type 'Empty' must have at least one field",
+		},
+		{
+			name: "empty enum",
+			module: &ast.Module{
+				Type: "module",
+				Name: "test_module",
+				Types: []ast.TypeDefinition{
+					{
+						Name: "Empty",
+						Definition: ast.TypeDefinitionDef{
+							Kind:   ast.TypeKindEnum,
+							Values: []string{},
+						},
+					},
+				},
+				Functions: []ast.Function{
+					{
+						Type:    "function",
+						Name:    "main",
+						Params:  []ast.Parameter{},
+						Returns: "int",
+						Body:    []ast.Statement{},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "enum type 'Empty' must have at least one value",
+		},
+		{
+			name: "function using custom type",
+			module: &ast.Module{
+				Type: "module",
+				Name: "test_module",
+				Types: []ast.TypeDefinition{
+					{
+						Name: "Person",
+						Definition: ast.TypeDefinitionDef{
+							Kind: ast.TypeKindStruct,
+							Fields: []ast.TypeField{
+								{Name: "name", Type: "string"},
+								{Name: "age", Type: "int"},
+							},
+						},
+					},
+				},
+				Functions: []ast.Function{
+					{
+						Type: "function",
+						Name: "createPerson",
+						Params: []ast.Parameter{
+							{Name: "name", Type: "string"},
+							{Name: "age", Type: "int"},
+						},
+						Returns: "Person",
+						Body: []ast.Statement{
+							{
+								Type: ast.StmtReturn,
+								Value: &ast.Expression{
+									Type: ast.ExprMapLit,
+									Pairs: []ast.MapPair{
+										{
+											Key:   ast.Expression{Type: ast.ExprLiteral, Value: "name"},
+											Value: ast.Expression{Type: ast.ExprVariable, Name: "name"},
+										},
+										{
+											Key:   ast.Expression{Type: ast.ExprLiteral, Value: "age"},
+											Value: ast.Expression{Type: ast.ExprVariable, Name: "age"},
+										},
+									},
+								},
+							},
+						},
+					},
+					{
+						Type:    "function",
+						Name:    "main",
+						Params:  []ast.Parameter{},
+						Returns: "int",
+						Body:    []ast.Statement{},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "duplicate type names",
+			module: &ast.Module{
+				Type: "module",
+				Name: "test_module",
+				Types: []ast.TypeDefinition{
+					{
+						Name: "Person",
+						Definition: ast.TypeDefinitionDef{
+							Kind: ast.TypeKindStruct,
+							Fields: []ast.TypeField{
+								{Name: "name", Type: "string"},
+							},
+						},
+					},
+					{
+						Name: "Person",
+						Definition: ast.TypeDefinitionDef{
+							Kind:   ast.TypeKindEnum,
+							Values: []string{"active"},
+						},
+					},
+				},
+				Functions: []ast.Function{
+					{
+						Type:    "function",
+						Name:    "main",
+						Params:  []ast.Parameter{},
+						Returns: "int",
+						Body:    []ast.Statement{},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "duplicate type name: Person",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := New()
+			err := v.ValidateModule(tt.module)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateModule() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if err != nil && tt.errMsg != "" && err.Error() != tt.errMsg {
+				// Check if error contains the expected message
+				if !strings.Contains(err.Error(), tt.errMsg) {
+					t.Errorf("ValidateModule() error = %v, want error containing %v", err, tt.errMsg)
+				}
+			}
+		})
+	}
+}
+
+func TestValidateFieldExpression(t *testing.T) {
+	tests := []struct {
+		name    string
+		module  *ast.Module
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid field access",
+			module: &ast.Module{
+				Type: "module",
+				Name: "test_module",
+				Functions: []ast.Function{
+					{
+						Type:    "function",
+						Name:    "test",
+						Params:  []ast.Parameter{},
+						Returns: "int",
+						Body: []ast.Statement{
+							{
+								Type:   ast.StmtAssign,
+								Target: "obj",
+								Value: &ast.Expression{
+									Type: ast.ExprMapLit,
+									Pairs: []ast.MapPair{
+										{
+											Key:   ast.Expression{Type: ast.ExprLiteral, Value: "age"},
+											Value: ast.Expression{Type: ast.ExprLiteral, Value: 25},
+										},
+									},
+								},
+							},
+							{
+								Type:   ast.StmtAssign,
+								Target: "age_value",
+								Value: &ast.Expression{
+									Type:   ast.ExprField,
+									Object: &ast.Expression{Type: ast.ExprVariable, Name: "obj"},
+									Field:  "age",
+								},
+							},
+							{
+								Type: ast.StmtReturn,
+								Value: &ast.Expression{
+									Type: ast.ExprVariable,
+									Name: "age_value",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "field access without object",
+			module: &ast.Module{
+				Type: "module",
+				Name: "test_module",
+				Functions: []ast.Function{
+					{
+						Type:    "function",
+						Name:    "test",
+						Params:  []ast.Parameter{},
+						Returns: "int",
+						Body: []ast.Statement{
+							{
+								Type:   ast.StmtAssign,
+								Target: "result",
+								Value: &ast.Expression{
+									Type:   ast.ExprField,
+									Object: nil,
+									Field:  "age",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "field expression must have an object",
+		},
+		{
+			name: "field access without field name",
+			module: &ast.Module{
+				Type: "module",
+				Name: "test_module",
+				Functions: []ast.Function{
+					{
+						Type:    "function",
+						Name:    "test",
+						Params:  []ast.Parameter{},
+						Returns: "int",
+						Body: []ast.Statement{
+							{
+								Type:   ast.StmtAssign,
+								Target: "obj",
+								Value: &ast.Expression{
+									Type: ast.ExprMapLit,
+									Pairs: []ast.MapPair{
+										{
+											Key:   ast.Expression{Type: ast.ExprLiteral, Value: "age"},
+											Value: ast.Expression{Type: ast.ExprLiteral, Value: 25},
+										},
+									},
+								},
+							},
+							{
+								Type:   ast.StmtAssign,
+								Target: "result",
+								Value: &ast.Expression{
+									Type:   ast.ExprField,
+									Object: &ast.Expression{Type: ast.ExprVariable, Name: "obj"},
+									Field:  "",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "field expression must have a field name",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := New()
+			err := v.ValidateModule(tt.module)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateModule() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if err != nil && tt.errMsg != "" {
+				if !strings.Contains(err.Error(), tt.errMsg) {
+					t.Errorf("ValidateModule() error = %v, want error containing %v", err, tt.errMsg)
+				}
+			}
+		})
 	}
 }
