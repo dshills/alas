@@ -716,9 +716,9 @@ func (g *LLVMCodegen) generateMapLiteral(expr *ast.Expression) (value.Value, err
 	
 	pairCount := len(expr.Pairs)
 	
-	// Define a key-value pair struct type {i64 key, i64 value}
-	// In a real implementation, this would be more generic
-	kvPairType := types.NewStruct(types.I64, types.I64)
+	// Define a key-value pair struct type {i8* key, i8* value}
+	// Using i8* (char*) pointers to handle both strings and boxed values
+	kvPairType := types.NewStruct(types.I8Ptr, types.I8Ptr)
 	
 	// Allocate array of pairs
 	pairsAlloca := g.builder.NewAlloca(types.NewArray(uint64(pairCount), kvPairType))
@@ -744,14 +744,23 @@ func (g *LLVMCodegen) generateMapLiteral(expr *ast.Expression) (value.Value, err
 			constant.NewInt(types.I32, int64(i)),
 		)
 		
-		// Store key
+		// Convert key to string pointer if needed
 		keyPtr := g.builder.NewGetElementPtr(
 			kvPairType,
 			pairPtr,
 			constant.NewInt(types.I32, 0),
 			constant.NewInt(types.I32, 0),
 		)
-		g.builder.NewStore(key, keyPtr)
+		
+		// Ensure key is a pointer type (string or boxed value)
+		keyAsPtr := key
+		if key.Type() != types.I8Ptr {
+			// Box the key value into a heap allocation
+			keyAlloca := g.builder.NewAlloca(key.Type())
+			g.builder.NewStore(key, keyAlloca)
+			keyAsPtr = g.builder.NewBitCast(keyAlloca, types.I8Ptr)
+		}
+		g.builder.NewStore(keyAsPtr, keyPtr)
 		
 		// Store value
 		valPtr := g.builder.NewGetElementPtr(
@@ -760,7 +769,16 @@ func (g *LLVMCodegen) generateMapLiteral(expr *ast.Expression) (value.Value, err
 			constant.NewInt(types.I32, 0),
 			constant.NewInt(types.I32, 1),
 		)
-		g.builder.NewStore(val, valPtr)
+		
+		// Ensure value is a pointer type
+		valAsPtr := val
+		if val.Type() != types.I8Ptr {
+			// Box the value into a heap allocation
+			valAlloca := g.builder.NewAlloca(val.Type())
+			g.builder.NewStore(val, valAlloca)
+			valAsPtr = g.builder.NewBitCast(valAlloca, types.I8Ptr)
+		}
+		g.builder.NewStore(valAsPtr, valPtr)
 	}
 	
 	// For now, just return the pointer to the pairs array
