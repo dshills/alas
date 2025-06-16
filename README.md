@@ -665,6 +665,8 @@ Current implementation includes:
 - ✅ Standard library runtime implementation (6 core modules)
 - ✅ Plugin system with security and multi-type support
 - ✅ Comprehensive test suite with optimization testing
+- ✅ Runtime garbage collection for arrays/maps (reference counting)
+- ✅ LLVM backend support for builtin expressions (standard library in compiled code)
 
 Recent additions:
 - ✅ **LLVM IR Optimization System** - Complete multi-level optimization framework
@@ -687,13 +689,33 @@ Recent additions:
   - **std.string**: String manipulation with split/join/replace
   - **std.type**: Type checking and conversion utilities
   - **std.result**: Structured error handling pattern
+- ✅ **Runtime Garbage Collection** - Reference counting GC for arrays and maps
+  - **Reference Counting**: Automatic memory management with retain/release
+  - **Nested Object Support**: Proper cleanup of nested arrays/maps
+  - **Automatic Cleanup**: Variables release old values on reassignment
+  - **Function Cleanup**: Local GC objects released on function return
+  - **GC Threshold**: Automatic collection when object count exceeds limit
+- ✅ **LLVM Builtin Support** - Standard library functions in compiled code
+  - **I/O Functions**: io.print
+  - **Math Functions**: math.sqrt, math.abs
+  - **Collection Functions**: collections.length
+  - **String Functions**: string.toUpper
+  - **Type Functions**: type.typeOf
 
-Future work:
-- ⏳ Runtime garbage collection for arrays/maps
-- ⏳ LLVM backend support for builtin expressions (standard library in compiled code)
-- ⏳ std.async module implementation
-- ⏳ Plugin marketplace and hot reloading
-- ⏳ Additional optimization passes (vectorization, dead store elimination)
+Future work (Priority order):
+- ⏳ **std.async module implementation** - Concurrent/async programming support
+  - Module specification exists but runtime implementation pending
+  - Functions defined: spawn, await, parallel, race, sleep, timeout, cancel
+- ⏳ **Plugin marketplace and hot reloading** - Dynamic plugin management
+  - Hot reload capability for development
+  - Remote plugin repository and marketplace
+  - Automated plugin installation/updates
+- ⏳ **Additional optimization passes** - Advanced compiler optimizations
+  - Vectorization/auto-vectorization for SIMD operations
+  - Dead store elimination (DSE)
+  - Loop unrolling
+  - Global value numbering
+  - Instruction combining
 
 ## License
 
