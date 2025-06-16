@@ -1,4 +1,4 @@
-.PHONY: all build test clean validate-example run-example build-stdlib compile-to-native run-compiled compare-output
+.PHONY: all build test test-verbose clean validate-example run-example build-stdlib compile-to-native run-compiled compare-output
 
 # Build all binaries
 all: build
@@ -15,8 +15,19 @@ build-stdlib:
 	go build -buildmode=c-shared -o lib/libalas_stdlib.so ./cmd/alas-stdlib
 	@echo "Built shared library: lib/libalas_stdlib.so"
 
-# Run tests
+# Run tests (showing only failures)
 test:
+	@echo "Running tests..."
+	@if go test ./tests/... > /tmp/test_output.txt 2>&1; then \
+		echo "✓ All tests passed"; \
+	else \
+		echo "✗ Tests failed:"; \
+		grep -E "^--- FAIL:|^\s+.*_test\.go:|^FAIL" /tmp/test_output.txt || cat /tmp/test_output.txt; \
+		exit 1; \
+	fi
+
+# Run tests with verbose output
+test-verbose:
 	go test ./tests/... -v
 
 # Clean build artifacts
