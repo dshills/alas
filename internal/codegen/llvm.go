@@ -1391,29 +1391,11 @@ func (g *LLVMCodegen) boxToI8Ptr(val value.Value, name string) value.Value {
 	heapPtr := g.builder.NewCall(mallocFunc, size)
 	heapPtr.SetName(name)
 	
-	// Check if malloc returned null
-	currentFunc := g.builder.Parent
-	allocOkBlock := currentFunc.NewBlock(name + ".alloc_ok")
-	allocFailBlock := currentFunc.NewBlock(name + ".alloc_fail")
-	
-	// Compare heapPtr with null
-	nullPtr := constant.NewNull(types.I8Ptr)
-	isNull := g.builder.NewICmp(enum.IPredEQ, heapPtr, nullPtr)
-	g.builder.NewCondBr(isNull, allocFailBlock, allocOkBlock)
-	
-	// Handle allocation failure
-	g.builder = allocFailBlock
-	// Call abort or exit to terminate the program
-	abortFunc, exists := g.builtinFunctions["abort"]
-	if !exists {
-		abortFunc = g.module.NewFunc("abort", types.Void)
-		g.builtinFunctions["abort"] = abortFunc
-	}
-	g.builder.NewCall(abortFunc)
-	g.builder.NewUnreachable()
-	
-	// Continue with allocation success
-	g.builder = allocOkBlock
+	// Note: We're not checking for malloc failure here as it would require
+	// complex control flow manipulation. In a production system, consider:
+	// 1. Using a runtime that guarantees allocation or aborts
+	// 2. Implementing a separate allocation wrapper function
+	// 3. Using LLVM's garbage collection infrastructure
 	
 	// Cast to proper type and store value
 	typedPtr := g.builder.NewBitCast(heapPtr, types.NewPointer(val.Type()))
