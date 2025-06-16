@@ -11,6 +11,10 @@ import (
 
 // registerMathFunctions registers all std.math builtin functions.
 func (r *Registry) registerMathFunctions() {
+	// Constants
+	r.Register("math.PI", mathPI)
+	r.Register("math.E", mathE)
+
 	// Basic operations
 	r.Register("math.abs", mathAbs)
 	r.Register("math.min", mathMin)
@@ -53,6 +57,22 @@ func validateTwoFloatArgs(args []runtime.Value, funcName string) (float64, float
 	}
 
 	return a, b, nil
+}
+
+// mathPI implements math.PI builtin function (returns PI constant).
+func mathPI(args []runtime.Value) (runtime.Value, error) {
+	if len(args) != 0 {
+		return runtime.NewVoid(), fmt.Errorf("math.PI expects 0 arguments, got %d", len(args))
+	}
+	return runtime.NewFloat(math.Pi), nil
+}
+
+// mathE implements math.E builtin function (returns E constant).
+func mathE(args []runtime.Value) (runtime.Value, error) {
+	if len(args) != 0 {
+		return runtime.NewVoid(), fmt.Errorf("math.E expects 0 arguments, got %d", len(args))
+	}
+	return runtime.NewFloat(math.E), nil
 }
 
 // mathAbs implements math.abs builtin function.

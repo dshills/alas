@@ -250,6 +250,14 @@ func (i *Interpreter) Run(functionName string, args []runtime.Value) (runtime.Va
 
 // RunModuleFunction executes a function from a specific module.
 func (i *Interpreter) RunModuleFunction(moduleName, functionName string, args []runtime.Value) (runtime.Value, error) {
+	// For std.* modules, try builtin functions first
+	if strings.HasPrefix(moduleName, "std.") {
+		builtinName := strings.TrimPrefix(moduleName, "std.") + "." + functionName
+		if i.stdlib.HasFunction(builtinName) {
+			return i.stdlib.Call(builtinName, args)
+		}
+	}
+
 	// Resolve module name through import map
 	actualModuleName := moduleName
 	if mapped, exists := i.importMap[moduleName]; exists {
