@@ -1,0 +1,296 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://alas-lang.org/schemas/v0.1/program.json",
+  "title": "ALaS Program Schema",
+  "type": "object",
+  "required": ["type", "name", "functions"],
+  "properties": {
+    "type": {
+      "const": "module"
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+    },
+    "exports": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "imports": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "functions": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/function"}
+    },
+    "types": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/type"}
+    },
+    "meta": {
+      "type": "object"
+    }
+  },
+  "definitions": {
+    "function": {
+      "type": "object",
+      "required": ["type", "name", "params", "returns", "body"],
+      "properties": {
+        "type": {"const": "function"},
+        "name": {"type": "string"},
+        "params": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "type"],
+            "properties": {
+              "name": {"type": "string"},
+              "type": {"type": "string"}
+            }
+          }
+        },
+        "returns": {"type": "string"},
+        "body": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/statement"}
+        }
+      }
+    },
+    "type": {
+      "type": "object",
+      "required": ["name", "definition"],
+      "properties": {
+        "name": {"type": "string"},
+        "definition": {
+          "type": "object"
+        }
+      }
+    },
+    "statement": {
+      "type": "object",
+      "required": ["type"],
+      "oneOf": [
+        {"$ref": "#/definitions/assignStatement"},
+        {"$ref": "#/definitions/ifStatement"},
+        {"$ref": "#/definitions/whileStatement"},
+        {"$ref": "#/definitions/forStatement"},
+        {"$ref": "#/definitions/returnStatement"},
+        {"$ref": "#/definitions/exprStatement"}
+      ]
+    },
+    "assignStatement": {
+      "type": "object",
+      "required": ["type", "target", "value"],
+      "properties": {
+        "type": {"const": "assign"},
+        "target": {"type": "string"},
+        "value": {"$ref": "#/definitions/expression"}
+      }
+    },
+    "ifStatement": {
+      "type": "object",
+      "required": ["type", "cond", "then"],
+      "properties": {
+        "type": {"const": "if"},
+        "cond": {"$ref": "#/definitions/expression"},
+        "then": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/statement"}
+        },
+        "else": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/statement"}
+        }
+      }
+    },
+    "whileStatement": {
+      "type": "object",
+      "required": ["type", "cond", "body"],
+      "properties": {
+        "type": {"const": "while"},
+        "cond": {"$ref": "#/definitions/expression"},
+        "body": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/statement"}
+        }
+      }
+    },
+    "forStatement": {
+      "type": "object",
+      "required": ["type", "cond", "body"],
+      "properties": {
+        "type": {"const": "for"},
+        "cond": {"$ref": "#/definitions/expression"},
+        "body": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/statement"}
+        }
+      }
+    },
+    "returnStatement": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"const": "return"},
+        "value": {"$ref": "#/definitions/expression"}
+      }
+    },
+    "exprStatement": {
+      "type": "object",
+      "required": ["type", "value"],
+      "properties": {
+        "type": {"const": "expr"},
+        "value": {"$ref": "#/definitions/expression"}
+      }
+    },
+    "expression": {
+      "type": "object",
+      "required": ["type"],
+      "oneOf": [
+        {"$ref": "#/definitions/literal"},
+        {"$ref": "#/definitions/variable"},
+        {"$ref": "#/definitions/binary"},
+        {"$ref": "#/definitions/unary"},
+        {"$ref": "#/definitions/call"},
+        {"$ref": "#/definitions/moduleCall"},
+        {"$ref": "#/definitions/builtin"},
+        {"$ref": "#/definitions/arrayLiteral"},
+        {"$ref": "#/definitions/mapLiteral"},
+        {"$ref": "#/definitions/index"},
+        {"$ref": "#/definitions/field"}
+      ]
+    },
+    "literal": {
+      "type": "object",
+      "required": ["type", "value"],
+      "properties": {
+        "type": {"const": "literal"},
+        "value": {
+          "oneOf": [
+            {"type": "number"},
+            {"type": "string"},
+            {"type": "boolean"}
+          ]
+        }
+      }
+    },
+    "variable": {
+      "type": "object",
+      "required": ["type", "name"],
+      "properties": {
+        "type": {"const": "variable"},
+        "name": {"type": "string"}
+      }
+    },
+    "binary": {
+      "type": "object",
+      "required": ["type", "op", "left", "right"],
+      "properties": {
+        "type": {"const": "binary"},
+        "op": {
+          "type": "string",
+          "enum": ["+", "-", "*", "/", "%", "==", "!=", "<", "<=", ">", ">=", "&&", "||"]
+        },
+        "left": {"$ref": "#/definitions/expression"},
+        "right": {"$ref": "#/definitions/expression"}
+      }
+    },
+    "unary": {
+      "type": "object",
+      "required": ["type", "op", "operand"],
+      "properties": {
+        "type": {"const": "unary"},
+        "op": {
+          "type": "string",
+          "enum": ["!", "-"]
+        },
+        "operand": {"$ref": "#/definitions/expression"}
+      }
+    },
+    "call": {
+      "type": "object",
+      "required": ["type", "name", "args"],
+      "properties": {
+        "type": {"const": "call"},
+        "name": {"type": "string"},
+        "args": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/expression"}
+        }
+      }
+    },
+    "moduleCall": {
+      "type": "object",
+      "required": ["type", "module", "name", "args"],
+      "properties": {
+        "type": {"const": "module_call"},
+        "module": {"type": "string"},
+        "name": {"type": "string"},
+        "args": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/expression"}
+        }
+      }
+    },
+    "builtin": {
+      "type": "object",
+      "required": ["type", "name", "args"],
+      "properties": {
+        "type": {"const": "builtin"},
+        "name": {"type": "string"},
+        "args": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/expression"}
+        }
+      }
+    },
+    "arrayLiteral": {
+      "type": "object",
+      "required": ["type", "elements"],
+      "properties": {
+        "type": {"const": "array_literal"},
+        "elements": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/expression"}
+        }
+      }
+    },
+    "mapLiteral": {
+      "type": "object",
+      "required": ["type", "pairs"],
+      "properties": {
+        "type": {"const": "map_literal"},
+        "pairs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["key", "value"],
+            "properties": {
+              "key": {"$ref": "#/definitions/expression"},
+              "value": {"$ref": "#/definitions/expression"}
+            }
+          }
+        }
+      }
+    },
+    "index": {
+      "type": "object",
+      "required": ["type", "object", "index"],
+      "properties": {
+        "type": {"const": "index"},
+        "object": {"$ref": "#/definitions/expression"},
+        "index": {"$ref": "#/definitions/expression"}
+      }
+    },
+    "field": {
+      "type": "object",
+      "required": ["type", "object", "field"],
+      "properties": {
+        "type": {"const": "field"},
+        "object": {"$ref": "#/definitions/expression"},
+        "field": {"type": "string"}
+      }
+    }
+  }
+}

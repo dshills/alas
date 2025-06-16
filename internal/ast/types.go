@@ -53,6 +53,7 @@ type Expression struct {
 	Pairs    []MapPair    `json:"pairs,omitempty"`    // For map literals
 	Index    *Expression  `json:"index,omitempty"`    // For indexing operations
 	Object   *Expression  `json:"object,omitempty"`   // For field/index access
+	Field    string       `json:"field,omitempty"`    // For field access
 }
 
 // MapPair represents a key-value pair in a map literal.

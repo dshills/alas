@@ -1,0 +1,88 @@
+{
+  "type": "module",
+  "name": "unary_demo",
+  "functions": [
+    {
+      "type": "function",
+      "name": "test_negation",
+      "params": [
+        {"name": "x", "type": "int"}
+      ],
+      "returns": "int",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "unary",
+            "op": "-",
+            "operand": {"type": "variable", "name": "x"}
+          }
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "test_logical_not",
+      "params": [
+        {"name": "flag", "type": "bool"}
+      ],
+      "returns": "bool",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "unary",
+            "op": "!",
+            "operand": {"type": "variable", "name": "flag"}
+          }
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "int",
+      "body": [
+        {
+          "type": "assign",
+          "target": "result1",
+          "value": {
+            "type": "call",
+            "name": "test_negation",
+            "args": [{"type": "literal", "value": 42}]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [{"type": "variable", "name": "result1"}]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "result2",
+          "value": {
+            "type": "call",
+            "name": "test_logical_not",
+            "args": [{"type": "literal", "value": true}]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [{"type": "variable", "name": "result2"}]
+          }
+        },
+        {
+          "type": "return",
+          "value": {"type": "literal", "value": 0}
+        }
+      ]
+    }
+  ]
+}
