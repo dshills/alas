@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// TaskStatus represents the status of an async task
+// TaskStatus represents the status of an async task.
 type TaskStatus string
 
 const (
@@ -16,10 +16,10 @@ const (
 	TaskStatusRunning   TaskStatus = "running"
 	TaskStatusCompleted TaskStatus = "completed"
 	TaskStatusFailed    TaskStatus = "failed"
-	TaskStatusCancelled TaskStatus = "cancelled"
+	TaskStatusCanceled TaskStatus = "canceled"
 )
 
-// Task represents an async task in ALaS
+// Task represents an async task in ALaS.
 type Task struct {
 	ID       string
 	Status   TaskStatus
@@ -30,7 +30,7 @@ type Task struct {
 	mu       sync.RWMutex
 }
 
-// AsyncManager manages async tasks
+// AsyncManager manages async tasks.
 type AsyncManager struct {
 	tasks    map[string]*Task
 	mu       sync.RWMutex
@@ -41,14 +41,14 @@ var (
 	globalAsyncManager = NewAsyncManager()
 )
 
-// NewAsyncManager creates a new async manager
+// NewAsyncManager creates a new async manager.
 func NewAsyncManager() *AsyncManager {
 	return &AsyncManager{
 		tasks: make(map[string]*Task),
 	}
 }
 
-// GetGlobalAsyncManager returns the global async manager instance
+// GetGlobalAsyncManager returns the global async manager instance.
 func GetGlobalAsyncManager() *AsyncManager {
 	return globalAsyncManager
 }
@@ -89,7 +89,7 @@ func (am *AsyncManager) SpawnTask(fn func(context.Context) (Value, error)) *Task
 			task.Status = TaskStatusFailed
 			task.Error = err
 		} else if ctx.Err() != nil {
-			task.Status = TaskStatusCancelled
+			task.Status = TaskStatusCanceled
 			task.Error = ctx.Err()
 		} else {
 			task.Status = TaskStatusCompleted
@@ -120,14 +120,14 @@ func (t *Task) Wait() (Value, error) {
 }
 
 // WaitTimeout waits for a task to complete with timeout
-func (t *Task) WaitTimeout(timeout time.Duration) (Value, error, bool) {
+func (t *Task) WaitTimeout(timeout time.Duration) (Value, bool, error) {
 	select {
 	case <-t.done:
 		t.mu.RLock()
 		defer t.mu.RUnlock()
-		return t.Result, t.Error, false
+		return t.Result, false, t.Error
 	case <-time.After(timeout):
-		return NewVoid(), nil, true
+		return NewVoid(), true, nil
 	}
 }
 
@@ -154,7 +154,7 @@ func (t *Task) IsRunning() bool {
 func (t *Task) IsCompleted() bool {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
-	return t.Status == TaskStatusCompleted || t.Status == TaskStatusFailed || t.Status == TaskStatusCancelled
+	return t.Status == TaskStatusCompleted || t.Status == TaskStatusFailed || t.Status == TaskStatusCanceled
 }
 
 // ToValue converts a Task to a runtime Value (map)

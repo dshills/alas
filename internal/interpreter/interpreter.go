@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/dshills/alas/internal/ast"
 	"github.com/dshills/alas/internal/runtime"
@@ -18,6 +19,7 @@ type Interpreter struct {
 	exportedFuncs map[string]map[string]*ast.Function // module -> function name -> function
 	moduleLoader  ModuleLoader
 	stdlib        *stdlib.Registry
+	importMap     map[string]string // maps import alias to actual module name
 }
 
 // ModuleLoader defines the interface for loading modules.
@@ -39,14 +41,33 @@ func NewFileModuleLoader(searchPaths []string) *FileModuleLoader {
 
 // LoadModuleByName loads a module by name from the filesystem.
 func (l *FileModuleLoader) LoadModuleByName(name string) (*ast.Module, error) {
-	for _, searchPath := range l.searchPaths {
-		fileName := filepath.Join(searchPath, name+".alas.json")
-		if data, err := os.ReadFile(fileName); err == nil {
-			var module ast.Module
-			if err := json.Unmarshal(data, &module); err != nil {
-				return nil, fmt.Errorf("failed to parse module %s: %v", name, err)
+	// Handle "std." prefix by stripping it and looking in stdlib directory
+	moduleName := name
+	if strings.HasPrefix(name, "std.") {
+		moduleName = strings.TrimPrefix(name, "std.")
+		// Add stdlib to the beginning of search paths for std modules
+		searchPaths := append([]string{"stdlib"}, l.searchPaths...)
+		for _, searchPath := range searchPaths {
+			fileName := filepath.Join(searchPath, moduleName+".alas.json")
+			if data, err := os.ReadFile(fileName); err == nil {
+				var module ast.Module
+				if err := json.Unmarshal(data, &module); err != nil {
+					return nil, fmt.Errorf("failed to parse module %s: %v", name, err)
+				}
+				return &module, nil
 			}
-			return &module, nil
+		}
+	} else {
+		// Regular module loading for non-std modules
+		for _, searchPath := range l.searchPaths {
+			fileName := filepath.Join(searchPath, moduleName+".alas.json")
+			if data, err := os.ReadFile(fileName); err == nil {
+				var module ast.Module
+				if err := json.Unmarshal(data, &module); err != nil {
+					return nil, fmt.Errorf("failed to parse module %s: %v", name, err)
+				}
+				return &module, nil
+			}
 		}
 	}
 	return nil, fmt.Errorf("module %s not found in search paths", name)
@@ -63,6 +84,7 @@ func New() *Interpreter {
 		exportedFuncs: make(map[string]map[string]*ast.Function),
 		moduleLoader:  NewFileModuleLoader(searchPaths),
 		stdlib:        stdlib.NewRegistry(),
+		importMap:     make(map[string]string),
 	}
 }
 
@@ -74,6 +96,7 @@ func NewWithLoader(loader ModuleLoader) *Interpreter {
 		exportedFuncs: make(map[string]map[string]*ast.Function),
 		moduleLoader:  loader,
 		stdlib:        stdlib.NewRegistry(),
+		importMap:     make(map[string]string),
 	}
 }
 
@@ -91,14 +114,31 @@ func (i *Interpreter) LoadModuleWithDependencies(module *ast.Module) error {
 
 	// Load all imported modules first
 	for _, importName := range module.Imports {
-		if _, exists := i.modules[importName]; !exists {
-			importedModule, err := i.moduleLoader.LoadModuleByName(importName)
-			if err != nil {
-				return fmt.Errorf("failed to load imported module %s: %v", importName, err)
+		// Check if already loaded (by import name or actual name)
+		if actualName, exists := i.importMap[importName]; exists {
+			// Already have this import mapped
+			if _, loaded := i.modules[actualName]; loaded {
+				continue
 			}
-			if err := i.LoadModuleWithDependencies(importedModule); err != nil {
-				return err
-			}
+		}
+
+		importedModule, err := i.moduleLoader.LoadModuleByName(importName)
+		if err != nil {
+			return fmt.Errorf("failed to load imported module %s: %v", importName, err)
+		}
+
+		// Map the import name to the actual module name
+		// For example: "std.async" -> "async"
+		i.importMap[importName] = importedModule.Name
+
+		// Also map without std. prefix for convenience
+		if strings.HasPrefix(importName, "std.") {
+			shortName := strings.TrimPrefix(importName, "std.")
+			i.importMap[shortName] = importedModule.Name
+		}
+
+		if err := i.LoadModuleWithDependencies(importedModule); err != nil {
+			return err
 		}
 	}
 
@@ -210,26 +250,32 @@ func (i *Interpreter) Run(functionName string, args []runtime.Value) (runtime.Va
 
 // RunModuleFunction executes a function from a specific module.
 func (i *Interpreter) RunModuleFunction(moduleName, functionName string, args []runtime.Value) (runtime.Value, error) {
+	// Resolve module name through import map
+	actualModuleName := moduleName
+	if mapped, exists := i.importMap[moduleName]; exists {
+		actualModuleName = mapped
+	}
+
 	// Check if module exists
-	if _, exists := i.modules[moduleName]; !exists {
+	if _, exists := i.modules[actualModuleName]; !exists {
 		return runtime.NewVoid(), fmt.Errorf("module '%s' not found", moduleName)
 	}
 
 	// Check if function is exported from the module
-	moduleExports, exists := i.exportedFuncs[moduleName]
+	moduleExports, exists := i.exportedFuncs[actualModuleName]
 	if !exists {
 		return runtime.NewVoid(), fmt.Errorf("module '%s' has no exports", moduleName)
 	}
 
 	fn, exists := moduleExports[functionName]
 	if !exists {
-		return runtime.NewVoid(), fmt.Errorf("function '%s' not exported from module '%s'", functionName, moduleName)
+		return runtime.NewVoid(), fmt.Errorf("function '%s' not exported from module '%s'", functionName, actualModuleName)
 	}
 
 	// Check argument count
 	if len(args) != len(fn.Params) {
 		return runtime.NewVoid(), fmt.Errorf("function '%s.%s' expects %d arguments, got %d",
-			moduleName, functionName, len(fn.Params), len(args))
+			actualModuleName, functionName, len(fn.Params), len(args))
 	}
 
 	// Create new environment for function execution
@@ -316,6 +362,28 @@ func (i *Interpreter) executeStatement(stmt *ast.Statement, env *Environment) (r
 		}
 		return runtime.NewVoid(), false, nil
 
+	case ast.StmtFor:
+		// For loops in ALaS are essentially while loops with a condition
+		for {
+			cond, err := i.evaluateExpression(stmt.Cond, env)
+			if err != nil {
+				return runtime.NewVoid(), false, err
+			}
+
+			if !cond.IsTruthy() {
+				break
+			}
+
+			_, isReturn, err := i.executeStatements(stmt.Body, env)
+			if err != nil {
+				return runtime.NewVoid(), false, err
+			}
+			if isReturn {
+				return runtime.NewVoid(), true, nil
+			}
+		}
+		return runtime.NewVoid(), false, nil
+
 	case ast.StmtReturn:
 		if stmt.Value != nil {
 			val, err := i.evaluateExpression(stmt.Value, env)
@@ -363,7 +431,17 @@ func (i *Interpreter) evaluateExpression(expr *ast.Expression, env *Environment)
 		return i.evaluateBinaryOp(expr.Op, left, right)
 
 	case ast.ExprUnary:
-		operand, err := i.evaluateExpression(expr.Right, env)
+		// Support both Operand (spec-compliant) and Right (backward compatibility)
+		var operandExpr *ast.Expression
+		if expr.Operand != nil {
+			operandExpr = expr.Operand
+		} else if expr.Right != nil {
+			operandExpr = expr.Right
+		} else {
+			return runtime.NewVoid(), fmt.Errorf("unary expression missing operand")
+		}
+
+		operand, err := i.evaluateExpression(operandExpr, env)
 		if err != nil {
 			return runtime.NewVoid(), err
 		}
@@ -418,10 +496,9 @@ func (i *Interpreter) evaluateExpression(expr *ast.Expression, env *Environment)
 				return runtime.NewVoid(), err
 			}
 
-			keyStr, err := key.AsString()
-			if err != nil {
-				return runtime.NewVoid(), fmt.Errorf("map key must be a string: %v", err)
-			}
+			// Convert key to string representation
+			// This allows using any type as a key, which will be stringified
+			keyStr := key.String()
 			mapValue[keyStr] = value
 		}
 		return runtime.NewGCMap(mapValue), nil
@@ -709,10 +786,9 @@ func (i *Interpreter) evaluateIndexAccess(object, index runtime.Value) (runtime.
 			return runtime.NewVoid(), err
 		}
 
-		key, err := index.AsString()
-		if err != nil {
-			return runtime.NewVoid(), fmt.Errorf("map key must be a string: %v", err)
-		}
+		// Convert key to string representation
+		// This allows using any type as a key, which will be stringified
+		key := index.String()
 
 		if val, ok := m[key]; ok {
 			return val, nil

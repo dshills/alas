@@ -47,6 +47,7 @@ type Expression struct {
 	Op       string       `json:"op,omitempty"`
 	Left     *Expression  `json:"left,omitempty"`
 	Right    *Expression  `json:"right,omitempty"`
+	Operand  *Expression  `json:"operand,omitempty"` // For unary operations
 	Args     []Expression `json:"args,omitempty"`
 	Elements []Expression `json:"elements,omitempty"` // For array literals
 	Pairs    []MapPair    `json:"pairs,omitempty"`    // For map literals

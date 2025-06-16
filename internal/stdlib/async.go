@@ -81,7 +81,7 @@ func (r *Registry) registerAsyncFunctions() {
 		
 		timeoutMs, _ := args[1].AsInt()
 		timeout := time.Duration(timeoutMs) * time.Millisecond
-		value, err, timedOut := task.WaitTimeout(timeout)
+		value, timedOut, err := task.WaitTimeout(timeout)
 		
 		// Return a Result type with timeout flag
 		result := make(map[string]runtime.Value)
@@ -287,8 +287,8 @@ func (r *Registry) registerAsyncFunctions() {
 			return runtime.NewVoid(), fmt.Errorf("async.cancel: %v", err)
 		}
 		
-		cancelled := task.Cancel()
-		return runtime.NewBool(cancelled), nil
+		canceled := task.Cancel()
+		return runtime.NewBool(canceled), nil
 	})
 	
 	// async.isRunning - Check if task is running
