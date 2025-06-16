@@ -2,10 +2,17 @@
 
 ## Top Priority
 
-- [ ] Fix LLVM field access compilation for dynamically-typed objects
-- [ ] Complete LLVM codegen for all language features (arrays, maps, strings)
-- [ ] Implement module import/export system
-- [ ] Add runtime error handling with stack traces
+- [x] Fix LLVM field access compilation for dynamically-typed objects
+- [x] Complete LLVM codegen for all language features (arrays, maps, strings)
+- [x] Implement module import/export system
+- [x] Add runtime error handling with stack traces
+
+## Linting Issues (Non-Critical)
+- [ ] Fix missing cases in switch of type runtime.ValueType (exhaustive) in tests/integration_test.go:289
+- [ ] Fix comment formatting (godot) in internal/runtime/async.go and internal/stdlib/async.go
+- [ ] Address unused functions (12 functions) - these are comprehensive implementations that may be used in future features
+- [ ] Address integer overflow conversion warnings (gosec) - 5 instances, review for safety
+- [ ] Address unused parameter warnings (unparam) - 2 instances in helper functions
 
 ## Setup
 - [ ] Set up development environment documentation

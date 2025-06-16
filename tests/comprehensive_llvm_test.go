@@ -33,7 +33,7 @@ func TestLLVMCodegenBasicTypes(t *testing.T) {
 						Returns: "int",
 						Body: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(42)},
 							},
 						},
@@ -55,7 +55,7 @@ func TestLLVMCodegenBasicTypes(t *testing.T) {
 						Returns: "float",
 						Body: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprLiteral, Value: 3.14},
 							},
 						},
@@ -77,7 +77,7 @@ func TestLLVMCodegenBasicTypes(t *testing.T) {
 						Returns: "bool",
 						Body: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprLiteral, Value: true},
 							},
 						},
@@ -126,9 +126,9 @@ func TestLLVMCodegenArithmetic(t *testing.T) {
 							{
 								Type: "return",
 								Value: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   "+",
-									Left: &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
+									Type:  ast.ExprBinary,
+									Op:    "+",
+									Left:  &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
 									Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(20)},
 								},
 							},
@@ -153,9 +153,9 @@ func TestLLVMCodegenArithmetic(t *testing.T) {
 							{
 								Type: "return",
 								Value: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   "*",
-									Left: &ast.Expression{Type: ast.ExprLiteral, Value: float64(5)},
+									Type:  ast.ExprBinary,
+									Op:    "*",
+									Left:  &ast.Expression{Type: ast.ExprLiteral, Value: float64(5)},
 									Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(6)},
 								},
 							},
@@ -180,9 +180,9 @@ func TestLLVMCodegenArithmetic(t *testing.T) {
 							{
 								Type: "return",
 								Value: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   "/",
-									Left: &ast.Expression{Type: ast.ExprLiteral, Value: float64(22)},
+									Type:  ast.ExprBinary,
+									Op:    "/",
+									Left:  &ast.Expression{Type: ast.ExprLiteral, Value: float64(22)},
 									Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(7)},
 								},
 							},
@@ -234,20 +234,20 @@ func TestLLVMCodegenControlFlow(t *testing.T) {
 							{
 								Type: "if",
 								Cond: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   ">",
-									Left: &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
+									Type:  ast.ExprBinary,
+									Op:    ">",
+									Left:  &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
 									Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(5)},
 								},
 								Then: []ast.Statement{
 									{
-										Type: "return",
+										Type:  "return",
 										Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 									},
 								},
 								Else: []ast.Statement{
 									{
-										Type: "return",
+										Type:  "return",
 										Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(0)},
 									},
 								},
@@ -278,9 +278,9 @@ func TestLLVMCodegenControlFlow(t *testing.T) {
 							{
 								Type: "while",
 								Cond: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   "<",
-									Left: &ast.Expression{Type: ast.ExprVariable, Name: "i"},
+									Type:  ast.ExprBinary,
+									Op:    "<",
+									Left:  &ast.Expression{Type: ast.ExprVariable, Name: "i"},
 									Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(5)},
 								},
 								Body: []ast.Statement{
@@ -288,16 +288,16 @@ func TestLLVMCodegenControlFlow(t *testing.T) {
 										Type:   "assign",
 										Target: "i",
 										Value: &ast.Expression{
-											Type: ast.ExprBinary,
-											Op:   "+",
-											Left: &ast.Expression{Type: ast.ExprVariable, Name: "i"},
+											Type:  ast.ExprBinary,
+											Op:    "+",
+											Left:  &ast.Expression{Type: ast.ExprVariable, Name: "i"},
 											Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 										},
 									},
 								},
 							},
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprVariable, Name: "i"},
 							},
 						},
@@ -348,9 +348,9 @@ func TestLLVMCodegenFunctions(t *testing.T) {
 							{
 								Type: "return",
 								Value: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   "+",
-									Left: &ast.Expression{Type: ast.ExprVariable, Name: "a"},
+									Type:  ast.ExprBinary,
+									Op:    "+",
+									Left:  &ast.Expression{Type: ast.ExprVariable, Name: "a"},
 									Right: &ast.Expression{Type: ast.ExprVariable, Name: "b"},
 								},
 							},
@@ -398,14 +398,14 @@ func TestLLVMCodegenFunctions(t *testing.T) {
 							{
 								Type: "if",
 								Cond: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   "<=",
-									Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+									Type:  ast.ExprBinary,
+									Op:    "<=",
+									Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 									Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 								},
 								Then: []ast.Statement{
 									{
-										Type: "return",
+										Type:  "return",
 										Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 									},
 								},
@@ -421,9 +421,9 @@ func TestLLVMCodegenFunctions(t *testing.T) {
 												Name: "factorial",
 												Args: []ast.Expression{
 													{
-														Type: ast.ExprBinary,
-														Op:   "-",
-														Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+														Type:  ast.ExprBinary,
+														Op:    "-",
+														Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 														Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 													},
 												},
@@ -481,7 +481,7 @@ func TestLLVMCodegenCompilation(t *testing.T) {
 			// Try to read the file with current path, fallback to ../
 			var data []byte
 			var err error
-			
+
 			data, err = os.ReadFile(file)
 			if err != nil {
 				// Try with ../ prefix in case we're still in tests directory
@@ -687,7 +687,7 @@ func TestLLVMCodegenErrorHandling(t *testing.T) {
 						Returns: "int",
 						Body: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprVariable, Name: "undefined"},
 							},
 						},
@@ -749,14 +749,14 @@ func BenchmarkLLVMCodegenPerformance(b *testing.B) {
 					{
 						Type: "if",
 						Cond: &ast.Expression{
-							Type: ast.ExprBinary,
-							Op:   "<=",
-							Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+							Type:  ast.ExprBinary,
+							Op:    "<=",
+							Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 							Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 						},
 						Then: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 							},
 						},
@@ -771,9 +771,9 @@ func BenchmarkLLVMCodegenPerformance(b *testing.B) {
 										Name: "fibonacci",
 										Args: []ast.Expression{
 											{
-												Type: ast.ExprBinary,
-												Op:   "-",
-												Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+												Type:  ast.ExprBinary,
+												Op:    "-",
+												Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 												Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 											},
 										},
@@ -783,9 +783,9 @@ func BenchmarkLLVMCodegenPerformance(b *testing.B) {
 										Name: "fibonacci",
 										Args: []ast.Expression{
 											{
-												Type: ast.ExprBinary,
-												Op:   "-",
-												Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+												Type:  ast.ExprBinary,
+												Op:    "-",
+												Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 												Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(2)},
 											},
 										},

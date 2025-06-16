@@ -38,16 +38,16 @@ func TestBasicDataTypes(t *testing.T) {
 									Type: ast.ExprBinary,
 									Op:   "+",
 									Left: &ast.Expression{
-										Type: ast.ExprBinary,
-										Op:   "*",
-										Left: &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
+										Type:  ast.ExprBinary,
+										Op:    "*",
+										Left:  &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
 										Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(5)},
 									},
 									Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(3)},
 								},
 							},
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprVariable, Name: "result"},
 							},
 						},
@@ -72,9 +72,9 @@ func TestBasicDataTypes(t *testing.T) {
 							{
 								Type: "return",
 								Value: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   "/",
-									Left: &ast.Expression{Type: ast.ExprLiteral, Value: 22.0},
+									Type:  ast.ExprBinary,
+									Op:    "/",
+									Left:  &ast.Expression{Type: ast.ExprLiteral, Value: 22.0},
 									Right: &ast.Expression{Type: ast.ExprLiteral, Value: 7.0},
 								},
 							},
@@ -100,9 +100,9 @@ func TestBasicDataTypes(t *testing.T) {
 							{
 								Type: "return",
 								Value: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   "+",
-									Left: &ast.Expression{Type: ast.ExprLiteral, Value: "Hello, "},
+									Type:  ast.ExprBinary,
+									Op:    "+",
+									Left:  &ast.Expression{Type: ast.ExprLiteral, Value: "Hello, "},
 									Right: &ast.Expression{Type: ast.ExprLiteral, Value: "World!"},
 								},
 							},
@@ -131,15 +131,15 @@ func TestBasicDataTypes(t *testing.T) {
 									Type: ast.ExprBinary,
 									Op:   "&&",
 									Left: &ast.Expression{
-										Type: ast.ExprBinary,
-										Op:   ">",
-										Left: &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
+										Type:  ast.ExprBinary,
+										Op:    ">",
+										Left:  &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
 										Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(5)},
 									},
 									Right: &ast.Expression{
-										Type: ast.ExprBinary,
-										Op:   "==",
-										Left: &ast.Expression{Type: ast.ExprLiteral, Value: "test"},
+										Type:  ast.ExprBinary,
+										Op:    "==",
+										Left:  &ast.Expression{Type: ast.ExprLiteral, Value: "test"},
 										Right: &ast.Expression{Type: ast.ExprLiteral, Value: "test"},
 									},
 								},
@@ -195,20 +195,20 @@ func TestControlFlow(t *testing.T) {
 							{
 								Type: "if",
 								Cond: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   ">",
-									Left: &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
+									Type:  ast.ExprBinary,
+									Op:    ">",
+									Left:  &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
 									Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(5)},
 								},
 								Then: []ast.Statement{
 									{
-										Type: "return",
+										Type:  "return",
 										Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(42)},
 									},
 								},
 								Else: []ast.Statement{
 									{
-										Type: "return",
+										Type:  "return",
 										Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(0)},
 									},
 								},
@@ -235,20 +235,20 @@ func TestControlFlow(t *testing.T) {
 							{
 								Type: "if",
 								Cond: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   "<",
-									Left: &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
+									Type:  ast.ExprBinary,
+									Op:    "<",
+									Left:  &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
 									Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(5)},
 								},
 								Then: []ast.Statement{
 									{
-										Type: "return",
+										Type:  "return",
 										Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(42)},
 									},
 								},
 								Else: []ast.Statement{
 									{
-										Type: "return",
+										Type:  "return",
 										Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(99)},
 									},
 								},
@@ -285,9 +285,9 @@ func TestControlFlow(t *testing.T) {
 							{
 								Type: "while",
 								Cond: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   "<=",
-									Left: &ast.Expression{Type: ast.ExprVariable, Name: "i"},
+									Type:  ast.ExprBinary,
+									Op:    "<=",
+									Left:  &ast.Expression{Type: ast.ExprVariable, Name: "i"},
 									Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(5)},
 								},
 								Body: []ast.Statement{
@@ -295,9 +295,9 @@ func TestControlFlow(t *testing.T) {
 										Type:   "assign",
 										Target: "sum",
 										Value: &ast.Expression{
-											Type: ast.ExprBinary,
-											Op:   "+",
-											Left: &ast.Expression{Type: ast.ExprVariable, Name: "sum"},
+											Type:  ast.ExprBinary,
+											Op:    "+",
+											Left:  &ast.Expression{Type: ast.ExprVariable, Name: "sum"},
 											Right: &ast.Expression{Type: ast.ExprVariable, Name: "i"},
 										},
 									},
@@ -305,16 +305,16 @@ func TestControlFlow(t *testing.T) {
 										Type:   "assign",
 										Target: "i",
 										Value: &ast.Expression{
-											Type: ast.ExprBinary,
-											Op:   "+",
-											Left: &ast.Expression{Type: ast.ExprVariable, Name: "i"},
+											Type:  ast.ExprBinary,
+											Op:    "+",
+											Left:  &ast.Expression{Type: ast.ExprVariable, Name: "i"},
 											Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 										},
 									},
 								},
 							},
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprVariable, Name: "sum"},
 							},
 						},
@@ -380,9 +380,9 @@ func TestArrayOperations(t *testing.T) {
 							{
 								Type: "return",
 								Value: &ast.Expression{
-									Type: ast.ExprIndex,
+									Type:   ast.ExprIndex,
 									Object: &ast.Expression{Type: ast.ExprVariable, Name: "arr"},
-									Index: &ast.Expression{Type: ast.ExprLiteral, Value: float64(2)},
+									Index:  &ast.Expression{Type: ast.ExprLiteral, Value: float64(2)},
 								},
 							},
 						},
@@ -432,9 +432,9 @@ func TestArrayOperations(t *testing.T) {
 								Value: &ast.Expression{
 									Type: ast.ExprIndex,
 									Object: &ast.Expression{
-										Type: ast.ExprIndex,
+										Type:   ast.ExprIndex,
 										Object: &ast.Expression{Type: ast.ExprVariable, Name: "matrix"},
-										Index: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
+										Index:  &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 									},
 									Index: &ast.Expression{Type: ast.ExprLiteral, Value: float64(0)},
 								},
@@ -511,9 +511,9 @@ func TestMapOperations(t *testing.T) {
 							{
 								Type: "return",
 								Value: &ast.Expression{
-									Type: ast.ExprIndex,
+									Type:   ast.ExprIndex,
 									Object: &ast.Expression{Type: ast.ExprVariable, Name: "person"},
-									Index: &ast.Expression{Type: ast.ExprLiteral, Value: "firstName"},
+									Index:  &ast.Expression{Type: ast.ExprLiteral, Value: "firstName"},
 								},
 							},
 						},
@@ -565,9 +565,9 @@ func TestMapOperations(t *testing.T) {
 								Value: &ast.Expression{
 									Type: ast.ExprIndex,
 									Object: &ast.Expression{
-										Type: ast.ExprIndex,
+										Type:   ast.ExprIndex,
 										Object: &ast.Expression{Type: ast.ExprVariable, Name: "config"},
-										Index: &ast.Expression{Type: ast.ExprLiteral, Value: "database"},
+										Index:  &ast.Expression{Type: ast.ExprLiteral, Value: "database"},
 									},
 									Index: &ast.Expression{Type: ast.ExprLiteral, Value: "host"},
 								},
@@ -624,9 +624,9 @@ func TestFunctionCalls(t *testing.T) {
 							{
 								Type: "return",
 								Value: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   "+",
-									Left: &ast.Expression{Type: ast.ExprVariable, Name: "a"},
+									Type:  ast.ExprBinary,
+									Op:    "+",
+									Left:  &ast.Expression{Type: ast.ExprVariable, Name: "a"},
 									Right: &ast.Expression{Type: ast.ExprVariable, Name: "b"},
 								},
 							},
@@ -672,14 +672,14 @@ func TestFunctionCalls(t *testing.T) {
 							{
 								Type: "if",
 								Cond: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   "<=",
-									Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+									Type:  ast.ExprBinary,
+									Op:    "<=",
+									Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 									Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 								},
 								Then: []ast.Statement{
 									{
-										Type: "return",
+										Type:  "return",
 										Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 									},
 								},
@@ -695,9 +695,9 @@ func TestFunctionCalls(t *testing.T) {
 												Name: "factorial",
 												Args: []ast.Expression{
 													{
-														Type: ast.ExprBinary,
-														Op:   "-",
-														Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+														Type:  ast.ExprBinary,
+														Op:    "-",
+														Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 														Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 													},
 												},
@@ -747,9 +747,9 @@ func TestFunctionCalls(t *testing.T) {
 							{
 								Type: "return",
 								Value: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   "+",
-									Left: &ast.Expression{Type: ast.ExprLiteral, Value: "Hello, "},
+									Type:  ast.ExprBinary,
+									Op:    "+",
+									Left:  &ast.Expression{Type: ast.ExprLiteral, Value: "Hello, "},
 									Right: &ast.Expression{Type: ast.ExprVariable, Name: "name"},
 								},
 							},
@@ -805,8 +805,8 @@ func TestUnaryOperations(t *testing.T) {
 							{
 								Type: "return",
 								Value: &ast.Expression{
-									Type: ast.ExprUnary,
-									Op:   "-",
+									Type:    ast.ExprUnary,
+									Op:      "-",
 									Operand: &ast.Expression{Type: ast.ExprLiteral, Value: float64(42)},
 								},
 							},
@@ -832,8 +832,8 @@ func TestUnaryOperations(t *testing.T) {
 							{
 								Type: "return",
 								Value: &ast.Expression{
-									Type: ast.ExprUnary,
-									Op:   "!",
+									Type:    ast.ExprUnary,
+									Op:      "!",
 									Operand: &ast.Expression{Type: ast.ExprLiteral, Value: false},
 								},
 							},
@@ -910,7 +910,7 @@ func TestAllExamplePrograms(t *testing.T) {
 			// Try to read the file with current path, fallback to ../
 			var data []byte
 			var err error
-			
+
 			data, err = os.ReadFile(tc.file)
 			if err != nil {
 				// Try with ../ prefix in case we're still in tests directory

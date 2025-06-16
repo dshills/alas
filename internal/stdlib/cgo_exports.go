@@ -117,7 +117,7 @@ func convertGoValueToCPtr(val runtime.Value) *C.CValue {
 func alas_builtin_io_print(val *C.CValue) {
 	goVal := convertCValueToGo(val)
 	args := []runtime.Value{goVal}
-	
+
 	// Get the registry and call the function
 	registry := NewRegistry()
 	registry.Call("io.print", args)
@@ -127,7 +127,7 @@ func alas_builtin_io_print(val *C.CValue) {
 func alas_builtin_math_sqrt(val *C.CValue) *C.CValue {
 	goVal := convertCValueToGo(val)
 	args := []runtime.Value{goVal}
-	
+
 	// Get the registry and call the function
 	registry := NewRegistry()
 	result, err := registry.Call("math.sqrt", args)
@@ -135,7 +135,7 @@ func alas_builtin_math_sqrt(val *C.CValue) *C.CValue {
 		// Return error value
 		return convertGoValueToCPtr(runtime.NewFloat(0))
 	}
-	
+
 	return convertGoValueToCPtr(result)
 }
 
@@ -143,13 +143,13 @@ func alas_builtin_math_sqrt(val *C.CValue) *C.CValue {
 func alas_builtin_math_abs(val *C.CValue) *C.CValue {
 	goVal := convertCValueToGo(val)
 	args := []runtime.Value{goVal}
-	
+
 	registry := NewRegistry()
 	result, err := registry.Call("math.abs", args)
 	if err != nil {
 		return convertGoValueToCPtr(runtime.NewFloat(0))
 	}
-	
+
 	return convertGoValueToCPtr(result)
 }
 
@@ -157,13 +157,13 @@ func alas_builtin_math_abs(val *C.CValue) *C.CValue {
 func alas_builtin_collections_length(val *C.CValue) *C.CValue {
 	goVal := convertCValueToGo(val)
 	args := []runtime.Value{goVal}
-	
+
 	registry := NewRegistry()
 	result, err := registry.Call("collections.length", args)
 	if err != nil {
 		return convertGoValueToCPtr(runtime.NewInt(0))
 	}
-	
+
 	return convertGoValueToCPtr(result)
 }
 
@@ -171,13 +171,13 @@ func alas_builtin_collections_length(val *C.CValue) *C.CValue {
 func alas_builtin_string_toUpper(val *C.CValue) *C.CValue {
 	goVal := convertCValueToGo(val)
 	args := []runtime.Value{goVal}
-	
+
 	registry := NewRegistry()
 	result, err := registry.Call("string.toUpper", args)
 	if err != nil {
 		return convertGoValueToCPtr(runtime.NewString(""))
 	}
-	
+
 	return convertGoValueToCPtr(result)
 }
 
@@ -185,23 +185,25 @@ func alas_builtin_string_toUpper(val *C.CValue) *C.CValue {
 func alas_builtin_type_typeOf(val *C.CValue) *C.CValue {
 	goVal := convertCValueToGo(val)
 	args := []runtime.Value{goVal}
-	
+
 	registry := NewRegistry()
 	result, err := registry.Call("type.typeOf", args)
 	if err != nil {
 		return convertGoValueToCPtr(runtime.NewString("unknown"))
 	}
-	
+
 	return convertGoValueToCPtr(result)
 }
 
 // FreeCString frees a C string allocated by Go
+//
 //export alas_free_cstring
 func alas_free_cstring(str *C.char) {
 	C.free(unsafe.Pointer(str))
 }
 
 // FreeCValue frees a CValue allocated by Go
+//
 //export alas_free_cvalue
 func alas_free_cvalue(val *C.CValue) {
 	if val != nil {

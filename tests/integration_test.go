@@ -45,7 +45,7 @@ func TestInterpreterVsCompiler(t *testing.T) {
 						Returns: "int",
 						Body: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(42)},
 							},
 						},
@@ -74,9 +74,9 @@ func TestInterpreterVsCompiler(t *testing.T) {
 									Type: ast.ExprBinary,
 									Op:   "+",
 									Left: &ast.Expression{
-										Type: ast.ExprBinary,
-										Op:   "*",
-										Left: &ast.Expression{Type: ast.ExprLiteral, Value: float64(5)},
+										Type:  ast.ExprBinary,
+										Op:    "*",
+										Left:  &ast.Expression{Type: ast.ExprLiteral, Value: float64(5)},
 										Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(6)},
 									},
 									Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
@@ -105,9 +105,9 @@ func TestInterpreterVsCompiler(t *testing.T) {
 							{
 								Type: "return",
 								Value: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   "+",
-									Left: &ast.Expression{Type: ast.ExprVariable, Name: "a"},
+									Type:  ast.ExprBinary,
+									Op:    "+",
+									Left:  &ast.Expression{Type: ast.ExprVariable, Name: "a"},
 									Right: &ast.Expression{Type: ast.ExprVariable, Name: "b"},
 								},
 							},
@@ -153,20 +153,20 @@ func TestInterpreterVsCompiler(t *testing.T) {
 							{
 								Type: "if",
 								Cond: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   ">",
-									Left: &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
+									Type:  ast.ExprBinary,
+									Op:    ">",
+									Left:  &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
 									Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(5)},
 								},
 								Then: []ast.Statement{
 									{
-										Type: "return",
+										Type:  "return",
 										Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(100)},
 									},
 								},
 								Else: []ast.Statement{
 									{
-										Type: "return",
+										Type:  "return",
 										Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(200)},
 									},
 								},
@@ -194,14 +194,14 @@ func TestInterpreterVsCompiler(t *testing.T) {
 							{
 								Type: "if",
 								Cond: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   "<=",
-									Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+									Type:  ast.ExprBinary,
+									Op:    "<=",
+									Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 									Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 								},
 								Then: []ast.Statement{
 									{
-										Type: "return",
+										Type:  "return",
 										Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 									},
 								},
@@ -217,9 +217,9 @@ func TestInterpreterVsCompiler(t *testing.T) {
 												Name: "factorial",
 												Args: []ast.Expression{
 													{
-														Type: ast.ExprBinary,
-														Op:   "-",
-														Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+														Type:  ast.ExprBinary,
+														Op:    "-",
+														Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 														Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 													},
 												},
@@ -349,7 +349,7 @@ func TestExampleProgramsIntegration(t *testing.T) {
 			// Try to read the file with current path, fallback to ../
 			var data []byte
 			var err error
-			
+
 			data, err = os.ReadFile(tc.file)
 			if err != nil {
 				// Try with ../ prefix in case we're still in tests directory
@@ -541,14 +541,14 @@ func TestPerformanceComparison(t *testing.T) {
 					{
 						Type: "if",
 						Cond: &ast.Expression{
-							Type: ast.ExprBinary,
-							Op:   "<=",
-							Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+							Type:  ast.ExprBinary,
+							Op:    "<=",
+							Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 							Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 						},
 						Then: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 							},
 						},
@@ -563,9 +563,9 @@ func TestPerformanceComparison(t *testing.T) {
 										Name: "fibonacci",
 										Args: []ast.Expression{
 											{
-												Type: ast.ExprBinary,
-												Op:   "-",
-												Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+												Type:  ast.ExprBinary,
+												Op:    "-",
+												Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 												Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 											},
 										},
@@ -575,9 +575,9 @@ func TestPerformanceComparison(t *testing.T) {
 										Name: "fibonacci",
 										Args: []ast.Expression{
 											{
-												Type: ast.ExprBinary,
-												Op:   "-",
-												Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+												Type:  ast.ExprBinary,
+												Op:    "-",
+												Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 												Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(2)},
 											},
 										},

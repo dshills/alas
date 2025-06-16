@@ -1,0 +1,39 @@
+{
+  "type": "module",
+  "name": "error_handling_test",
+  "exports": ["test_division"],
+  "imports": [],
+  "functions": [
+    {
+      "type": "function",
+      "name": "test_division",
+      "params": [
+        {"name": "x", "type": "int"},
+        {"name": "y", "type": "int"}
+      ],
+      "returns": "int",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "binary",
+            "op": "/",
+            "left": {
+              "type": "variable",
+              "name": "x"
+            },
+            "right": {
+              "type": "variable",
+              "name": "y"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "types": [],
+  "meta": {
+    "version": "0.1.0",
+    "description": "Test program for error handling and runtime checks"
+  }
+}

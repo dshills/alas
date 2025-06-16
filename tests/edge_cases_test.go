@@ -32,7 +32,7 @@ func TestEdgeCaseValues(t *testing.T) {
 						Returns: "int",
 						Body: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(0)},
 							},
 						},
@@ -55,7 +55,7 @@ func TestEdgeCaseValues(t *testing.T) {
 						Returns: "int",
 						Body: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(-12345)},
 							},
 						},
@@ -78,7 +78,7 @@ func TestEdgeCaseValues(t *testing.T) {
 						Returns: "int",
 						Body: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(9223372036854775807)}, // max int64
 							},
 						},
@@ -101,7 +101,7 @@ func TestEdgeCaseValues(t *testing.T) {
 						Returns: "int", // ALaS may not distinguish float from int in literals
 						Body: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprLiteral, Value: 0.0},
 							},
 						},
@@ -124,7 +124,7 @@ func TestEdgeCaseValues(t *testing.T) {
 						Returns: "float",
 						Body: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprLiteral, Value: -3.14159},
 							},
 						},
@@ -147,7 +147,7 @@ func TestEdgeCaseValues(t *testing.T) {
 						Returns: "float",
 						Body: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprLiteral, Value: 1.7976931348623157e+308}, // close to max float64
 							},
 						},
@@ -170,7 +170,7 @@ func TestEdgeCaseValues(t *testing.T) {
 						Returns: "float",
 						Body: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprLiteral, Value: 2.2250738585072014e-308}, // close to min positive float64
 							},
 						},
@@ -193,7 +193,7 @@ func TestEdgeCaseValues(t *testing.T) {
 						Returns: "string",
 						Body: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprLiteral, Value: ""},
 							},
 						},
@@ -216,7 +216,7 @@ func TestEdgeCaseValues(t *testing.T) {
 						Returns: "string",
 						Body: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprLiteral, Value: "Hello 世界 🌍"},
 							},
 						},
@@ -239,7 +239,7 @@ func TestEdgeCaseValues(t *testing.T) {
 						Returns: "string",
 						Body: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprLiteral, Value: "This is a very long string that tests the system's ability to handle larger text content without issues or performance degradation during processing and execution."},
 							},
 						},
@@ -273,10 +273,10 @@ func TestEdgeCaseValues(t *testing.T) {
 // TestErrorHandling tests various error conditions
 func TestErrorHandling(t *testing.T) {
 	tests := []struct {
-		name    string
-		module  *ast.Module
-		function string
-		args    []runtime.Value
+		name        string
+		module      *ast.Module
+		function    string
+		args        []runtime.Value
 		expectError bool
 	}{
 		{
@@ -292,15 +292,15 @@ func TestErrorHandling(t *testing.T) {
 						Returns: "int",
 						Body: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprVariable, Name: "undefined_var"},
 							},
 						},
 					},
 				},
 			},
-			function: "main",
-			args:     []runtime.Value{},
+			function:    "main",
+			args:        []runtime.Value{},
 			expectError: true,
 		},
 		{
@@ -327,8 +327,8 @@ func TestErrorHandling(t *testing.T) {
 					},
 				},
 			},
-			function: "main",
-			args:     []runtime.Value{},
+			function:    "main",
+			args:        []runtime.Value{},
 			expectError: true,
 		},
 		{
@@ -346,9 +346,9 @@ func TestErrorHandling(t *testing.T) {
 							{
 								Type: "return",
 								Value: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   "+",
-									Left: &ast.Expression{Type: ast.ExprVariable, Name: "a"},
+									Type:  ast.ExprBinary,
+									Op:    "+",
+									Left:  &ast.Expression{Type: ast.ExprVariable, Name: "a"},
 									Right: &ast.Expression{Type: ast.ExprVariable, Name: "b"},
 								},
 							},
@@ -374,8 +374,8 @@ func TestErrorHandling(t *testing.T) {
 					},
 				},
 			},
-			function: "main",
-			args:     []runtime.Value{},
+			function:    "main",
+			args:        []runtime.Value{},
 			expectError: true,
 		},
 		{
@@ -393,9 +393,9 @@ func TestErrorHandling(t *testing.T) {
 							{
 								Type: "return",
 								Value: &ast.Expression{
-									Type: ast.ExprBinary,
-									Op:   "/",
-									Left: &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
+									Type:  ast.ExprBinary,
+									Op:    "/",
+									Left:  &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
 									Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(0)},
 								},
 							},
@@ -403,8 +403,8 @@ func TestErrorHandling(t *testing.T) {
 					},
 				},
 			},
-			function: "main",
-			args:     []runtime.Value{},
+			function:    "main",
+			args:        []runtime.Value{},
 			expectError: true,
 		},
 		{
@@ -433,17 +433,17 @@ func TestErrorHandling(t *testing.T) {
 							{
 								Type: "return",
 								Value: &ast.Expression{
-									Type: ast.ExprIndex,
+									Type:   ast.ExprIndex,
 									Object: &ast.Expression{Type: ast.ExprVariable, Name: "arr"},
-									Index: &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)}, // Out of bounds
+									Index:  &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)}, // Out of bounds
 								},
 							},
 						},
 					},
 				},
 			},
-			function: "main",
-			args:     []runtime.Value{},
+			function:    "main",
+			args:        []runtime.Value{},
 			expectError: true,
 		},
 		{
@@ -474,17 +474,17 @@ func TestErrorHandling(t *testing.T) {
 							{
 								Type: "return",
 								Value: &ast.Expression{
-									Type: ast.ExprIndex,
+									Type:   ast.ExprIndex,
 									Object: &ast.Expression{Type: ast.ExprVariable, Name: "map"},
-									Index: &ast.Expression{Type: ast.ExprLiteral, Value: "nonexistent_key"},
+									Index:  &ast.Expression{Type: ast.ExprLiteral, Value: "nonexistent_key"},
 								},
 							},
 						},
 					},
 				},
 			},
-			function: "main",
-			args:     []runtime.Value{},
+			function:    "main",
+			args:        []runtime.Value{},
 			expectError: true,
 		},
 	}
@@ -560,9 +560,9 @@ func TestComplexDataStructures(t *testing.T) {
 									Object: &ast.Expression{
 										Type: ast.ExprIndex,
 										Object: &ast.Expression{
-											Type: ast.ExprIndex,
+											Type:   ast.ExprIndex,
 											Object: &ast.Expression{Type: ast.ExprVariable, Name: "deep"},
-											Index: &ast.Expression{Type: ast.ExprLiteral, Value: float64(0)},
+											Index:  &ast.Expression{Type: ast.ExprLiteral, Value: float64(0)},
 										},
 										Index: &ast.Expression{Type: ast.ExprLiteral, Value: float64(0)},
 									},
@@ -624,9 +624,9 @@ func TestComplexDataStructures(t *testing.T) {
 									Object: &ast.Expression{
 										Type: ast.ExprIndex,
 										Object: &ast.Expression{
-											Type: ast.ExprIndex,
+											Type:   ast.ExprIndex,
 											Object: &ast.Expression{Type: ast.ExprVariable, Name: "config"},
-											Index: &ast.Expression{Type: ast.ExprLiteral, Value: "database"},
+											Index:  &ast.Expression{Type: ast.ExprLiteral, Value: "database"},
 										},
 										Index: &ast.Expression{Type: ast.ExprLiteral, Value: "connection"},
 									},
@@ -686,9 +686,9 @@ func TestComplexDataStructures(t *testing.T) {
 								Value: &ast.Expression{
 									Type: ast.ExprIndex,
 									Object: &ast.Expression{
-										Type: ast.ExprIndex,
+										Type:   ast.ExprIndex,
 										Object: &ast.Expression{Type: ast.ExprVariable, Name: "data"},
-										Index: &ast.Expression{Type: ast.ExprLiteral, Value: float64(0)},
+										Index:  &ast.Expression{Type: ast.ExprLiteral, Value: float64(0)},
 									},
 									Index: &ast.Expression{Type: ast.ExprLiteral, Value: "name"},
 								},
@@ -822,7 +822,7 @@ func TestValidationEdgeCases(t *testing.T) {
 					"type": "module",
 					"name": "large",
 					"functions": [`
-				
+
 				// Add many functions with unique names
 				for i := 0; i < 100; i++ { // Reduced to avoid timeout
 					if i > 0 {
@@ -836,7 +836,7 @@ func TestValidationEdgeCases(t *testing.T) {
 						"body": []
 					}`, i)
 				}
-				
+
 				base += `]}`
 				return base
 			}(),
@@ -887,9 +887,9 @@ func TestMemoryLimits(t *testing.T) {
 						{
 							Type: "return",
 							Value: &ast.Expression{
-								Type: ast.ExprIndex,
+								Type:   ast.ExprIndex,
 								Object: &ast.Expression{Type: ast.ExprVariable, Name: "large_array"},
-								Index: &ast.Expression{Type: ast.ExprLiteral, Value: float64(5000)},
+								Index:  &ast.Expression{Type: ast.ExprLiteral, Value: float64(5000)},
 							},
 						},
 					},
@@ -928,14 +928,14 @@ func TestMemoryLimits(t *testing.T) {
 						{
 							Type: "if",
 							Cond: &ast.Expression{
-								Type: ast.ExprBinary,
-								Op:   "<=",
-								Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+								Type:  ast.ExprBinary,
+								Op:    "<=",
+								Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 								Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(0)},
 							},
 							Then: []ast.Statement{
 								{
-									Type: "return",
+									Type:  "return",
 									Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(0)},
 								},
 							},
@@ -947,9 +947,9 @@ func TestMemoryLimits(t *testing.T) {
 										Name: "countdown",
 										Args: []ast.Expression{
 											{
-												Type: ast.ExprBinary,
-												Op:   "-",
-												Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+												Type:  ast.ExprBinary,
+												Op:    "-",
+												Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 												Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 											},
 										},
@@ -1035,7 +1035,7 @@ func TestCodegenEdgeCases(t *testing.T) {
 						Meta:    map[string]interface{}{"comment": "This function does something"},
 						Body: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(42)},
 							},
 						},
@@ -1057,7 +1057,7 @@ func TestCodegenEdgeCases(t *testing.T) {
 						Returns: "int",
 						Body: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(42)},
 							},
 						},
