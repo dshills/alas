@@ -344,6 +344,17 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 			}
 		}
 
+	case ast.ExprField:
+		if expr.Object == nil {
+			return fmt.Errorf("field expression must have an object")
+		}
+		if expr.Field == "" {
+			return fmt.Errorf("field expression must have a field name")
+		}
+		if err := v.validateExpression(expr.Object, scope); err != nil {
+			return fmt.Errorf("field object: %v", err)
+		}
+
 	default:
 		return fmt.Errorf("unknown expression type: %s", expr.Type)
 	}

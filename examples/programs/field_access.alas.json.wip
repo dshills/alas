@@ -1,0 +1,68 @@
+{
+  "type": "module",
+  "name": "field_access_demo",
+  "functions": [
+    {
+      "type": "function",
+      "name": "test_field_access",
+      "params": [],
+      "returns": "int",
+      "body": [
+        {
+          "type": "assign",
+          "target": "obj",
+          "value": {
+            "type": "map_literal",
+            "pairs": [
+              {
+                "key": {"type": "literal", "value": "age"},
+                "value": {"type": "literal", "value": 25}
+              },
+              {
+                "key": {"type": "literal", "value": "name"},
+                "value": {"type": "literal", "value": "Alice"}
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "age_value",
+          "value": {
+            "type": "field",
+            "object": {"type": "variable", "name": "obj"},
+            "field": "age"
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [{"type": "variable", "name": "age_value"}]
+          }
+        },
+        {
+          "type": "return",
+          "value": {"type": "variable", "name": "age_value"}
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "int",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "call",
+            "name": "test_field_access",
+            "args": []
+          }
+        }
+      ]
+    }
+  ]
+}

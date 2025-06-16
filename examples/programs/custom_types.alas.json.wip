@@ -1,0 +1,84 @@
+{
+  "type": "module",
+  "name": "custom_types_demo",
+  "types": [
+    {
+      "name": "Person",
+      "definition": {
+        "kind": "struct",
+        "fields": [
+          {"name": "name", "type": "string"},
+          {"name": "age", "type": "int"}
+        ]
+      }
+    },
+    {
+      "name": "Status",
+      "definition": {
+        "kind": "enum",
+        "values": ["active", "inactive", "pending"]
+      }
+    }
+  ],
+  "functions": [
+    {
+      "type": "function",
+      "name": "create_person",
+      "params": [
+        {"name": "name", "type": "string"},
+        {"name": "age", "type": "int"}
+      ],
+      "returns": "Person",
+      "body": [
+        {
+          "type": "return",
+          "value": {
+            "type": "map_literal",
+            "pairs": [
+              {
+                "key": {"type": "literal", "value": "name"},
+                "value": {"type": "variable", "name": "name"}
+              },
+              {
+                "key": {"type": "literal", "value": "age"},
+                "value": {"type": "variable", "name": "age"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "int",
+      "body": [
+        {
+          "type": "assign",
+          "target": "person",
+          "value": {
+            "type": "call",
+            "name": "create_person",
+            "args": [
+              {"type": "literal", "value": "Bob"},
+              {"type": "literal", "value": 30}
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [{"type": "literal", "value": "Person created"}]
+          }
+        },
+        {
+          "type": "return",
+          "value": {"type": "literal", "value": 0}
+        }
+      ]
+    }
+  ]
+}
