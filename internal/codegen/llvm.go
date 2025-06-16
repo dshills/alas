@@ -1346,7 +1346,9 @@ func (g *LLVMCodegen) declareImportedFunctions(imports []string) error {
 func (g *LLVMCodegen) getTypeSize(t types.Type) int64 {
 	switch typ := t.(type) {
 	case *types.IntType:
-		return int64(typ.BitSize) / 8
+		// Round up to the nearest byte for non-byte-aligned types
+		// e.g., i1 needs 1 byte, i7 needs 1 byte, i9 needs 2 bytes
+		return (int64(typ.BitSize) + 7) / 8
 	case *types.FloatType:
 		switch typ.Kind {
 		case types.FloatKindHalf:
