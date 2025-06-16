@@ -59,6 +59,7 @@ func NewFileModuleLoader(searchPaths []string) *FileModuleLoader {
 
 // LoadModuleByName loads a module by name from the filesystem.
 func (l *FileModuleLoader) LoadModuleByName(name string) (*ast.Module, error) {
+	// Try original name first
 	for _, searchPath := range l.searchPaths {
 		fileName := filepath.Join(searchPath, name+".alas.json")
 		if data, err := os.ReadFile(fileName); err == nil {
@@ -69,6 +70,22 @@ func (l *FileModuleLoader) LoadModuleByName(name string) (*ast.Module, error) {
 			return &module, nil
 		}
 	}
+	
+	// For stdlib modules, try without "std." prefix
+	if len(name) > 4 && name[:4] == "std." {
+		simpleName := name[4:] // Remove "std." prefix
+		for _, searchPath := range l.searchPaths {
+			fileName := filepath.Join(searchPath, simpleName+".alas.json")
+			if data, err := os.ReadFile(fileName); err == nil {
+				var module ast.Module
+				if err := json.Unmarshal(data, &module); err != nil {
+					return nil, fmt.Errorf("failed to parse module %s: %v", name, err)
+				}
+				return &module, nil
+			}
+		}
+	}
+	
 	return nil, fmt.Errorf("module %s not found in search paths", name)
 }
 
@@ -106,6 +123,13 @@ func NewLLVMCodegenWithLoader(loader ModuleResolver) *LLVMCodegen {
 
 // declareCustomType declares a custom type in LLVM IR.
 func (g *LLVMCodegen) declareCustomType(typeDef *ast.TypeDefinition) error {
+	// Skip if type definition is incomplete or uses unsupported format
+	if typeDef.Definition.Kind == "" {
+		// This handles old schema formats or incomplete type definitions
+		// For now, we skip them to maintain backward compatibility
+		return nil
+	}
+	
 	switch typeDef.Definition.Kind {
 	case ast.TypeKindStruct:
 		// Create LLVM struct type
@@ -735,6 +759,14 @@ func (g *LLVMCodegen) convertType(alasType string) (types.Type, error) {
 	case ast.TypeMap:
 		// Represent maps as a simple pointer (simplified implementation)
 		// In a real implementation, this would be a hash table structure
+		return types.NewPointer(types.I8), nil
+	case "any":
+		// Represent "any" type as a generic pointer - this allows stdlib functions to accept any type
+		// In a real implementation, this would include type information
+		return types.NewPointer(types.I8), nil
+	case "function":
+		// Represent function type as a function pointer - simplified implementation
+		// In a real implementation, this would include proper function signatures
 		return types.NewPointer(types.I8), nil
 	case ast.TypeVoid, "":
 		return types.Void, nil

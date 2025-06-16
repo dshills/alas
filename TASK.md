@@ -14,6 +14,13 @@
 - [ ] Address integer overflow conversion warnings (gosec) - 5 instances, review for safety
 - [ ] Address unused parameter warnings (unparam) - 2 instances in helper functions
 
+## Module System Issues (Exposed by Enhanced Module Loading)
+- [ ] Fix stdlib modules with unsupported types:
+  - [ ] `io.print` function uses "any" type parameter - needs type system enhancement
+  - [ ] `async.Task` custom type definition not properly handled in LLVM conversion
+  - [ ] Enhanced dependency resolution exposes pre-existing type system limitations
+- [ ] Consider adding type aliases or improving type conversion for stdlib compatibility
+
 ## Setup
 - [ ] Set up development environment documentation
 - [ ] Document required dependencies (Go 1.24.4, LLVM tools)
