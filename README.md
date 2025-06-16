@@ -2,6 +2,8 @@
 
 ALaS is a general-purpose, Turing-complete programming language designed exclusively for AI models to generate, manipulate, and execute. It uses structured JSON representations to enable low-error, high-speed code generation and transformation by LLMs.
 
+**For LLM Users**: Check out our comprehensive [documentation](docs/README.md) designed specifically to help AI systems generate ALaS code effectively. The [LLM Integration Guide](docs/llm-guide.md) provides optimal prompting strategies and common patterns.
+
 ## Features
 
 - **Machine-First Design**: Optimized for AI generation, not human readability
@@ -36,9 +38,26 @@ alas/
 │   ├── modules/           # Example ALaS modules (math_utils, format_utils)
 │   └── plugins/           # Example plugin implementations
 ├── tests/                 # Test suite with optimization and multi-module tests
-└── docs/
-    └── alas_lang_spec.md  # Language specification
+└── docs/                  # Comprehensive documentation
+    ├── README.md          # Documentation overview
+    ├── language-spec.md   # Complete language specification
+    ├── getting-started.md # Quick start guide
+    ├── stdlib-reference.md # Standard library reference
+    ├── plugin-system.md   # Plugin development guide
+    ├── examples.md        # Code examples and patterns
+    ├── llm-guide.md       # LLM integration guide
+    └── troubleshooting.md # Common issues and solutions
 ```
+
+## Documentation
+
+- **[Getting Started Guide](docs/getting-started.md)** - Quick introduction to writing ALaS programs
+- **[Language Specification](docs/language-spec.md)** - Complete language reference
+- **[Standard Library Reference](docs/stdlib-reference.md)** - All built-in functions
+- **[Plugin System Guide](docs/plugin-system.md)** - Extending ALaS
+- **[Examples](docs/examples.md)** - Sample programs and patterns
+- **[LLM Integration Guide](docs/llm-guide.md)** - For AI-assisted development
+- **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
 
 ## Getting Started
 
