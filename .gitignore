@@ -43,6 +43,11 @@ test/testdata/*/output
 *.out
 /test/integration/local_integration_test.go
 
+# LLVM generated files
+*.ll
+*.bc
+*.o
+
 # locally built binaries
 bin/
 lib/

@@ -3,6 +3,7 @@ package validator
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/dshills/alas/internal/ast"
@@ -32,6 +33,8 @@ func (v *Validator) ValidateModule(m *ast.Module) error {
 	// Validate module name
 	if m.Name == "" {
 		v.addError("module name cannot be empty")
+	} else if !isValidIdentifier(m.Name) {
+		v.addError("invalid module name '%s', must be valid identifier", m.Name)
 	}
 
 	// Validate custom types
@@ -63,20 +66,34 @@ func (v *Validator) ValidateModule(m *ast.Module) error {
 	}
 
 	// Validate exports reference actual functions
-	for _, export := range m.Exports {
-		if !functionNames[export] {
+	for i, export := range m.Exports {
+		if export == "" {
+			v.addError("export %d: name cannot be empty", i)
+		} else if !isValidIdentifier(export) {
+			v.addError("export %d: invalid name '%s'", i, export)
+		} else if !functionNames[export] {
 			v.addError("exported function '%s' not found in module", export)
 		}
 	}
 
 	// Validate imports are non-empty strings and don't include self
-	for _, importName := range m.Imports {
+	for i, importName := range m.Imports {
 		if importName == "" {
-			v.addError("import name cannot be empty")
-		}
-		if importName == m.Name {
+			v.addError("import %d: name cannot be empty", i)
+		} else if !isValidModuleName(importName) {
+			v.addError("import %d: invalid name '%s'", i, importName)
+		} else if importName == m.Name {
 			v.addError("module cannot import itself")
 		}
+	}
+
+	// Check for duplicate imports
+	importSet := make(map[string]bool)
+	for i, importName := range m.Imports {
+		if importSet[importName] {
+			v.addError("import %d: duplicate import '%s'", i, importName)
+		}
+		importSet[importName] = true
 	}
 
 	if len(v.errors) > 0 {
@@ -140,12 +157,18 @@ func (v *Validator) validateFunction(fn *ast.Function, typeNames map[string]bool
 	if fn.Name == "" {
 		return fmt.Errorf("name cannot be empty")
 	}
+	if !isValidIdentifier(fn.Name) {
+		return fmt.Errorf("invalid function name '%s'", fn.Name)
+	}
 
 	// Validate parameters
 	paramNames := make(map[string]bool)
 	for i, param := range fn.Params {
 		if param.Name == "" {
 			return fmt.Errorf("parameter %d: name cannot be empty", i)
+		}
+		if !isValidIdentifier(param.Name) {
+			return fmt.Errorf("parameter %d: invalid name '%s'", i, param.Name)
 		}
 		if paramNames[param.Name] {
 			return fmt.Errorf("duplicate parameter name: %s", param.Name)
@@ -189,6 +212,9 @@ func (v *Validator) validateStatement(stmt *ast.Statement, scope map[string]bool
 	case ast.StmtAssign:
 		if stmt.Target == "" {
 			return fmt.Errorf("assign statement must have a target")
+		}
+		if !isValidIdentifier(stmt.Target) {
+			return fmt.Errorf("invalid assignment target '%s'", stmt.Target)
 		}
 		if stmt.Value == nil {
 			return fmt.Errorf("assign statement must have a value")
@@ -284,7 +310,7 @@ func (v *Validator) validateStatement(stmt *ast.Statement, scope map[string]bool
 	return nil
 }
 
-// validateExpression validates an expression.
+// validateExpression validates an expression with comprehensive schema checking.
 // The typeNames parameter is currently unused but kept for future type checking enhancements.
 //
 //nolint:unparam // typeNames will be used for type inference in future
@@ -294,10 +320,30 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 		if expr.Value == nil {
 			return fmt.Errorf("literal expression must have a value")
 		}
+		// Enhanced literal validation based on value type
+		switch expr.Value.(type) {
+		case string:
+			if err := v.validateStringLiteral(expr.Value); err != nil {
+				return fmt.Errorf("string literal: %v", err)
+			}
+		case bool:
+			if err := v.validateBooleanLiteral(expr.Value); err != nil {
+				return fmt.Errorf("boolean literal: %v", err)
+			}
+		default:
+			// Numeric literals (int, float)
+			if err := v.validateNumericLiteral(expr.Value); err != nil {
+				return fmt.Errorf("numeric literal: %v", err)
+			}
+		}
 
 	case ast.ExprVariable:
 		if expr.Name == "" {
 			return fmt.Errorf("variable expression must have a name")
+		}
+		// Validate variable name format
+		if !isValidIdentifier(expr.Name) {
+			return fmt.Errorf("invalid variable name '%s'", expr.Name)
 		}
 		// Check if variable is in scope
 		if !scope[expr.Name] {
@@ -345,6 +391,14 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 		if expr.Name == "" {
 			return fmt.Errorf("call expression must have a function name")
 		}
+		// Validate function name format
+		if !isValidIdentifier(expr.Name) {
+			return fmt.Errorf("invalid function name '%s'", expr.Name)
+		}
+		// Validate arguments structure
+		if expr.Args == nil {
+			return fmt.Errorf("function call must have args field (can be empty)")
+		}
 		// Validate arguments
 		for i, arg := range expr.Args {
 			if err := v.validateExpression(&arg, scope, typeNames); err != nil {
@@ -353,14 +407,26 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 		}
 
 	case ast.ExprArrayLit:
+		// Validate array literal structure
+		if expr.Elements == nil {
+			return fmt.Errorf("array literal must have elements field (can be empty)")
+		}
 		// Validate array elements
 		for i, elem := range expr.Elements {
 			if err := v.validateExpression(&elem, scope, typeNames); err != nil {
 				return fmt.Errorf("array element %d: %v", i, err)
 			}
+			// Validate array element has proper structure
+			if elem.Type == "" {
+				return fmt.Errorf("array element %d: missing type field", i)
+			}
 		}
 
 	case ast.ExprMapLit:
+		// Validate map literal structure
+		if expr.Pairs == nil {
+			return fmt.Errorf("map literal must have pairs field (can be empty)")
+		}
 		// Validate map key-value pairs
 		for i, pair := range expr.Pairs {
 			if err := v.validateExpression(&pair.Key, scope, typeNames); err != nil {
@@ -368,6 +434,13 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 			}
 			if err := v.validateExpression(&pair.Value, scope, typeNames); err != nil {
 				return fmt.Errorf("map pair %d value: %v", i, err)
+			}
+			// Validate key and value have proper structure
+			if pair.Key.Type == "" {
+				return fmt.Errorf("map pair %d key: missing type field", i)
+			}
+			if pair.Value.Type == "" {
+				return fmt.Errorf("map pair %d value: missing type field", i)
 			}
 		}
 
@@ -392,6 +465,17 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 		if expr.Name == "" {
 			return fmt.Errorf("module call expression must have a function name")
 		}
+		// Validate identifiers
+		if !isValidModuleName(expr.Module) {
+			return fmt.Errorf("invalid module name '%s'", expr.Module)
+		}
+		if !isValidIdentifier(expr.Name) {
+			return fmt.Errorf("invalid function name '%s'", expr.Name)
+		}
+		// Validate arguments structure
+		if expr.Args == nil {
+			return fmt.Errorf("module call must have args field (can be empty)")
+		}
 		// Validate arguments
 		for i, arg := range expr.Args {
 			if err := v.validateExpression(&arg, scope, typeNames); err != nil {
@@ -402,6 +486,14 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 	case ast.ExprBuiltin:
 		if expr.Name == "" {
 			return fmt.Errorf("builtin call expression must have a function name")
+		}
+		// Validate builtin function name format
+		if err := v.validateBuiltinName(expr.Name); err != nil {
+			return fmt.Errorf("invalid builtin name: %v", err)
+		}
+		// Validate arguments structure
+		if expr.Args == nil {
+			return fmt.Errorf("builtin call must have args field (can be empty)")
 		}
 		// Validate arguments
 		for i, arg := range expr.Args {
@@ -475,6 +567,83 @@ func copyScope(scope map[string]bool) map[string]bool {
 		newScope[k] = v
 	}
 	return newScope
+}
+
+// validateBuiltinName validates builtin function names follow expected format.
+func (v *Validator) validateBuiltinName(name string) error {
+	// Builtin names should follow format: namespace.function
+	parts := strings.Split(name, ".")
+	if len(parts) != 2 {
+		return fmt.Errorf("builtin name must be in format 'namespace.function', got '%s'", name)
+	}
+	if parts[0] == "" || parts[1] == "" {
+		return fmt.Errorf("builtin namespace and function cannot be empty in '%s'", name)
+	}
+	// Validate known builtin namespaces
+	knownNamespaces := map[string]bool{
+		"io":          true,
+		"math":        true,
+		"string":      true,
+		"array":       true,
+		"map":         true,
+		"collections": true,
+		"type":        true,
+	}
+	if !knownNamespaces[parts[0]] {
+		return fmt.Errorf("unknown builtin namespace '%s', expected one of: io, math, string, array, map, collections, type", parts[0])
+	}
+	return nil
+}
+
+// isValidIdentifier validates that a string is a valid identifier.
+func isValidIdentifier(name string) bool {
+	// ALaS identifiers must start with letter or underscore, followed by letters, digits, or underscores
+	identifierPattern := regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
+	return identifierPattern.MatchString(name)
+}
+
+// isValidModuleName validates that a string is a valid module name (allows dots for namespacing).
+func isValidModuleName(name string) bool {
+	// Module names can have dots for namespacing, like "std.io"
+	modulePattern := regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_.]*[a-zA-Z0-9_]$|^[a-zA-Z_]$`)
+	return modulePattern.MatchString(name)
+}
+
+// validateStringLiteral validates string literal values.
+func (v *Validator) validateStringLiteral(value interface{}) error {
+	if value == nil {
+		return fmt.Errorf("string literal cannot be null")
+	}
+	if _, ok := value.(string); !ok {
+		return fmt.Errorf("string literal value must be a string, got %T", value)
+	}
+	return nil
+}
+
+// validateNumericLiteral validates numeric literal values.
+func (v *Validator) validateNumericLiteral(value interface{}) error {
+	if value == nil {
+		return fmt.Errorf("numeric literal cannot be null")
+	}
+	switch value.(type) {
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		return nil
+	case float32, float64:
+		return nil
+	default:
+		return fmt.Errorf("numeric literal value must be int or float, got %T", value)
+	}
+}
+
+// validateBooleanLiteral validates boolean literal values.
+func (v *Validator) validateBooleanLiteral(value interface{}) error {
+	if value == nil {
+		return fmt.Errorf("boolean literal cannot be null")
+	}
+	if _, ok := value.(bool); !ok {
+		return fmt.Errorf("boolean literal value must be a boolean, got %T", value)
+	}
+	return nil
 }
 
 // ValidateJSON validates ALaS JSON input.
