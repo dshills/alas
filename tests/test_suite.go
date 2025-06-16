@@ -248,12 +248,75 @@ func (bh *BenchmarkHelper) RunBenchmark(b *testing.B, name string, fn func(b *te
 	b.Run(name, func(b *testing.B) {
 		// Setup cleanup for benchmark
 		b.Cleanup(func() {
-			bh.suite.Cleanup(&testing.T{}) // Convert B to T for cleanup
+			bh.cleanupForBenchmark(b)
 		})
 		
 		// Run the actual benchmark
 		fn(b)
 	})
+}
+
+// cleanupForBenchmark performs cleanup operations for benchmarks
+func (bh *BenchmarkHelper) cleanupForBenchmark(b *testing.B) {
+	b.Helper()
+	
+	suite := bh.suite
+	if suite.cleanupDone {
+		return
+	}
+	suite.cleanupDone = true
+	
+	var errors []string
+	
+	// Clean up temporary files
+	for _, file := range suite.tempFiles {
+		if err := os.Remove(file); err != nil && !os.IsNotExist(err) {
+			errors = append(errors, fmt.Sprintf("failed to remove temp file %s: %v", file, err))
+		}
+	}
+	
+	// Clean up temporary directories
+	for _, dir := range suite.tempDirs {
+		if err := os.RemoveAll(dir); err != nil && !os.IsNotExist(err) {
+			errors = append(errors, fmt.Sprintf("failed to remove temp dir %s: %v", dir, err))
+		}
+	}
+	
+	// Clean up compiler artifacts
+	llFiles, _ := filepath.Glob("*.ll")
+	for _, file := range llFiles {
+		if err := os.Remove(file); err != nil && !os.IsNotExist(err) {
+			b.Logf("Warning: failed to remove %s: %v", file, err)
+		}
+	}
+	
+	objFiles, _ := filepath.Glob("*.o")
+	for _, file := range objFiles {
+		if err := os.Remove(file); err != nil && !os.IsNotExist(err) {
+			b.Logf("Warning: failed to remove %s: %v", file, err)
+		}
+	}
+	
+	executables, _ := filepath.Glob("test_*")
+	for _, file := range executables {
+		if info, err := os.Stat(file); err == nil && info.Mode().IsRegular() && info.Mode()&0111 != 0 {
+			if err := os.Remove(file); err != nil && !os.IsNotExist(err) {
+				b.Logf("Warning: failed to remove %s: %v", file, err)
+			}
+		}
+	}
+	
+	duration := time.Since(suite.startTime)
+	b.Logf("Benchmark cleanup completed in %v", duration)
+	
+	if len(errors) > 0 {
+		b.Logf("Cleanup warnings: %s", strings.Join(errors, "; "))
+	}
+	
+	// Reset the suite for potential reuse
+	suite.tempFiles = suite.tempFiles[:0]
+	suite.tempDirs = suite.tempDirs[:0]
+	suite.cleanupDone = false
 }
 
 // TestResult represents the result of a test execution
