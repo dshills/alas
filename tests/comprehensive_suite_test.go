@@ -14,113 +14,113 @@ import (
 func TestComprehensiveSuite(t *testing.T) {
 	suite := NewTestSuite()
 	suite.Setup(t)
-	
+
 	// Validate test environment
 	suite.ValidateTestEnvironment(t)
-	
+
 	// Check initial memory usage
 	suite.CheckMemoryUsage(t, "start")
-	
+
 	// Run all test categories
 	t.Run("BasicDataTypes", func(t *testing.T) {
 		TestBasicDataTypes(t)
 	})
-	
+
 	t.Run("ControlFlow", func(t *testing.T) {
 		TestControlFlow(t)
 	})
-	
+
 	t.Run("ArrayOperations", func(t *testing.T) {
 		TestArrayOperations(t)
 	})
-	
+
 	t.Run("MapOperations", func(t *testing.T) {
 		TestMapOperations(t)
 	})
-	
+
 	t.Run("FunctionCalls", func(t *testing.T) {
 		TestFunctionCalls(t)
 	})
-	
+
 	t.Run("UnaryOperations", func(t *testing.T) {
 		TestUnaryOperations(t)
 	})
-	
+
 	t.Run("AllExamplePrograms", func(t *testing.T) {
 		TestAllExamplePrograms(t)
 	})
-	
+
 	// LLVM Tests
 	t.Run("LLVMBasicTypes", func(t *testing.T) {
 		TestLLVMCodegenBasicTypes(t)
 	})
-	
+
 	t.Run("LLVMArithmetic", func(t *testing.T) {
 		TestLLVMCodegenArithmetic(t)
 	})
-	
+
 	t.Run("LLVMControlFlow", func(t *testing.T) {
 		TestLLVMCodegenControlFlow(t)
 	})
-	
+
 	t.Run("LLVMFunctions", func(t *testing.T) {
 		TestLLVMCodegenFunctions(t)
 	})
-	
+
 	t.Run("LLVMCompilation", func(t *testing.T) {
 		TestLLVMCodegenCompilation(t)
 	})
-	
+
 	t.Run("LLVMMultiModule", func(t *testing.T) {
 		TestLLVMMultiModuleCodegen(t)
 	})
-	
+
 	t.Run("LLVMErrorHandling", func(t *testing.T) {
 		TestLLVMCodegenErrorHandling(t)
 	})
-	
+
 	// Integration Tests
 	t.Run("InterpreterVsCompiler", func(t *testing.T) {
 		TestInterpreterVsCompiler(t)
 	})
-	
+
 	t.Run("ExampleProgramsIntegration", func(t *testing.T) {
 		TestExampleProgramsIntegration(t)
 	})
-	
+
 	t.Run("ValidationIntegration", func(t *testing.T) {
 		TestValidationIntegration(t)
 	})
-	
+
 	// Edge Cases and Error Handling
 	t.Run("EdgeCaseValues", func(t *testing.T) {
 		TestEdgeCaseValues(t)
 	})
-	
+
 	t.Run("ErrorHandling", func(t *testing.T) {
 		TestErrorHandling(t)
 	})
-	
+
 	t.Run("ComplexDataStructures", func(t *testing.T) {
 		TestComplexDataStructures(t)
 	})
-	
+
 	t.Run("ValidationEdgeCases", func(t *testing.T) {
 		TestValidationEdgeCases(t)
 	})
-	
+
 	t.Run("MemoryLimits", func(t *testing.T) {
 		TestMemoryLimits(t)
 	})
-	
+
 	t.Run("CodegenEdgeCases", func(t *testing.T) {
 		TestCodegenEdgeCases(t)
 	})
-	
+
 	// Force garbage collection and check memory usage
 	suite.ForceGC(t)
 	suite.CheckMemoryUsage(t, "after_gc")
-	
+
 	t.Log("Comprehensive test suite completed successfully")
 }
 
@@ -128,7 +128,7 @@ func TestComprehensiveSuite(t *testing.T) {
 func TestParallelExecution(t *testing.T) {
 	suite := NewTestSuite()
 	suite.Setup(t)
-	
+
 	// Create parallel test functions
 	parallelTests := []func(*testing.T){
 		func(t *testing.T) { TestBasicDataTypes(t) },
@@ -137,7 +137,7 @@ func TestParallelExecution(t *testing.T) {
 		func(t *testing.T) { TestMapOperations(t) },
 		func(t *testing.T) { TestFunctionCalls(t) },
 	}
-	
+
 	// Run tests in parallel
 	runner := suite.NewParallelTestRunner(3) // Limit to 3 concurrent tests
 	runner.RunTests(t, parallelTests)
@@ -148,16 +148,16 @@ func TestPerformanceStress(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping stress test in short mode")
 	}
-	
+
 	suite := NewTestSuite()
 	suite.Setup(t)
-	
+
 	// Check memory before stress test
 	suite.CheckMemoryUsage(t, "before_stress")
-	
+
 	t.Run("StressInterpreter", func(t *testing.T) {
 		start := time.Now()
-		
+
 		// Run the same test many times to check for memory leaks
 		for i := 0; i < 100; i++ {
 			TestBasicDataTypes(t)
@@ -165,11 +165,11 @@ func TestPerformanceStress(t *testing.T) {
 				suite.CheckMemoryUsage(t, "stress_iteration_"+string(rune('0'+i/20)))
 			}
 		}
-		
+
 		duration := time.Since(start)
 		t.Logf("Stress test completed in %v (100 iterations)", duration)
 	})
-	
+
 	// Force GC and check final memory usage
 	suite.ForceGC(t)
 	suite.CheckMemoryUsage(t, "after_stress")
@@ -178,38 +178,38 @@ func TestPerformanceStress(t *testing.T) {
 // BenchmarkInterpreterPerformance benchmarks interpreter performance
 func BenchmarkInterpreterPerformance(b *testing.B) {
 	suite := NewTestSuite()
-	
+
 	benchHelper := suite.NewBenchmarkHelper()
-	
+
 	benchHelper.RunBenchmark(b, "BasicArithmetic", func(b *testing.B) {
 		// Create a simple arithmetic module for benchmarking
 		module := createBasicArithmeticModule()
-		
+
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			interp := interpreter.New()
 			if err := interp.LoadModule(module); err != nil {
 				b.Fatalf("Failed to load module: %v", err)
 			}
-			
+
 			_, err := interp.Run("main", []runtime.Value{})
 			if err != nil {
 				b.Fatalf("Runtime error: %v", err)
 			}
 		}
 	})
-	
+
 	benchHelper.RunBenchmark(b, "RecursiveFunction", func(b *testing.B) {
 		// Create a recursive factorial module for benchmarking
 		module := createFactorialModule()
-		
+
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			interp := interpreter.New()
 			if err := interp.LoadModule(module); err != nil {
 				b.Fatalf("Failed to load module: %v", err)
 			}
-			
+
 			_, err := interp.Run("main", []runtime.Value{})
 			if err != nil {
 				b.Fatalf("Runtime error: %v", err)
@@ -221,12 +221,12 @@ func BenchmarkInterpreterPerformance(b *testing.B) {
 // BenchmarkLLVMCodegen benchmarks LLVM code generation performance
 func BenchmarkLLVMCodegen(b *testing.B) {
 	suite := NewTestSuite()
-	
+
 	benchHelper := suite.NewBenchmarkHelper()
-	
+
 	benchHelper.RunBenchmark(b, "SimpleModule", func(b *testing.B) {
 		module := createBasicArithmeticModule()
-		
+
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			cg := codegen.NewLLVMCodegen()
@@ -236,10 +236,10 @@ func BenchmarkLLVMCodegen(b *testing.B) {
 			}
 		}
 	})
-	
+
 	benchHelper.RunBenchmark(b, "ComplexModule", func(b *testing.B) {
 		module := createComplexModule()
-		
+
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			cg := codegen.NewLLVMCodegen()
@@ -270,9 +270,9 @@ func createBasicArithmeticModule() *ast.Module {
 							Type: ast.ExprBinary,
 							Op:   "+",
 							Left: &ast.Expression{
-								Type: ast.ExprBinary,
-								Op:   "*",
-								Left: &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
+								Type:  ast.ExprBinary,
+								Op:    "*",
+								Left:  &ast.Expression{Type: ast.ExprLiteral, Value: float64(10)},
 								Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(20)},
 							},
 							Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(30)},
@@ -298,14 +298,14 @@ func createFactorialModule() *ast.Module {
 					{
 						Type: "if",
 						Cond: &ast.Expression{
-							Type: ast.ExprBinary,
-							Op:   "<=",
-							Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+							Type:  ast.ExprBinary,
+							Op:    "<=",
+							Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 							Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 						},
 						Then: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 							},
 						},
@@ -321,9 +321,9 @@ func createFactorialModule() *ast.Module {
 										Name: "factorial",
 										Args: []ast.Expression{
 											{
-												Type: ast.ExprBinary,
-												Op:   "-",
-												Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+												Type:  ast.ExprBinary,
+												Op:    "-",
+												Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 												Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 											},
 										},
@@ -370,14 +370,14 @@ func createComplexModule() *ast.Module {
 					{
 						Type: "if",
 						Cond: &ast.Expression{
-							Type: ast.ExprBinary,
-							Op:   "<=",
-							Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+							Type:  ast.ExprBinary,
+							Op:    "<=",
+							Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 							Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 						},
 						Then: []ast.Statement{
 							{
-								Type: "return",
+								Type:  "return",
 								Value: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 							},
 						},
@@ -392,9 +392,9 @@ func createComplexModule() *ast.Module {
 										Name: "fibonacci",
 										Args: []ast.Expression{
 											{
-												Type: ast.ExprBinary,
-												Op:   "-",
-												Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+												Type:  ast.ExprBinary,
+												Op:    "-",
+												Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 												Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(1)},
 											},
 										},
@@ -404,9 +404,9 @@ func createComplexModule() *ast.Module {
 										Name: "fibonacci",
 										Args: []ast.Expression{
 											{
-												Type: ast.ExprBinary,
-												Op:   "-",
-												Left: &ast.Expression{Type: ast.ExprVariable, Name: "n"},
+												Type:  ast.ExprBinary,
+												Op:    "-",
+												Left:  &ast.Expression{Type: ast.ExprVariable, Name: "n"},
 												Right: &ast.Expression{Type: ast.ExprLiteral, Value: float64(2)},
 											},
 										},

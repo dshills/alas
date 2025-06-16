@@ -34,7 +34,7 @@ func TestStandardLibraryIntegration(t *testing.T) {
 			// Try to read the file with current path, fallback to ../
 			var data []byte
 			var err error
-			
+
 			data, err = os.ReadFile(tc.file)
 			if err != nil {
 				// Try with ../ prefix in case we're still in tests directory

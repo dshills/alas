@@ -14,12 +14,12 @@ func contains(s, substr string) bool {
 
 func TestAsyncSpawn(t *testing.T) {
 	registry := NewRegistry()
-	
+
 	// Test spawn
 	args := []runtime.Value{
 		runtime.NewString("test function"), // Placeholder for function
 	}
-	
+
 	result, err := registry.Call("async.spawn", args)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -27,7 +27,7 @@ func TestAsyncSpawn(t *testing.T) {
 	if result.Type != runtime.ValueTypeMap {
 		t.Errorf("expected map type, got %v", result.Type)
 	}
-	
+
 	// Check task structure
 	taskMap, _ := result.AsMap()
 	typeVal, _ := taskMap["type"].AsString()
@@ -46,7 +46,7 @@ func TestAsyncSpawn(t *testing.T) {
 
 func TestAsyncAwait(t *testing.T) {
 	registry := NewRegistry()
-	
+
 	// First spawn a task
 	spawnArgs := []runtime.Value{
 		runtime.NewString("test function"),
@@ -55,7 +55,7 @@ func TestAsyncAwait(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	
+
 	// Wait for the task
 	awaitArgs := []runtime.Value{task}
 	result, err := registry.Call("async.await", awaitArgs)
@@ -65,7 +65,7 @@ func TestAsyncAwait(t *testing.T) {
 	if result.Type != runtime.ValueTypeMap {
 		t.Errorf("expected map type, got %v", result.Type)
 	}
-	
+
 	// Check result structure
 	resultMap, _ := result.AsMap()
 	okVal, _ := resultMap["ok"].AsBool()
@@ -84,7 +84,7 @@ func TestAsyncAwait(t *testing.T) {
 
 func TestAsyncAwaitTimeout(t *testing.T) {
 	registry := NewRegistry()
-	
+
 	// Create a sleep task that takes 200ms
 	sleepArgs := []runtime.Value{
 		runtime.NewInt(200),
@@ -93,7 +93,7 @@ func TestAsyncAwaitTimeout(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	
+
 	// Try to wait with 50ms timeout (should timeout)
 	awaitArgs := []runtime.Value{
 		task,
@@ -103,7 +103,7 @@ func TestAsyncAwaitTimeout(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	
+
 	resultMap, _ := result.AsMap()
 	timedOut, _ := resultMap["timedOut"].AsBool()
 	if timedOut != true {
@@ -121,9 +121,9 @@ func TestAsyncAwaitTimeout(t *testing.T) {
 
 func TestAsyncSleep(t *testing.T) {
 	registry := NewRegistry()
-	
+
 	start := time.Now()
-	
+
 	// Create sleep task
 	sleepArgs := []runtime.Value{
 		runtime.NewInt(100), // 100ms
@@ -132,14 +132,14 @@ func TestAsyncSleep(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	
+
 	// Wait for it
 	awaitArgs := []runtime.Value{task}
 	_, err = registry.Call("async.await", awaitArgs)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	
+
 	elapsed := time.Since(start)
 	if elapsed < 100*time.Millisecond {
 		t.Errorf("expected elapsed time >= 100ms, got %v", elapsed)
@@ -148,7 +148,7 @@ func TestAsyncSleep(t *testing.T) {
 
 func TestAsyncCancel(t *testing.T) {
 	registry := NewRegistry()
-	
+
 	// Create a long-running sleep task
 	sleepArgs := []runtime.Value{
 		runtime.NewInt(1000), // 1 second
@@ -157,7 +157,7 @@ func TestAsyncCancel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	
+
 	// Cancel it
 	cancelArgs := []runtime.Value{task}
 	canceled, err := registry.Call("async.cancel", cancelArgs)
@@ -168,14 +168,14 @@ func TestAsyncCancel(t *testing.T) {
 	if canceledBool != true {
 		t.Errorf("expected canceled=true, got %v", canceledBool)
 	}
-	
+
 	// Wait should return quickly with cancellation error
 	awaitArgs := []runtime.Value{task}
 	result, err := registry.Call("async.await", awaitArgs)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	
+
 	resultMap, _ := result.AsMap()
 	okVal, _ := resultMap["ok"].AsBool()
 	if okVal != false {
@@ -189,7 +189,7 @@ func TestAsyncCancel(t *testing.T) {
 
 func TestAsyncIsRunning(t *testing.T) {
 	registry := NewRegistry()
-	
+
 	// Create a sleep task
 	sleepArgs := []runtime.Value{
 		runtime.NewInt(100),
@@ -198,7 +198,7 @@ func TestAsyncIsRunning(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	
+
 	// Check if running (might be pending or running)
 	checkArgs := []runtime.Value{task}
 	_, err = registry.Call("async.isRunning", checkArgs)
@@ -206,14 +206,14 @@ func TestAsyncIsRunning(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	// Task should be either pending or running
-	
+
 	// Wait for completion
 	awaitArgs := []runtime.Value{task}
 	_, err = registry.Call("async.await", awaitArgs)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	
+
 	// Now should not be running
 	isRunning, err := registry.Call("async.isRunning", checkArgs)
 	if err != nil {
@@ -227,7 +227,7 @@ func TestAsyncIsRunning(t *testing.T) {
 
 func TestAsyncIsCompleted(t *testing.T) {
 	registry := NewRegistry()
-	
+
 	// Create a sleep task
 	sleepArgs := []runtime.Value{
 		runtime.NewInt(50),
@@ -236,7 +236,7 @@ func TestAsyncIsCompleted(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	
+
 	// Initially not completed
 	checkArgs := []runtime.Value{task}
 	isCompleted, err := registry.Call("async.isCompleted", checkArgs)
@@ -247,14 +247,14 @@ func TestAsyncIsCompleted(t *testing.T) {
 	if isCompletedBool != false {
 		t.Errorf("expected isCompleted=false, got %v", isCompletedBool)
 	}
-	
+
 	// Wait for completion
 	awaitArgs := []runtime.Value{task}
 	_, err = registry.Call("async.await", awaitArgs)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	
+
 	// Now should be completed
 	isCompleted, err = registry.Call("async.isCompleted", checkArgs)
 	if err != nil {
@@ -268,7 +268,7 @@ func TestAsyncIsCompleted(t *testing.T) {
 
 func TestAsyncParallel(t *testing.T) {
 	registry := NewRegistry()
-	
+
 	// Create multiple tasks
 	tasks := []runtime.Value{}
 	for i := 0; i < 3; i++ {
@@ -281,7 +281,7 @@ func TestAsyncParallel(t *testing.T) {
 		}
 		tasks = append(tasks, task)
 	}
-	
+
 	// Run parallel
 	start := time.Now()
 	parallelArgs := []runtime.Value{
@@ -292,12 +292,12 @@ func TestAsyncParallel(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	elapsed := time.Since(start)
-	
+
 	// Should take about 150ms (the longest task), not 300ms (sum of all)
 	if elapsed >= 200*time.Millisecond {
 		t.Errorf("expected elapsed time < 200ms, got %v", elapsed)
 	}
-	
+
 	resultMap, _ := result.AsMap()
 	okVal, _ := resultMap["ok"].AsBool()
 	if okVal != true {
@@ -311,11 +311,11 @@ func TestAsyncParallel(t *testing.T) {
 
 func TestAsyncRace(t *testing.T) {
 	registry := NewRegistry()
-	
+
 	// Create multiple tasks with different durations
 	tasks := []runtime.Value{}
 	durations := []int{100, 50, 150} // 50ms should win
-	
+
 	for _, duration := range durations {
 		sleepArgs := []runtime.Value{
 			runtime.NewInt(int64(duration)),
@@ -326,7 +326,7 @@ func TestAsyncRace(t *testing.T) {
 		}
 		tasks = append(tasks, task)
 	}
-	
+
 	// Race them
 	start := time.Now()
 	raceArgs := []runtime.Value{
@@ -337,12 +337,12 @@ func TestAsyncRace(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	elapsed := time.Since(start)
-	
+
 	// Should complete in about 50ms (the fastest task)
 	if elapsed >= 80*time.Millisecond {
 		t.Errorf("expected elapsed time < 80ms, got %v", elapsed)
 	}
-	
+
 	resultMap, _ := result.AsMap()
 	okVal, _ := resultMap["ok"].AsBool()
 	if okVal != true {

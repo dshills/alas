@@ -2,10 +2,24 @@
 
 ## Top Priority
 
-- [ ] Fix LLVM field access compilation for dynamically-typed objects
-- [ ] Complete LLVM codegen for all language features (arrays, maps, strings)
-- [ ] Implement module import/export system
-- [ ] Add runtime error handling with stack traces
+- [x] Fix LLVM field access compilation for dynamically-typed objects
+- [x] Complete LLVM codegen for all language features (arrays, maps, strings)
+- [x] Implement module import/export system
+- [x] Add runtime error handling with stack traces
+
+## Linting Issues (Non-Critical)
+- [ ] Fix missing cases in switch of type runtime.ValueType (exhaustive) in tests/integration_test.go:289
+- [ ] Fix comment formatting (godot) in internal/runtime/async.go and internal/stdlib/async.go
+- [ ] Address unused functions (12 functions) - these are comprehensive implementations that may be used in future features
+- [ ] Address integer overflow conversion warnings (gosec) - 5 instances, review for safety
+- [ ] Address unused parameter warnings (unparam) - 2 instances in helper functions
+
+## Module System Issues (Exposed by Enhanced Module Loading)
+- [ ] Fix stdlib modules with unsupported types:
+  - [ ] `io.print` function uses "any" type parameter - needs type system enhancement
+  - [ ] `async.Task` custom type definition not properly handled in LLVM conversion
+  - [ ] Enhanced dependency resolution exposes pre-existing type system limitations
+- [ ] Consider adding type aliases or improving type conversion for stdlib compatibility
 
 ## Setup
 - [ ] Set up development environment documentation
