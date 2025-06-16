@@ -1,5 +1,13 @@
 # TASK.md
 
+## Top Priority
+
+- [ ] Complete JSON schema validation for all language constructs
+- [ ] Implement comprehensive test suite for all language features
+- [ ] Complete LLVM codegen for all language features (arrays, maps, strings)
+- [ ] Implement module import/export system
+- [ ] Add runtime error handling with stack traces
+
 ## Setup
 - [ ] Set up development environment documentation
 - [ ] Document required dependencies (Go 1.24.4, LLVM tools)
