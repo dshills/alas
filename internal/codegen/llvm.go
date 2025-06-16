@@ -200,16 +200,21 @@ func (g *LLVMCodegen) generateStatement(stmt *ast.Statement) (value.Value, bool,
 			return nil, false, err
 		}
 
-		// For LLVM IR, we need to store variables properly with alloca + store
-		// Allocate memory for the variable
-		varAlloca := g.builder.NewAlloca(val.Type())
-		varAlloca.SetName(stmt.Target + "_ptr")
+		// Check if variable already has an alloca
+		varAlloca, exists := g.variables[stmt.Target]
+		if !exists {
+			// First assignment - allocate memory for the variable
+			newAlloca := g.builder.NewAlloca(val.Type())
+			newAlloca.SetName(stmt.Target + "_ptr")
+			
+			// Keep track of the alloca for later loads
+			varAlloca = newAlloca
+			g.variables[stmt.Target] = varAlloca
+		}
 
-		// Store the value
+		// Store the value (works for both new and existing allocas)
 		g.builder.NewStore(val, varAlloca)
-
-		// Keep track of the alloca for later loads
-		g.variables[stmt.Target] = varAlloca
+		
 		return val, false, nil
 
 	case ast.StmtReturn:
@@ -264,7 +269,7 @@ func (g *LLVMCodegen) generateExpression(expr *ast.Expression) (value.Value, err
 		}
 
 		loadedVal := g.builder.NewLoad(ptrType.ElemType, varAlloca)
-		loadedVal.SetName(expr.Name + "_val")
+		// Don't set a name - let LLVM auto-generate unique names to avoid SSA conflicts
 		return loadedVal, nil
 
 	case ast.ExprBinary:
