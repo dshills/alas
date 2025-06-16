@@ -34,6 +34,18 @@ func (v *Validator) ValidateModule(m *ast.Module) error {
 		v.addError("module name cannot be empty")
 	}
 
+	// Validate custom types
+	typeNames := make(map[string]bool)
+	for i, typeDef := range m.Types {
+		if err := v.validateTypeDefinition(&typeDef); err != nil {
+			v.addError("type %d: %v", i, err)
+		}
+		if typeNames[typeDef.Name] {
+			v.addError("duplicate type name: %s", typeDef.Name)
+		}
+		typeNames[typeDef.Name] = true
+	}
+
 	// Validate functions
 	if len(m.Functions) == 0 {
 		v.addError("module must contain at least one function")
@@ -41,7 +53,7 @@ func (v *Validator) ValidateModule(m *ast.Module) error {
 
 	functionNames := make(map[string]bool)
 	for i, fn := range m.Functions {
-		if err := v.validateFunction(&fn); err != nil {
+		if err := v.validateFunction(&fn, typeNames); err != nil {
 			v.addError("function %d: %v", i, err)
 		}
 		if functionNames[fn.Name] {
@@ -74,8 +86,53 @@ func (v *Validator) ValidateModule(m *ast.Module) error {
 	return nil
 }
 
+// validateTypeDefinition validates a custom type definition.
+func (v *Validator) validateTypeDefinition(typeDef *ast.TypeDefinition) error {
+	if typeDef.Name == "" {
+		return fmt.Errorf("type name cannot be empty")
+	}
+
+	switch typeDef.Definition.Kind {
+	case ast.TypeKindStruct:
+		if len(typeDef.Definition.Fields) == 0 {
+			return fmt.Errorf("struct type '%s' must have at least one field", typeDef.Name)
+		}
+		fieldNames := make(map[string]bool)
+		for i, field := range typeDef.Definition.Fields {
+			if field.Name == "" {
+				return fmt.Errorf("field %d: name cannot be empty", i)
+			}
+			if fieldNames[field.Name] {
+				return fmt.Errorf("duplicate field name: %s", field.Name)
+			}
+			fieldNames[field.Name] = true
+			if !isValidType(field.Type, nil) {
+				return fmt.Errorf("field %s: invalid type '%s'", field.Name, field.Type)
+			}
+		}
+	case ast.TypeKindEnum:
+		if len(typeDef.Definition.Values) == 0 {
+			return fmt.Errorf("enum type '%s' must have at least one value", typeDef.Name)
+		}
+		valueNames := make(map[string]bool)
+		for _, value := range typeDef.Definition.Values {
+			if value == "" {
+				return fmt.Errorf("enum value cannot be empty")
+			}
+			if valueNames[value] {
+				return fmt.Errorf("duplicate enum value: %s", value)
+			}
+			valueNames[value] = true
+		}
+	default:
+		return fmt.Errorf("unknown type kind: %s", typeDef.Definition.Kind)
+	}
+
+	return nil
+}
+
 // validateFunction validates a function definition.
-func (v *Validator) validateFunction(fn *ast.Function) error {
+func (v *Validator) validateFunction(fn *ast.Function, typeNames map[string]bool) error {
 	if fn.Type != "function" {
 		return fmt.Errorf("type must be 'function', got '%s'", fn.Type)
 	}
@@ -95,13 +152,13 @@ func (v *Validator) validateFunction(fn *ast.Function) error {
 		}
 		paramNames[param.Name] = true
 
-		if !isValidType(param.Type) {
+		if !isValidType(param.Type, typeNames) {
 			return fmt.Errorf("parameter %s: invalid type '%s'", param.Name, param.Type)
 		}
 	}
 
 	// Validate return type
-	if fn.Returns != "" && !isValidType(fn.Returns) {
+	if fn.Returns != "" && !isValidType(fn.Returns, typeNames) {
 		return fmt.Errorf("invalid return type '%s'", fn.Returns)
 	}
 
@@ -110,9 +167,15 @@ func (v *Validator) validateFunction(fn *ast.Function) error {
 		return fmt.Errorf("function body cannot be null")
 	}
 
+	// Create scope with parameters and type names
+	scope := make(map[string]bool)
+	for name := range paramNames {
+		scope[name] = true
+	}
+
 	// Validate body statements
 	for i, stmt := range fn.Body {
-		if err := v.validateStatement(&stmt, paramNames); err != nil {
+		if err := v.validateStatement(&stmt, scope, typeNames); err != nil {
 			return fmt.Errorf("statement %d: %v", i, err)
 		}
 	}
@@ -121,7 +184,7 @@ func (v *Validator) validateFunction(fn *ast.Function) error {
 }
 
 // validateStatement validates a statement.
-func (v *Validator) validateStatement(stmt *ast.Statement, scope map[string]bool) error {
+func (v *Validator) validateStatement(stmt *ast.Statement, scope map[string]bool, typeNames map[string]bool) error {
 	switch stmt.Type {
 	case ast.StmtAssign:
 		if stmt.Target == "" {
@@ -130,7 +193,7 @@ func (v *Validator) validateStatement(stmt *ast.Statement, scope map[string]bool
 		if stmt.Value == nil {
 			return fmt.Errorf("assign statement must have a value")
 		}
-		if err := v.validateExpression(stmt.Value, scope); err != nil {
+		if err := v.validateExpression(stmt.Value, scope, typeNames); err != nil {
 			return fmt.Errorf("assign value: %v", err)
 		}
 		// Add target to scope
@@ -140,7 +203,7 @@ func (v *Validator) validateStatement(stmt *ast.Statement, scope map[string]bool
 		if stmt.Cond == nil {
 			return fmt.Errorf("if statement must have a condition")
 		}
-		if err := v.validateExpression(stmt.Cond, scope); err != nil {
+		if err := v.validateExpression(stmt.Cond, scope, typeNames); err != nil {
 			return fmt.Errorf("if condition: %v", err)
 		}
 		if len(stmt.Then) == 0 {
@@ -149,7 +212,7 @@ func (v *Validator) validateStatement(stmt *ast.Statement, scope map[string]bool
 		// Validate then block
 		thenScope := copyScope(scope)
 		for i, s := range stmt.Then {
-			if err := v.validateStatement(&s, thenScope); err != nil {
+			if err := v.validateStatement(&s, thenScope, typeNames); err != nil {
 				return fmt.Errorf("then block statement %d: %v", i, err)
 			}
 		}
@@ -157,7 +220,7 @@ func (v *Validator) validateStatement(stmt *ast.Statement, scope map[string]bool
 		if len(stmt.Else) > 0 {
 			elseScope := copyScope(scope)
 			for i, s := range stmt.Else {
-				if err := v.validateStatement(&s, elseScope); err != nil {
+				if err := v.validateStatement(&s, elseScope, typeNames); err != nil {
 					return fmt.Errorf("else block statement %d: %v", i, err)
 				}
 			}
@@ -167,7 +230,7 @@ func (v *Validator) validateStatement(stmt *ast.Statement, scope map[string]bool
 		if stmt.Cond == nil {
 			return fmt.Errorf("while statement must have a condition")
 		}
-		if err := v.validateExpression(stmt.Cond, scope); err != nil {
+		if err := v.validateExpression(stmt.Cond, scope, typeNames); err != nil {
 			return fmt.Errorf("while condition: %v", err)
 		}
 		if len(stmt.Body) == 0 {
@@ -176,7 +239,7 @@ func (v *Validator) validateStatement(stmt *ast.Statement, scope map[string]bool
 		// Validate body
 		bodyScope := copyScope(scope)
 		for i, s := range stmt.Body {
-			if err := v.validateStatement(&s, bodyScope); err != nil {
+			if err := v.validateStatement(&s, bodyScope, typeNames); err != nil {
 				return fmt.Errorf("while body statement %d: %v", i, err)
 			}
 		}
@@ -185,7 +248,7 @@ func (v *Validator) validateStatement(stmt *ast.Statement, scope map[string]bool
 		if stmt.Cond == nil {
 			return fmt.Errorf("for statement must have a condition")
 		}
-		if err := v.validateExpression(stmt.Cond, scope); err != nil {
+		if err := v.validateExpression(stmt.Cond, scope, typeNames); err != nil {
 			return fmt.Errorf("for condition: %v", err)
 		}
 		if len(stmt.Body) == 0 {
@@ -194,14 +257,14 @@ func (v *Validator) validateStatement(stmt *ast.Statement, scope map[string]bool
 		// Validate body
 		bodyScope := copyScope(scope)
 		for i, s := range stmt.Body {
-			if err := v.validateStatement(&s, bodyScope); err != nil {
+			if err := v.validateStatement(&s, bodyScope, typeNames); err != nil {
 				return fmt.Errorf("for body statement %d: %v", i, err)
 			}
 		}
 
 	case ast.StmtReturn:
 		if stmt.Value != nil {
-			if err := v.validateExpression(stmt.Value, scope); err != nil {
+			if err := v.validateExpression(stmt.Value, scope, typeNames); err != nil {
 				return fmt.Errorf("return value: %v", err)
 			}
 		}
@@ -210,7 +273,7 @@ func (v *Validator) validateStatement(stmt *ast.Statement, scope map[string]bool
 		if stmt.Value == nil {
 			return fmt.Errorf("expression statement must have a value")
 		}
-		if err := v.validateExpression(stmt.Value, scope); err != nil {
+		if err := v.validateExpression(stmt.Value, scope, typeNames); err != nil {
 			return fmt.Errorf("expression: %v", err)
 		}
 
@@ -222,7 +285,10 @@ func (v *Validator) validateStatement(stmt *ast.Statement, scope map[string]bool
 }
 
 // validateExpression validates an expression.
-func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bool) error {
+// The typeNames parameter is currently unused but kept for future type checking enhancements.
+//
+//nolint:unparam // typeNames will be used for type inference in future
+func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bool, typeNames map[string]bool) error {
 	switch expr.Type {
 	case ast.ExprLiteral:
 		if expr.Value == nil {
@@ -248,10 +314,10 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 		if expr.Left == nil || expr.Right == nil {
 			return fmt.Errorf("binary expression must have left and right operands")
 		}
-		if err := v.validateExpression(expr.Left, scope); err != nil {
+		if err := v.validateExpression(expr.Left, scope, typeNames); err != nil {
 			return fmt.Errorf("left operand: %v", err)
 		}
-		if err := v.validateExpression(expr.Right, scope); err != nil {
+		if err := v.validateExpression(expr.Right, scope, typeNames); err != nil {
 			return fmt.Errorf("right operand: %v", err)
 		}
 
@@ -271,7 +337,7 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 		} else {
 			return fmt.Errorf("unary expression must have an operand")
 		}
-		if err := v.validateExpression(operandExpr, scope); err != nil {
+		if err := v.validateExpression(operandExpr, scope, typeNames); err != nil {
 			return fmt.Errorf("unary operand: %v", err)
 		}
 
@@ -281,7 +347,7 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 		}
 		// Validate arguments
 		for i, arg := range expr.Args {
-			if err := v.validateExpression(&arg, scope); err != nil {
+			if err := v.validateExpression(&arg, scope, typeNames); err != nil {
 				return fmt.Errorf("argument %d: %v", i, err)
 			}
 		}
@@ -289,7 +355,7 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 	case ast.ExprArrayLit:
 		// Validate array elements
 		for i, elem := range expr.Elements {
-			if err := v.validateExpression(&elem, scope); err != nil {
+			if err := v.validateExpression(&elem, scope, typeNames); err != nil {
 				return fmt.Errorf("array element %d: %v", i, err)
 			}
 		}
@@ -297,10 +363,10 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 	case ast.ExprMapLit:
 		// Validate map key-value pairs
 		for i, pair := range expr.Pairs {
-			if err := v.validateExpression(&pair.Key, scope); err != nil {
+			if err := v.validateExpression(&pair.Key, scope, typeNames); err != nil {
 				return fmt.Errorf("map pair %d key: %v", i, err)
 			}
-			if err := v.validateExpression(&pair.Value, scope); err != nil {
+			if err := v.validateExpression(&pair.Value, scope, typeNames); err != nil {
 				return fmt.Errorf("map pair %d value: %v", i, err)
 			}
 		}
@@ -312,10 +378,10 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 		if expr.Index == nil {
 			return fmt.Errorf("index expression must have an index")
 		}
-		if err := v.validateExpression(expr.Object, scope); err != nil {
+		if err := v.validateExpression(expr.Object, scope, typeNames); err != nil {
 			return fmt.Errorf("index object: %v", err)
 		}
-		if err := v.validateExpression(expr.Index, scope); err != nil {
+		if err := v.validateExpression(expr.Index, scope, typeNames); err != nil {
 			return fmt.Errorf("index: %v", err)
 		}
 
@@ -328,7 +394,7 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 		}
 		// Validate arguments
 		for i, arg := range expr.Args {
-			if err := v.validateExpression(&arg, scope); err != nil {
+			if err := v.validateExpression(&arg, scope, typeNames); err != nil {
 				return fmt.Errorf("module call argument %d: %v", i, err)
 			}
 		}
@@ -339,7 +405,7 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 		}
 		// Validate arguments
 		for i, arg := range expr.Args {
-			if err := v.validateExpression(&arg, scope); err != nil {
+			if err := v.validateExpression(&arg, scope, typeNames); err != nil {
 				return fmt.Errorf("builtin call argument %d: %v", i, err)
 			}
 		}
@@ -351,7 +417,7 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 		if expr.Field == "" {
 			return fmt.Errorf("field expression must have a field name")
 		}
-		if err := v.validateExpression(expr.Object, scope); err != nil {
+		if err := v.validateExpression(expr.Object, scope, typeNames); err != nil {
 			return fmt.Errorf("field object: %v", err)
 		}
 
@@ -368,13 +434,17 @@ func (v *Validator) addError(format string, args ...interface{}) {
 	v.errors = append(v.errors, fmt.Sprintf(format, args...))
 }
 
-func isValidType(t string) bool {
+func isValidType(t string, typeNames map[string]bool) bool {
 	switch t {
 	case ast.TypeInt, ast.TypeFloat, ast.TypeString, ast.TypeBool,
 		ast.TypeArray, ast.TypeMap, ast.TypeVoid:
 		return true
 	default:
-		// Could be a custom type - for now accept anything that's not empty
+		// Check if it's a custom type
+		if typeNames != nil && typeNames[t] {
+			return true
+		}
+		// For backward compatibility, accept any non-empty string as a type
 		return t != ""
 	}
 }
