@@ -1,8 +1,15 @@
-# ALaS Language Specification
+# ALaS Language Specification (v0.1)
 
 ## Overview
 
-ALaS (Artificial Language for Autonomous Systems) is a programming language that uses JSON as its primary representation format. This design choice makes it optimized for programmatic generation and manipulation by AI systems rather than human readability.
+ALaS (Artificial Language for Autonomous Systems) is a programming language designed specifically for machine generation and manipulation. Unlike traditional programming languages optimized for human readability, ALaS uses JSON and other non-human-readable representations (with potential for future binary IR formats) to maximize clarity and ease of generation for AI/LLM systems.
+
+## Goals
+
+1. **Machine-First Design**: Prioritize ease of generation, manipulation, and understanding by AI systems
+2. **Deterministic Execution**: Ensure predictable, reproducible behavior across all execution environments
+3. **Extensibility**: Support a plugin architecture for domain-specific extensions
+4. **Safety**: Provide memory safety and type safety guarantees
 
 ## Module Structure
 
@@ -352,6 +359,14 @@ Supported operators:
 }
 ```
 
+## Execution Model
+
+ALaS programs execute in a deterministic environment with:
+- Function-scoped memory model
+- No global mutable state
+- Explicit error handling
+- Support for compilation to binary IR (via LLVM)
+
 ## Design Principles
 
 1. **Machine-First**: Every construct is designed for easy generation and parsing by machines
@@ -359,3 +374,105 @@ Supported operators:
 3. **Structured**: Consistent JSON schema throughout
 4. **Deterministic**: Same input always produces same output
 5. **Extensible**: Plugin system allows language extensions
+
+## Design Constraints
+
+- **No Implicit Behavior**: All operations must be explicitly defined
+- **Type Safety**: Strong static typing with no implicit conversions
+- **Memory Safety**: No direct memory manipulation
+- **Determinism**: No undefined behavior or platform-specific variations
+
+## Appendix: Formal JSON Schema
+
+ALaS programs conform to the following JSON Schema definition:
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://alas-lang.org/schemas/v0.1/program.json",
+  "title": "ALaS Program Schema",
+  "type": "object",
+  "required": ["type", "name", "functions"],
+  "properties": {
+    "type": {
+      "const": "module"
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+    },
+    "exports": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "imports": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "functions": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/function"}
+    },
+    "types": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/type"}
+    },
+    "meta": {
+      "type": "object"
+    }
+  },
+  "definitions": {
+    "function": {
+      "type": "object",
+      "required": ["type", "name", "params", "returns", "body"],
+      "properties": {
+        "type": {"const": "function"},
+        "name": {"type": "string"},
+        "params": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "type"],
+            "properties": {
+              "name": {"type": "string"},
+              "type": {"type": "string"}
+            }
+          }
+        },
+        "returns": {"type": "string"},
+        "body": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/statement"}
+        }
+      }
+    },
+    "statement": {
+      "type": "object",
+      "required": ["type"],
+      "oneOf": [
+        {"$ref": "#/definitions/assignStatement"},
+        {"$ref": "#/definitions/ifStatement"},
+        {"$ref": "#/definitions/whileStatement"},
+        {"$ref": "#/definitions/forStatement"},
+        {"$ref": "#/definitions/returnStatement"},
+        {"$ref": "#/definitions/exprStatement"}
+      ]
+    },
+    "expression": {
+      "type": "object",
+      "required": ["type"],
+      "oneOf": [
+        {"$ref": "#/definitions/literal"},
+        {"$ref": "#/definitions/variable"},
+        {"$ref": "#/definitions/binary"},
+        {"$ref": "#/definitions/unary"},
+        {"$ref": "#/definitions/call"},
+        {"$ref": "#/definitions/arrayLiteral"},
+        {"$ref": "#/definitions/mapLiteral"},
+        {"$ref": "#/definitions/index"},
+        {"$ref": "#/definitions/field"}
+      ]
+    }
+  }
+}
+```

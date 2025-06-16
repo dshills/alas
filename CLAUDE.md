@@ -11,7 +11,7 @@ ALaS (Artificial Language for Autonomous Systems) is a programming language spec
 This is an early-stage Go project (module: `github.com/dshills/alas`) that will implement the ALaS language specification.
 
 Key files:
-- `alas_lang_spec.md` - Complete language specification (v0.1) defining the JSON schema and language design
+- `docs/language-spec.md` - Complete language specification (v0.1) defining the JSON schema and language design
 - `go.mod` - Go module definition (Go 1.24.4)
 
 ## Development Commands
@@ -50,7 +50,7 @@ ALaS is designed around these core concepts:
 
 When implementing features for ALaS:
 
-1. **Follow the JSON Schema**: All language constructs must conform to the schema defined in `alas_lang_spec.md`
+1. **Follow the JSON Schema**: All language constructs must conform to the schema defined in `docs/language-spec.md`
 2. **Machine-First Design**: Prioritize programmatic clarity over human readability
 3. **Modularity**: Keep components (parser, compiler, runtime) separate and well-defined
 4. **Testing**: Given the language's deterministic nature, comprehensive testing of all language constructs is essential

@@ -109,6 +109,59 @@ For if-else statements:
 }
 ```
 
+## Critical Implementation Notes
+
+### Function Declaration Patterns
+
+When generating functions, avoid using internal type constructors. Always use explicit parameter lists:
+
+```json
+{
+  "type": "function",
+  "name": "myFunc",
+  "params": [
+    {"name": "x", "type": "int"},
+    {"name": "y", "type": "int"}
+  ],
+  "returns": "int",
+  "body": [/* ... */]
+}
+```
+
+### For Loop Support
+
+For loops are now fully supported:
+
+```json
+{
+  "type": "for",
+  "init": {
+    "type": "assign",
+    "target": "i",
+    "value": {"type": "literal", "value": 0}
+  },
+  "cond": {
+    "type": "binary",
+    "op": "<",
+    "left": {"type": "variable", "name": "i"},
+    "right": {"type": "literal", "value": 10}
+  },
+  "update": {
+    "type": "assign",
+    "target": "i",
+    "value": {
+      "type": "binary",
+      "op": "+",
+      "left": {"type": "variable", "name": "i"},
+      "right": {"type": "literal", "value": 1}
+    }
+  },
+  "body": [
+    // Loop body
+  ]
+}
+```
+
 ## Best Practices for LLM Generation
 
 ### 1. Start with Structure
@@ -213,6 +266,62 @@ Generate proper error handling:
 **Correct:**
 Use a function call or restructure the logic.
 
+### 4. Parameter Handling in LLVM
+
+**Common Error:** When generating code for LLVM compilation, parameters must be properly stored:
+
+**Wrong:**
+```json
+// Directly using parameters without proper storage
+{"type": "variable", "name": "param"}
+```
+
+**Correct Pattern:**
+Parameters are automatically handled by the compiler - just reference them normally:
+```json
+{
+  "type": "function",
+  "name": "add",
+  "params": [
+    {"name": "a", "type": "int"},
+    {"name": "b", "type": "int"}
+  ],
+  "returns": "int",
+  "body": [
+    {
+      "type": "return",
+      "value": {
+        "type": "binary",
+        "op": "+",
+        "left": {"type": "variable", "name": "a"},
+        "right": {"type": "variable", "name": "b"}
+      }
+    }
+  ]
+}
+```
+
+### 5. Array and Map Literals
+
+**Important:** Use the correct literal types:
+
+**Wrong:**
+```json
+{"type": "literal", "value": [1, 2, 3]}  // Arrays aren't literals
+```
+
+**Correct:**
+```json
+{
+  "type": "array_literal",
+  "elements": [
+    {"type": "literal", "value": 1},
+    {"type": "literal", "value": 2},
+    {"type": "literal", "value": 3}
+  ]
+}
+```
+
 ## Advanced Generation Techniques
 
 ### 1. Template-Based Generation
@@ -279,6 +388,90 @@ Generate modules separately and combine:
 4. Add error handling
 5. Optimize generated code
 
+## Practical Generation Tips from Experience
+
+### 1. Variable Initialization
+
+Always initialize variables before use. The validator will catch undefined variables:
+
+```json
+// Initialize counters
+{"type": "assign", "target": "sum", "value": {"type": "literal", "value": 0}},
+// Then use them
+{"type": "assign", "target": "sum", "value": {
+  "type": "binary",
+  "op": "+",
+  "left": {"type": "variable", "name": "sum"},
+  "right": {"type": "variable", "name": "x"}
+}}
+```
+
+### 2. Array Operations
+
+For array iteration, combine index tracking with length checks:
+
+```json
+{
+  "type": "assign",
+  "target": "arr",
+  "value": {
+    "type": "array_literal",
+    "elements": [
+      {"type": "literal", "value": 5},
+      {"type": "literal", "value": 2},
+      {"type": "literal", "value": 8}
+    ]
+  }
+},
+{
+  "type": "for",
+  "init": {"type": "assign", "target": "i", "value": {"type": "literal", "value": 0}},
+  "cond": {
+    "type": "binary",
+    "op": "<",
+    "left": {"type": "variable", "name": "i"},
+    "right": {
+      "type": "builtin",
+      "name": "collections.length",
+      "args": [{"type": "variable", "name": "arr"}]
+    }
+  },
+  "update": {
+    "type": "assign",
+    "target": "i",
+    "value": {
+      "type": "binary",
+      "op": "+",
+      "left": {"type": "variable", "name": "i"},
+      "right": {"type": "literal", "value": 1}
+    }
+  },
+  "body": [
+    {
+      "type": "expr",
+      "value": {
+        "type": "builtin",
+        "name": "io.print",
+        "args": [{
+          "type": "index",
+          "object": {"type": "variable", "name": "arr"},
+          "index": {"type": "variable", "name": "i"}
+        }]
+      }
+    }
+  ]
+}
+```
+
+### 3. Debugging Generated Code
+
+When debugging:
+1. First validate with `alas-validate`
+2. Check for undefined variables
+3. Verify all function calls have correct argument counts
+4. Ensure array indices are within bounds
+5. Test with simple inputs before complex ones
+
 ## Validation and Testing
 
 ### 1. Use the Validator
@@ -334,6 +527,112 @@ Leverage built-in functions instead of reimplementing:
 }
 ```
 
+## Real-World Generation Patterns
+
+### Sorting Algorithm Template
+
+Here's a complete bubble sort implementation pattern:
+
+```json
+{
+  "type": "function",
+  "name": "bubbleSort",
+  "params": [{"name": "arr", "type": "array"}],
+  "returns": "array",
+  "body": [
+    {
+      "type": "assign",
+      "target": "n",
+      "value": {
+        "type": "builtin",
+        "name": "collections.length",
+        "args": [{"type": "variable", "name": "arr"}]
+      }
+    },
+    {
+      "type": "for",
+      "init": {"type": "assign", "target": "i", "value": {"type": "literal", "value": 0}},
+      "cond": {
+        "type": "binary",
+        "op": "<",
+        "left": {"type": "variable", "name": "i"},
+        "right": {"type": "variable", "name": "n"}
+      },
+      "update": {
+        "type": "assign",
+        "target": "i",
+        "value": {
+          "type": "binary",
+          "op": "+",
+          "left": {"type": "variable", "name": "i"},
+          "right": {"type": "literal", "value": 1}
+        }
+      },
+      "body": [
+        // Inner loop for comparisons
+      ]
+    },
+    {"type": "return", "value": {"type": "variable", "name": "arr"}}
+  ]
+}
+```
+
+### Recursive Function Pattern
+
+When generating recursive functions, ensure base cases come first:
+
+```json
+{
+  "type": "function",
+  "name": "fibonacci",
+  "params": [{"name": "n", "type": "int"}],
+  "returns": "int",
+  "body": [
+    // Base case first
+    {
+      "type": "if",
+      "cond": {
+        "type": "binary",
+        "op": "<=",
+        "left": {"type": "variable", "name": "n"},
+        "right": {"type": "literal", "value": 1}
+      },
+      "then": [
+        {"type": "return", "value": {"type": "variable", "name": "n"}}
+      ]
+    },
+    // Recursive case
+    {
+      "type": "return",
+      "value": {
+        "type": "binary",
+        "op": "+",
+        "left": {
+          "type": "call",
+          "name": "fibonacci",
+          "args": [{
+            "type": "binary",
+            "op": "-",
+            "left": {"type": "variable", "name": "n"},
+            "right": {"type": "literal", "value": 1}
+          }]
+        },
+        "right": {
+          "type": "call",
+          "name": "fibonacci",
+          "args": [{
+            "type": "binary",
+            "op": "-",
+            "left": {"type": "variable", "name": "n"},
+            "right": {"type": "literal", "value": 2}
+          }]
+        }
+      }
+    }
+  ]
+}
+```
+
 ## Integration Examples
 
 ### ChatGPT/Claude Prompt
@@ -345,6 +644,12 @@ You are an ALaS code generator. ALaS uses JSON syntax where:
 - Expressions and statements are separate
 
 Generate an ALaS program that implements quicksort for an integer array.
+
+IMPORTANT:
+- Use array_literal for array creation, not literal
+- Initialize all variables before use
+- Use for loops with proper init/cond/update structure
+- Reference parameters directly without special handling
 ```
 
 ### GitHub Copilot Integration
@@ -391,6 +696,26 @@ As ALaS evolves, LLM integration will improve with:
 3. **Optimization Hints**: Performance-aware generation
 4. **Domain-Specific Libraries**: Specialized generation for different domains
 
+## Key Takeaways for LLM Generation
+
+1. **Always validate generated code** - Use `alas-validate` to catch syntax errors
+2. **Initialize before use** - All variables must be assigned before being referenced
+3. **Use correct literal types** - `array_literal` for arrays, `map_literal` for maps
+4. **Parameters are automatic** - Just reference parameter names directly
+5. **For loops are supported** - Use the init/cond/update/body structure
+6. **Test incrementally** - Start with simple functions and build up
+7. **LLVM compilation works** - Generated code can be compiled to native binaries
+
+## Common Pitfalls to Avoid
+
+1. **Don't use internal type constructors** - Stick to the JSON schema
+2. **Don't assume implicit conversions** - Be explicit about types
+3. **Don't forget array bounds** - Always check length before indexing
+4. **Don't nest statements in expressions** - Keep them separate
+5. **Don't skip validation** - Always validate before running or compiling
+
 ## Conclusion
 
-ALaS is designed to be the ideal target language for AI code generation. By following these guidelines, LLMs can consistently generate correct, efficient ALaS programs. The explicit, structured nature of the language minimizes ambiguity and maximizes the success rate of automated code generation.
+ALaS is designed to be the ideal target language for AI code generation. By following these guidelines and learning from common implementation patterns, LLMs can consistently generate correct, efficient ALaS programs. The explicit, structured nature of the language minimizes ambiguity and maximizes the success rate of automated code generation.
+
+The LLVM backend is now fully functional, supporting all core language features including functions, recursion, loops, arrays, and basic maps. This enables ALaS programs to be compiled to efficient native code, making it suitable for production use cases where performance matters.
