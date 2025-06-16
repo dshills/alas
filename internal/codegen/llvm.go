@@ -27,6 +27,10 @@ type LLVMCodegen struct {
 	moduleLoader      ModuleResolver
 	customTypes       map[string]*ast.TypeDefinition // Custom type definitions
 	structTypes       map[string]types.Type         // LLVM types for custom types
+	fieldIndices      map[string]map[string]int     // type name -> field name -> index
+	variableTypes     map[string]string             // variable name -> ALaS type name
+	currentFunction   *ast.Function                 // Current function being generated
+	astFunctions      map[string]*ast.Function      // AST function definitions
 }
 
 // ModuleResolver interface for loading modules.
@@ -80,6 +84,10 @@ func NewLLVMCodegenWithLoader(loader ModuleResolver) *LLVMCodegen {
 		moduleLoader:      loader,
 		customTypes:       make(map[string]*ast.TypeDefinition),
 		structTypes:       make(map[string]types.Type),
+		fieldIndices:      make(map[string]map[string]int),
+		variableTypes:     make(map[string]string),
+		currentFunction:   nil,
+		astFunctions:      make(map[string]*ast.Function),
 	}
 	g.declareGCFunctions()
 	g.declareBuiltinFunctions()
@@ -92,20 +100,21 @@ func (g *LLVMCodegen) declareCustomType(typeDef *ast.TypeDefinition) error {
 	case ast.TypeKindStruct:
 		// Create LLVM struct type
 		var fieldTypes []types.Type
-		for _, field := range typeDef.Definition.Fields {
+		fieldIndexMap := make(map[string]int)
+		
+		for i, field := range typeDef.Definition.Fields {
 			fieldType, err := g.convertType(field.Type)
 			if err != nil {
 				return fmt.Errorf("invalid field type %s: %v", field.Type, err)
 			}
 			fieldTypes = append(fieldTypes, fieldType)
+			fieldIndexMap[field.Name] = i
 		}
 		
 		// Create named struct type
 		structType := types.NewStruct(fieldTypes...)
 		g.structTypes[typeDef.Name] = structType
-		
-		// Note: LLVM doesn't support named struct types directly in the IR module
-		// We just keep track of them in our map
+		g.fieldIndices[typeDef.Name] = fieldIndexMap
 		
 	case ast.TypeKindEnum:
 		// Enums are represented as i32 (could also use string pointers)
@@ -138,8 +147,10 @@ func (g *LLVMCodegen) GenerateModule(module *ast.Module) (*ir.Module, error) {
 	}
 
 	// First pass: declare all functions
-	for _, fn := range module.Functions {
-		if err := g.declareFunction(&fn); err != nil {
+	for i := range module.Functions {
+		fn := &module.Functions[i]
+		g.astFunctions[fn.Name] = fn
+		if err := g.declareFunction(fn); err != nil {
 			return nil, fmt.Errorf("failed to declare function %s: %v", fn.Name, err)
 		}
 	}
@@ -186,10 +197,17 @@ func (g *LLVMCodegen) generateFunction(fn *ast.Function) error {
 	// Create entry block
 	entry := llvmFunc.NewBlock("entry")
 	g.builder = entry
+	
+	// Set current function
+	g.currentFunction = fn
 
 	// Create new variable scope for this function
 	oldVars := g.variables
 	g.variables = make(map[string]value.Value)
+	
+	// Create new type tracking scope for this function
+	oldVarTypes := g.variableTypes
+	g.variableTypes = make(map[string]string)
 
 	// Add parameters to variable scope
 	for i, param := range fn.Params {
@@ -197,6 +215,9 @@ func (g *LLVMCodegen) generateFunction(fn *ast.Function) error {
 			// Create alloca for the parameter
 			paramAlloca := g.builder.NewAlloca(llvmFunc.Params[i].Type())
 			paramAlloca.SetName(param.Name + "_ptr")
+			
+			// Track parameter type
+			g.variableTypes[param.Name] = param.Type
 
 			// Store the parameter value into the alloca
 			g.builder.NewStore(llvmFunc.Params[i], paramAlloca)
@@ -234,6 +255,7 @@ func (g *LLVMCodegen) generateFunction(fn *ast.Function) error {
 
 	// Restore previous variable scope
 	g.variables = oldVars
+	g.variableTypes = oldVarTypes
 	return nil
 }
 
@@ -260,6 +282,9 @@ func (g *LLVMCodegen) generateStatement(stmt *ast.Statement) (value.Value, bool,
 
 		// Store the value (works for both new and existing allocas)
 		g.builder.NewStore(val, varAlloca)
+		
+		// Try to infer and track variable type
+		g.inferVariableType(stmt.Target, stmt.Value)
 		
 		return val, false, nil
 
@@ -804,9 +829,23 @@ func (g *LLVMCodegen) generateArrayLiteral(expr *ast.Expression) (value.Value, e
 // generateMapLiteral generates LLVM IR for map literals.
 // This is a simplified implementation - a full implementation would need a proper hash table.
 func (g *LLVMCodegen) generateMapLiteral(expr *ast.Expression) (value.Value, error) {
-	// For a basic implementation, we'll create a simple linear array of key-value pairs
-	// A real implementation would use a hash table structure
-
+	// Check if this should be a struct construction
+	if g.currentFunction != nil && g.currentFunction.Returns != "" {
+		// Check if the return type is a custom type
+		if typeDef, isCustomType := g.customTypes[g.currentFunction.Returns]; isCustomType {
+			// Check if it's a struct type
+			if typeDef.Definition.Kind == ast.TypeKindStruct {
+				if structType, isStruct := g.structTypes[g.currentFunction.Returns]; isStruct {
+					if _, ok := structType.(*types.StructType); ok {
+						// This is a struct construction
+						return g.generateStructConstruction(expr, g.currentFunction.Returns)
+					}
+				}
+			}
+		}
+	}
+	
+	// Regular map literal generation
 	pairCount := len(expr.Pairs)
 
 	// Define a key-value pair struct type {i8* key, i8* value}
@@ -910,24 +949,141 @@ func (g *LLVMCodegen) generateIndexAccess(expr *ast.Expression) (value.Value, er
 	return constant.NewInt(types.I64, 0), nil
 }
 
+// generateStructConstruction generates LLVM IR for constructing a struct from a map literal.
+func (g *LLVMCodegen) generateStructConstruction(expr *ast.Expression, typeName string) (value.Value, error) {
+	structType, ok := g.structTypes[typeName].(*types.StructType)
+	if !ok {
+		return nil, fmt.Errorf("type %s is not a struct", typeName)
+	}
+	
+	fieldIndices := g.fieldIndices[typeName]
+	if fieldIndices == nil {
+		return nil, fmt.Errorf("no field indices found for struct %s", typeName)
+	}
+	
+	// Allocate struct on stack
+	structAlloca := g.builder.NewAlloca(structType)
+	structAlloca.SetName(typeName + "_struct")
+	
+	// CRITICAL: The issue might be that the subsequent instructions are not being
+	// added to the same block. Let's ensure we're using the right builder.
+	
+	// Initialize all fields to zero first
+	for i, fieldType := range structType.Fields {
+		fieldPtr := g.builder.NewGetElementPtr(
+			structType,
+			structAlloca,
+			constant.NewInt(types.I32, 0),
+			constant.NewInt(types.I32, int64(i)),
+		)
+		fieldPtr.SetName(fmt.Sprintf("%s_init_%d", typeName, i))
+		zeroVal := g.getZeroValue(fieldType)
+		initStore := g.builder.NewStore(zeroVal, fieldPtr)
+		if initStore == nil {
+			return nil, fmt.Errorf("failed to create init store for field %d", i)
+		}
+	}
+	
+	// Process each field from the map literal
+	for _, pair := range expr.Pairs {
+		// Get field name from key
+		keyLit, ok := pair.Key.Value.(string)
+		if !ok {
+			return nil, fmt.Errorf("struct field key must be a string literal")
+		}
+		
+		// Find field index
+		fieldIdx, ok := fieldIndices[keyLit]
+		if !ok {
+			return nil, fmt.Errorf("unknown field %s in struct %s", keyLit, typeName)
+		}
+		
+		// Generate value
+		fieldVal, err := g.generateExpression(&pair.Value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate value for field %s: %v", keyLit, err)
+		}
+		
+		// Get pointer to field
+		fieldPtr := g.builder.NewGetElementPtr(
+			structType,
+			structAlloca,
+			constant.NewInt(types.I32, 0),
+			constant.NewInt(types.I32, int64(fieldIdx)),
+		)
+		fieldPtr.SetName(fmt.Sprintf("%s.%s_ptr", typeName, keyLit))
+		
+		// Store value in field
+		store := g.builder.NewStore(fieldVal, fieldPtr)
+		if store == nil {
+			return nil, fmt.Errorf("failed to create store instruction for field %s", keyLit)
+		}
+	}
+	
+	// Load and return the struct
+	return g.builder.NewLoad(structType, structAlloca), nil
+}
+
+// inferVariableType tries to infer the ALaS type of a variable from its value expression.
+func (g *LLVMCodegen) inferVariableType(varName string, valueExpr *ast.Expression) {
+	switch valueExpr.Type {
+	case ast.ExprCall:
+		// Check if the called function returns a custom type
+		if astFn, ok := g.astFunctions[valueExpr.Name]; ok {
+			if _, isCustomType := g.customTypes[astFn.Returns]; isCustomType {
+				g.variableTypes[varName] = astFn.Returns
+			}
+		}
+	case ast.ExprMapLit:
+		// For now, we can't easily infer struct type from map literal alone
+		// This would require more sophisticated type inference
+	}
+}
+
 // generateFieldAccess generates LLVM IR for field access (struct.field).
 func (g *LLVMCodegen) generateFieldAccess(expr *ast.Expression) (value.Value, error) {
 	// Generate object expression
-	_, err := g.generateExpression(expr.Object)
+	obj, err := g.generateExpression(expr.Object)
 	if err != nil {
 		return nil, err
 	}
-
-	// For now, we represent structs as maps at runtime (simplified)
-	// In a full implementation, we would:
-	// 1. Track the type of the object
-	// 2. Look up the field index in the struct type
-	// 3. Use GEP (GetElementPtr) to access the field
 	
-	// Since we're using maps for now, we can't directly access fields
-	// Return a placeholder value
-	// TODO: Implement proper struct field access
-	return constant.NewInt(types.I64, 0), nil
+	// Get the type of the object from variable tracking
+	var objTypeName string
+	if expr.Object != nil && expr.Object.Type == ast.ExprVariable {
+		objTypeName = g.variableTypes[expr.Object.Name]
+	}
+	
+	if objTypeName == "" {
+		// Try to infer from the object's LLVM type
+		if structType, ok := obj.Type().(*types.StructType); ok {
+			// Look for matching struct type
+			for typeName, llvmType := range g.structTypes {
+				if llvmType == structType {
+					objTypeName = typeName
+					break
+				}
+			}
+		}
+	}
+	
+	if objTypeName == "" {
+		return nil, fmt.Errorf("cannot determine type of object for field access")
+	}
+	
+	// Get field index
+	fieldIndices, ok := g.fieldIndices[objTypeName]
+	if !ok {
+		return nil, fmt.Errorf("no field indices found for type %s", objTypeName)
+	}
+	
+	fieldIdx, ok := fieldIndices[expr.Field]
+	if !ok {
+		return nil, fmt.Errorf("field %s not found in type %s", expr.Field, objTypeName)
+	}
+	
+	// Extract field value
+	return g.builder.NewExtractValue(obj, uint64(fieldIdx)), nil
 }
 
 // generateModuleCall generates LLVM IR for module function calls.
