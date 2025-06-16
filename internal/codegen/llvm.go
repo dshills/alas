@@ -9,8 +9,8 @@ import (
 	"github.com/llir/llvm/ir/types"
 	"github.com/llir/llvm/ir/value"
 
-	"github.com/dshills/alas/internal/ast"
 	"encoding/json"
+	"github.com/dshills/alas/internal/ast"
 	"os"
 	"path/filepath"
 )
@@ -151,10 +151,10 @@ func (g *LLVMCodegen) generateFunction(fn *ast.Function) error {
 			// Create alloca for the parameter
 			paramAlloca := g.builder.NewAlloca(llvmFunc.Params[i].Type())
 			paramAlloca.SetName(param.Name + "_ptr")
-			
+
 			// Store the parameter value into the alloca
 			g.builder.NewStore(llvmFunc.Params[i], paramAlloca)
-			
+
 			// Store the alloca in variables map
 			g.variables[param.Name] = paramAlloca
 		}
@@ -199,15 +199,15 @@ func (g *LLVMCodegen) generateStatement(stmt *ast.Statement) (value.Value, bool,
 		if err != nil {
 			return nil, false, err
 		}
-		
+
 		// For LLVM IR, we need to store variables properly with alloca + store
 		// Allocate memory for the variable
 		varAlloca := g.builder.NewAlloca(val.Type())
 		varAlloca.SetName(stmt.Target + "_ptr")
-		
+
 		// Store the value
 		g.builder.NewStore(val, varAlloca)
-		
+
 		// Keep track of the alloca for later loads
 		g.variables[stmt.Target] = varAlloca
 		return val, false, nil
@@ -256,13 +256,13 @@ func (g *LLVMCodegen) generateExpression(expr *ast.Expression) (value.Value, err
 		if !ok {
 			return nil, fmt.Errorf("undefined variable: %s", expr.Name)
 		}
-		
+
 		// Load the value from the alloca
 		ptrType, isPtr := varAlloca.Type().(*types.PointerType)
 		if !isPtr {
 			return nil, fmt.Errorf("variable %s is not a pointer type", expr.Name)
 		}
-		
+
 		loadedVal := g.builder.NewLoad(ptrType.ElemType, varAlloca)
 		loadedVal.SetName(expr.Name + "_val")
 		return loadedVal, nil
@@ -430,7 +430,17 @@ func (g *LLVMCodegen) generateBinary(expr *ast.Expression) (value.Value, error) 
 
 // generateUnary generates LLVM IR for unary operations.
 func (g *LLVMCodegen) generateUnary(expr *ast.Expression) (value.Value, error) {
-	operand, err := g.generateExpression(expr.Right)
+	// Support both Operand (spec-compliant) and Right (backward compatibility)
+	var operandExpr *ast.Expression
+	if expr.Operand != nil {
+		operandExpr = expr.Operand
+	} else if expr.Right != nil {
+		operandExpr = expr.Right
+	} else {
+		return nil, fmt.Errorf("unary expression missing operand")
+	}
+
+	operand, err := g.generateExpression(operandExpr)
 	if err != nil {
 		return nil, err
 	}
@@ -552,12 +562,13 @@ func (g *LLVMCodegen) generateIf(stmt *ast.Statement) (value.Value, bool, error)
 	return nil, false, nil
 }
 
-// generateWhile generates LLVM IR for while loops.
-func (g *LLVMCodegen) generateWhile(stmt *ast.Statement) (value.Value, bool, error) {
+// generateLoop generates LLVM IR for loop statements (while and for).
+// Both while and for loops in ALaS have the same structure: condition and body.
+func (g *LLVMCodegen) generateLoop(stmt *ast.Statement, loopType string) (value.Value, bool, error) {
 	currentFunc := g.builder.Parent
-	condBlock := currentFunc.NewBlock("while.cond")
-	bodyBlock := currentFunc.NewBlock("while.body")
-	endBlock := currentFunc.NewBlock("while.end")
+	condBlock := currentFunc.NewBlock(loopType + ".cond")
+	bodyBlock := currentFunc.NewBlock(loopType + ".body")
+	endBlock := currentFunc.NewBlock(loopType + ".end")
 
 	// Jump to condition block
 	g.builder.NewBr(condBlock)
@@ -588,42 +599,16 @@ func (g *LLVMCodegen) generateWhile(stmt *ast.Statement) (value.Value, bool, err
 	return nil, false, nil
 }
 
+// generateWhile generates LLVM IR for while loops.
+func (g *LLVMCodegen) generateWhile(stmt *ast.Statement) (value.Value, bool, error) {
+	return g.generateLoop(stmt, "while")
+}
+
 // generateFor generates LLVM IR for for loops.
 // ALaS for loops are similar to while loops with a condition and body.
-// Traditional for(init; cond; update) can be desugared to init + while(cond) { body; update }
+// Traditional for(init; cond; update) can be desugared to init + while(cond) { body; update }.
 func (g *LLVMCodegen) generateFor(stmt *ast.Statement) (value.Value, bool, error) {
-	currentFunc := g.builder.Parent
-	condBlock := currentFunc.NewBlock("for.cond")
-	bodyBlock := currentFunc.NewBlock("for.body")
-	endBlock := currentFunc.NewBlock("for.end")
-
-	// Jump to condition block
-	g.builder.NewBr(condBlock)
-
-	// Generate condition block
-	g.builder = condBlock
-	cond, err := g.generateExpression(stmt.Cond)
-	if err != nil {
-		return nil, false, err
-	}
-	g.builder.NewCondBr(cond, bodyBlock, endBlock)
-
-	// Generate body block
-	g.builder = bodyBlock
-	for _, s := range stmt.Body {
-		_, isReturn, err := g.generateStatement(&s)
-		if err != nil {
-			return nil, false, err
-		}
-		if isReturn {
-			return nil, true, nil
-		}
-	}
-	g.builder.NewBr(condBlock) // Loop back to condition
-
-	// Continue with end block
-	g.builder = endBlock
-	return nil, false, nil
+	return g.generateLoop(stmt, "for")
 }
 
 // convertType converts ALaS type to LLVM type.
@@ -684,7 +669,7 @@ func (g *LLVMCodegen) generateArrayLiteral(expr *ast.Expression) (value.Value, e
 	// Generate all element expressions first
 	elementCount := int64(len(expr.Elements))
 	elements := make([]value.Value, elementCount)
-	
+
 	// Determine element type from first element (assume homogeneous arrays)
 	var elemType types.Type
 	if elementCount > 0 {
@@ -694,7 +679,7 @@ func (g *LLVMCodegen) generateArrayLiteral(expr *ast.Expression) (value.Value, e
 		}
 		elements[0] = firstElem
 		elemType = firstElem.Type()
-		
+
 		// Generate remaining elements
 		for i := 1; i < int(elementCount); i++ {
 			elem, err := g.generateExpression(&expr.Elements[i])
@@ -707,11 +692,12 @@ func (g *LLVMCodegen) generateArrayLiteral(expr *ast.Expression) (value.Value, e
 		// Empty array, default to i64
 		elemType = types.I64
 	}
-	
+
 	// Allocate array on stack
+	// Safe conversion: elementCount is already validated to be non-negative
 	arrayAlloca := g.builder.NewAlloca(types.NewArray(uint64(elementCount), elemType))
 	arrayAlloca.SetName("array_literal")
-	
+
 	// Store elements
 	for i, elem := range elements {
 		// Get pointer to element
@@ -724,15 +710,15 @@ func (g *LLVMCodegen) generateArrayLiteral(expr *ast.Expression) (value.Value, e
 		// Store element value
 		g.builder.NewStore(elem, elemPtr)
 	}
-	
+
 	// Create array struct: {data*, length}
 	arrayType, _ := g.convertType(ast.TypeArray)
 	structType := arrayType.(*types.StructType)
-	
+
 	// Allocate struct on stack
 	structAlloca := g.builder.NewAlloca(structType)
 	structAlloca.SetName("array_struct")
-	
+
 	// Store data pointer
 	dataFieldPtr := g.builder.NewGetElementPtr(
 		structType,
@@ -743,7 +729,7 @@ func (g *LLVMCodegen) generateArrayLiteral(expr *ast.Expression) (value.Value, e
 	// Cast array pointer to i8*
 	castedPtr := g.builder.NewBitCast(arrayAlloca, types.NewPointer(types.I8))
 	g.builder.NewStore(castedPtr, dataFieldPtr)
-	
+
 	// Store length
 	lengthFieldPtr := g.builder.NewGetElementPtr(
 		structType,
@@ -752,7 +738,7 @@ func (g *LLVMCodegen) generateArrayLiteral(expr *ast.Expression) (value.Value, e
 		constant.NewInt(types.I32, 1),
 	)
 	g.builder.NewStore(constant.NewInt(types.I64, elementCount), lengthFieldPtr)
-	
+
 	// Load and return the struct
 	return g.builder.NewLoad(structType, structAlloca), nil
 }
@@ -762,17 +748,17 @@ func (g *LLVMCodegen) generateArrayLiteral(expr *ast.Expression) (value.Value, e
 func (g *LLVMCodegen) generateMapLiteral(expr *ast.Expression) (value.Value, error) {
 	// For a basic implementation, we'll create a simple linear array of key-value pairs
 	// A real implementation would use a hash table structure
-	
+
 	pairCount := len(expr.Pairs)
-	
+
 	// Define a key-value pair struct type {i8* key, i8* value}
 	// Using i8* (char*) pointers to handle both strings and boxed values
 	kvPairType := types.NewStruct(types.I8Ptr, types.I8Ptr)
-	
+
 	// Allocate array of pairs
 	pairsAlloca := g.builder.NewAlloca(types.NewArray(uint64(pairCount), kvPairType))
 	pairsAlloca.SetName("map_pairs")
-	
+
 	// Store key-value pairs
 	for i, pair := range expr.Pairs {
 		// Generate key and value
@@ -784,7 +770,7 @@ func (g *LLVMCodegen) generateMapLiteral(expr *ast.Expression) (value.Value, err
 		if err != nil {
 			return nil, err
 		}
-		
+
 		// Get pointer to pair
 		pairPtr := g.builder.NewGetElementPtr(
 			types.NewArray(uint64(pairCount), kvPairType),
@@ -792,7 +778,7 @@ func (g *LLVMCodegen) generateMapLiteral(expr *ast.Expression) (value.Value, err
 			constant.NewInt(types.I32, 0),
 			constant.NewInt(types.I32, int64(i)),
 		)
-		
+
 		// Convert key to string pointer if needed
 		keyPtr := g.builder.NewGetElementPtr(
 			kvPairType,
@@ -800,11 +786,11 @@ func (g *LLVMCodegen) generateMapLiteral(expr *ast.Expression) (value.Value, err
 			constant.NewInt(types.I32, 0),
 			constant.NewInt(types.I32, 0),
 		)
-		
+
 		// Box key if needed and store it
 		keyAsPtr := g.boxToI8Ptr(key, "boxed_key")
 		g.builder.NewStore(keyAsPtr, keyPtr)
-		
+
 		// Store value
 		valPtr := g.builder.NewGetElementPtr(
 			kvPairType,
@@ -812,12 +798,12 @@ func (g *LLVMCodegen) generateMapLiteral(expr *ast.Expression) (value.Value, err
 			constant.NewInt(types.I32, 0),
 			constant.NewInt(types.I32, 1),
 		)
-		
+
 		// Box value if needed and store it
 		valAsPtr := g.boxToI8Ptr(val, "boxed_value")
 		g.builder.NewStore(valAsPtr, valPtr)
 	}
-	
+
 	// For now, just return the pointer to the pairs array
 	// A real map would have a more complex structure with hash buckets, etc.
 	mapType, _ := g.convertType(ast.TypeMap)
@@ -845,23 +831,23 @@ func (g *LLVMCodegen) generateIndexAccess(expr *ast.Expression) (value.Value, er
 		// Extract data pointer
 		dataPtr := g.builder.NewExtractValue(obj, 0)
 		dataPtr.SetName("array_data_ptr")
-		
+
 		// TODO: Add bounds checking here using the length field
 		// length := g.builder.NewExtractValue(obj, 1)
-		
+
 		// For now, assume the array contains i64 elements (should be determined from context)
 		// Cast i8* back to proper element type pointer
 		elemType := types.I64
 		typedPtr := g.builder.NewBitCast(dataPtr, types.NewPointer(elemType))
-		
+
 		// Calculate element address
 		elemPtr := g.builder.NewGetElementPtr(elemType, typedPtr, index)
 		elemPtr.SetName("elem_ptr")
-		
+
 		// Load and return element value
 		return g.builder.NewLoad(elemType, elemPtr), nil
 	}
-	
+
 	// For maps or other types, return placeholder for now
 	return constant.NewInt(types.I64, 0), nil
 }
@@ -925,7 +911,7 @@ func (g *LLVMCodegen) declareGCFunctions() {
 
 	// Array allocation: alas_gc_alloc_array(values *Value, count i64) -> *GCObject
 	arrayAllocFunc := g.module.NewFunc("alas_gc_alloc_array", gcObjectPtrType)
-	arrayAllocFunc.Params = append(arrayAllocFunc.Params, 
+	arrayAllocFunc.Params = append(arrayAllocFunc.Params,
 		ir.NewParam("", valuePtrType),
 		ir.NewParam("", types.I64))
 	g.gcFunctions["alas_gc_alloc_array"] = arrayAllocFunc
@@ -971,7 +957,7 @@ func (g *LLVMCodegen) declareBuiltinFunctions() {
 	// For C compatibility, use simple i8* (void*) for CValue parameters
 	// This matches the actual C function signatures generated by CGO
 	cvalueArgType := types.NewPointer(types.I8) // void* for CValue*
-	
+
 	// For functions that return CValue, we'll also use a simple i8* for now
 	// In a complete implementation, we'd use the actual struct type
 	cvalueReturnType := types.NewPointer(types.I8) // void* for CValue return
@@ -982,12 +968,12 @@ func (g *LLVMCodegen) declareBuiltinFunctions() {
 	printFunc.Params = append(printFunc.Params, ir.NewParam("", cvalueArgType))
 	g.builtinFunctions["io.print"] = printFunc
 
-	// Math functions  
+	// Math functions
 	// void* alas_builtin_math_sqrt(void* val) - simplified for C compatibility
 	sqrtFunc := g.module.NewFunc("alas_builtin_math_sqrt", cvalueReturnType)
 	sqrtFunc.Params = append(sqrtFunc.Params, ir.NewParam("", cvalueArgType))
 	g.builtinFunctions["math.sqrt"] = sqrtFunc
-	
+
 	absFunc := g.module.NewFunc("alas_builtin_math_abs", cvalueReturnType)
 	absFunc.Params = append(absFunc.Params, ir.NewParam("", cvalueArgType))
 	g.builtinFunctions["math.abs"] = absFunc
@@ -1052,7 +1038,7 @@ func (g *LLVMCodegen) generateBuiltinCall(expr *ast.Expression) (value.Value, er
 
 	// For now, we'll handle a simplified case with single arguments
 	// A full implementation would handle multiple arguments and complex types
-	
+
 	if expr.Name == "io.print" {
 		// Special case for io.print which returns void
 		if len(expr.Args) != 1 {
@@ -1067,10 +1053,11 @@ func (g *LLVMCodegen) generateBuiltinCall(expr *ast.Expression) (value.Value, er
 
 		// Convert to CValue
 		cval := g.convertToCValue(argVal)
-		
+
 		// Call the function
 		g.builder.NewCall(builtinFunc, cval)
-		return nil, nil // io.print returns void
+		// Return a dummy value for void functions
+		return constant.NewInt(types.I32, 0), nil
 	}
 
 	// Handle functions that take multiple arguments
@@ -1093,7 +1080,7 @@ func (g *LLVMCodegen) generateBuiltinCall(expr *ast.Expression) (value.Value, er
 
 		// Call the function with both arguments
 		result := g.builder.NewCall(builtinFunc, args...)
-		
+
 		// Convert result from CValue
 		return g.convertFromCValue(result)
 	}
@@ -1111,7 +1098,7 @@ func (g *LLVMCodegen) generateBuiltinCall(expr *ast.Expression) (value.Value, er
 
 	// Convert to CValue - check if it's already a CValue* (i8*)
 	var cval value.Value
-	
+
 	// Check if this is already an i8* (CValue pointer)
 	if ptrType, isPtr := argVal.Type().(*types.PointerType); isPtr {
 		if ptrType.ElemType.Equal(types.I8) {
@@ -1125,31 +1112,31 @@ func (g *LLVMCodegen) generateBuiltinCall(expr *ast.Expression) (value.Value, er
 		// Not a pointer type, convert to CValue
 		cval = g.convertToCValue(argVal)
 	}
-	
+
 	// Call the function and get result
 	result := g.builder.NewCall(builtinFunc, cval)
-	
+
 	// Known issue: The LLVM Go library has a type handling issue where
 	// NewCall().Type() returns *types.FuncType instead of the expected return type
 	// However, the generated LLVM IR is correct and shows proper function calls
 	// For now, we work around this by using a context-aware placeholder
-	
+
 	// For functions that return values, return the raw CValue* so it can be reused
 	// For io.print (void), we don't need to return anything meaningful
 	if expr.Name == "io.print" {
 		return constant.NewInt(types.I32, 0), nil // Dummy return for void functions
 	}
-	
+
 	// The LLVM Go library has a type issue where result.Type() returns the wrong type
 	// But the actual LLVM IR is correct (i8*). We need to cast to the correct type.
-	
+
 	// Cast the result to i8* to fix the type issue
 	if _, isFuncType := result.Type().(*types.FuncType); isFuncType {
 		// The LLVM IR is correct but the Go type is wrong, create a bitcast to fix it
 		correctResult := g.builder.NewBitCast(result, types.NewPointer(types.I8))
 		return correctResult, nil
 	}
-	
+
 	// Return the raw CValue* result for reuse in variables and other calls
 	return result, nil
 }
@@ -1163,30 +1150,30 @@ func (g *LLVMCodegen) convertToCValue(val value.Value) value.Value {
 			return val
 		}
 	}
-	
+
 	// Create CValue type directly to match our CGO definition
 	cvalueType := types.NewStruct(
 		types.I32, // type field
 		types.NewStruct( // data union (simplified as struct with all fields)
-			types.I64,                   // int_val
-			types.Double,                // float_val
-			types.NewPointer(types.I8),  // string_val
-			types.NewPointer(types.I8),  // array_val
-			types.NewPointer(types.I8),  // map_val
+			types.I64,                  // int_val
+			types.Double,               // float_val
+			types.NewPointer(types.I8), // string_val
+			types.NewPointer(types.I8), // array_val
+			types.NewPointer(types.I8), // map_val
 		),
 	)
-	
+
 	// Allocate space for CValue on stack
 	cval := g.builder.NewAlloca(cvalueType)
-	
+
 	// Get pointers to type field and data union
-	typeField := g.builder.NewGetElementPtr(cvalueType, cval, 
-		constant.NewInt(types.I32, 0), 
+	typeField := g.builder.NewGetElementPtr(cvalueType, cval,
+		constant.NewInt(types.I32, 0),
 		constant.NewInt(types.I32, 0))
 	dataField := g.builder.NewGetElementPtr(cvalueType, cval,
 		constant.NewInt(types.I32, 0),
 		constant.NewInt(types.I32, 1))
-	
+
 	// Determine value type and store
 	valType := val.Type()
 	switch {
@@ -1197,7 +1184,7 @@ func (g *LLVMCodegen) convertToCValue(val value.Value) value.Value {
 			constant.NewInt(types.I32, 0),
 			constant.NewInt(types.I32, 0))
 		g.builder.NewStore(val, intField)
-		
+
 	case valType.Equal(types.Double):
 		// Float
 		g.builder.NewStore(constant.NewInt(types.I32, 1), typeField) // CValueTypeFloat
@@ -1205,7 +1192,7 @@ func (g *LLVMCodegen) convertToCValue(val value.Value) value.Value {
 			constant.NewInt(types.I32, 0),
 			constant.NewInt(types.I32, 1))
 		g.builder.NewStore(val, floatField)
-		
+
 	case valType.Equal(types.I1):
 		// Boolean
 		g.builder.NewStore(constant.NewInt(types.I32, 3), typeField) // CValueTypeBool
@@ -1215,7 +1202,7 @@ func (g *LLVMCodegen) convertToCValue(val value.Value) value.Value {
 		// Extend bool to i64
 		extended := g.builder.NewZExt(val, types.I64)
 		g.builder.NewStore(extended, intField)
-		
+
 	case valType.Equal(types.NewPointer(types.I8)):
 		// String
 		g.builder.NewStore(constant.NewInt(types.I32, 2), typeField) // CValueTypeString
@@ -1223,12 +1210,12 @@ func (g *LLVMCodegen) convertToCValue(val value.Value) value.Value {
 			constant.NewInt(types.I32, 0),
 			constant.NewInt(types.I32, 2))
 		g.builder.NewStore(val, stringField)
-		
+
 	default:
 		// Void or unsupported
 		g.builder.NewStore(constant.NewInt(types.I32, 6), typeField) // CValueTypeVoid
 	}
-	
+
 	// Cast to i8* for C compatibility
 	return g.builder.NewBitCast(cval, types.NewPointer(types.I8))
 }
@@ -1236,37 +1223,37 @@ func (g *LLVMCodegen) convertToCValue(val value.Value) value.Value {
 // convertFromCValue converts a CValue to an LLVM value.
 func (g *LLVMCodegen) convertFromCValue(cval value.Value) (value.Value, error) {
 	// This function handles extracting values from CValue structs returned by builtin functions
-	
+
 	// Define CValue struct type to match our CGO definition
 	cvalueType := types.NewStruct(
 		types.I32, // type field
 		types.NewStruct( // data union
-			types.I64,                   // int_val
-			types.Double,                // float_val
-			types.NewPointer(types.I8),  // string_val
-			types.NewPointer(types.I8),  // array_val
-			types.NewPointer(types.I8),  // map_val
+			types.I64,                  // int_val
+			types.Double,               // float_val
+			types.NewPointer(types.I8), // string_val
+			types.NewPointer(types.I8), // array_val
+			types.NewPointer(types.I8), // map_val
 		),
 	)
-	
+
 	// Check if we have a pointer type (i8* from builtin function call)
 	if ptrType, isPtr := cval.Type().(*types.PointerType); isPtr {
 		if ptrType.ElemType.Equal(types.I8) {
 			// This is an i8* pointer to CValue, cast it to CValue* and load
 			cvaluePtr := g.builder.NewBitCast(cval, types.NewPointer(cvalueType))
 			cvalueStruct := g.builder.NewLoad(cvalueType, cvaluePtr)
-			
+
 			// Extract the type field to determine what kind of value this is
 			_ = g.builder.NewExtractValue(cvalueStruct, 0) // typeField for future type switching
 			dataUnion := g.builder.NewExtractValue(cvalueStruct, 1)
-			
+
 			// For now, assume it's a float value (type 1) and extract the float field
 			// TODO: Add proper type switching based on typeField
 			floatVal := g.builder.NewExtractValue(dataUnion, 1)
 			return floatVal, nil
 		}
 	}
-	
+
 	// Check if we have the expected struct type directly
 	if _, isStruct := cval.Type().(*types.StructType); isStruct {
 		// We have a proper struct! Extract the value based on the type field
@@ -1274,7 +1261,7 @@ func (g *LLVMCodegen) convertFromCValue(cval value.Value) (value.Value, error) {
 		floatVal := g.builder.NewExtractValue(dataUnion, 1)
 		return floatVal, nil
 	}
-	
+
 	// Fallback for unexpected types
 	return constant.NewFloat(types.Double, 0.0), nil
 }
@@ -1348,7 +1335,9 @@ func (g *LLVMCodegen) getTypeSize(t types.Type) int64 {
 	case *types.IntType:
 		// Round up to the nearest byte for non-byte-aligned types
 		// e.g., i1 needs 1 byte, i7 needs 1 byte, i9 needs 2 bytes
-		return (int64(typ.BitSize) + 7) / 8
+		// Safe conversion: BitSize is always positive
+		// Round up to the nearest byte for non-byte-aligned types
+		return int64((typ.BitSize + 7) / 8)
 	case *types.FloatType:
 		switch typ.Kind {
 		case types.FloatKindHalf:
@@ -1380,29 +1369,29 @@ func (g *LLVMCodegen) boxToI8Ptr(val value.Value, name string) value.Value {
 	if val.Type() == types.I8Ptr {
 		return val
 	}
-	
+
 	// Ensure malloc is declared
 	mallocFunc, exists := g.builtinFunctions["malloc"]
 	if !exists {
 		mallocFunc = g.module.NewFunc("malloc", types.I8Ptr, ir.NewParam("size", types.I64))
 		g.builtinFunctions["malloc"] = mallocFunc
 	}
-	
+
 	// Calculate size and allocate heap memory
 	size := constant.NewInt(types.I64, g.getTypeSize(val.Type()))
 	heapPtr := g.builder.NewCall(mallocFunc, size)
 	heapPtr.SetName(name)
-	
+
 	// Note: We're not checking for malloc failure here as it would require
 	// complex control flow manipulation. In a production system, consider:
 	// 1. Using a runtime that guarantees allocation or aborts
 	// 2. Implementing a separate allocation wrapper function
 	// 3. Using LLVM's garbage collection infrastructure
-	
+
 	// Cast to proper type and store value
 	typedPtr := g.builder.NewBitCast(heapPtr, types.NewPointer(val.Type()))
 	g.builder.NewStore(val, typedPtr)
-	
+
 	// Return as i8*
 	return heapPtr
 }

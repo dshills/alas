@@ -254,7 +254,7 @@ func (opt *Optimizer) substituteOperands(operand value.Value, paramMap map[value
 func (opt *Optimizer) constantFolding(fn *ir.Func) {
 	// Create a map to track constant values
 	constValues := make(map[value.Value]value.Value)
-	
+
 	changed := true
 	for changed {
 		changed = false

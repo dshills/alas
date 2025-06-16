@@ -160,13 +160,13 @@ func TestAsyncCancel(t *testing.T) {
 	
 	// Cancel it
 	cancelArgs := []runtime.Value{task}
-	cancelled, err := registry.Call("async.cancel", cancelArgs)
+	canceled, err := registry.Call("async.cancel", cancelArgs)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	cancelledBool, _ := cancelled.AsBool()
-	if cancelledBool != true {
-		t.Errorf("expected cancelled=true, got %v", cancelledBool)
+	canceledBool, _ := canceled.AsBool()
+	if canceledBool != true {
+		t.Errorf("expected canceled=true, got %v", canceledBool)
 	}
 	
 	// Wait should return quickly with cancellation error
@@ -201,7 +201,7 @@ func TestAsyncIsRunning(t *testing.T) {
 	
 	// Check if running (might be pending or running)
 	checkArgs := []runtime.Value{task}
-	isRunning, err := registry.Call("async.isRunning", checkArgs)
+	_, err = registry.Call("async.isRunning", checkArgs)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -215,7 +215,7 @@ func TestAsyncIsRunning(t *testing.T) {
 	}
 	
 	// Now should not be running
-	isRunning, err = registry.Call("async.isRunning", checkArgs)
+	isRunning, err := registry.Call("async.isRunning", checkArgs)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

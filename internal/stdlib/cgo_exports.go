@@ -61,11 +61,8 @@ func convertCValueToGo(cval *C.CValue) runtime.Value {
 	}
 }
 
-// convertGoValueToC converts a Go runtime.Value to a C Value
-// The caller is responsible for freeing any allocated memory
-func convertGoValueToC(val runtime.Value) C.CValue {
-	var cval C.CValue
-	
+// setCValueFields sets the fields of a C.CValue based on a Go runtime.Value
+func setCValueFields(cval *C.CValue, val runtime.Value) {
 	switch val.Type {
 	case runtime.ValueTypeInt:
 		cval._type = CValueTypeInt
@@ -89,11 +86,22 @@ func convertGoValueToC(val runtime.Value) C.CValue {
 		}
 	case runtime.ValueTypeVoid:
 		cval._type = CValueTypeVoid
-	// TODO: Handle arrays and maps
+	case runtime.ValueTypeArray:
+		// TODO: Handle arrays
+		cval._type = CValueTypeVoid
+	case runtime.ValueTypeMap:
+		// TODO: Handle maps
+		cval._type = CValueTypeVoid
 	default:
 		cval._type = CValueTypeVoid
 	}
-	
+}
+
+// convertGoValueToC converts a Go runtime.Value to a C Value
+// The caller is responsible for freeing any allocated memory
+func convertGoValueToC(val runtime.Value) C.CValue {
+	var cval C.CValue
+	setCValueFields(&cval, val)
 	return cval
 }
 
@@ -101,35 +109,7 @@ func convertGoValueToC(val runtime.Value) C.CValue {
 // This allocates memory that the caller must free
 func convertGoValueToCPtr(val runtime.Value) *C.CValue {
 	cval := (*C.CValue)(C.calloc(1, C.size_t(unsafe.Sizeof(C.CValue{}))))
-	
-	switch val.Type {
-	case runtime.ValueTypeInt:
-		cval._type = CValueTypeInt
-		i, _ := val.AsInt()
-		cval.int_val = C.int64_t(i)
-	case runtime.ValueTypeFloat:
-		cval._type = CValueTypeFloat
-		f, _ := val.AsFloat()
-		cval.float_val = C.double(f)
-	case runtime.ValueTypeString:
-		cval._type = CValueTypeString
-		s, _ := val.AsString()
-		cval.string_val = C.CString(s)
-	case runtime.ValueTypeBool:
-		cval._type = CValueTypeBool
-		b, _ := val.AsBool()
-		if b {
-			cval.int_val = 1
-		} else {
-			cval.int_val = 0
-		}
-	case runtime.ValueTypeVoid:
-		cval._type = CValueTypeVoid
-	// TODO: Handle arrays and maps
-	default:
-		cval._type = CValueTypeVoid
-	}
-	
+	setCValueFields(cval, val)
 	return cval
 }
 

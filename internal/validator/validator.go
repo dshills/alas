@@ -262,10 +262,16 @@ func (v *Validator) validateExpression(expr *ast.Expression, scope map[string]bo
 		if !isValidUnaryOp(expr.Op) {
 			return fmt.Errorf("invalid unary operator: %s", expr.Op)
 		}
-		if expr.Right == nil {
+		// Support both Operand (spec-compliant) and Right (backward compatibility)
+		var operandExpr *ast.Expression
+		if expr.Operand != nil {
+			operandExpr = expr.Operand
+		} else if expr.Right != nil {
+			operandExpr = expr.Right
+		} else {
 			return fmt.Errorf("unary expression must have an operand")
 		}
-		if err := v.validateExpression(expr.Right, scope); err != nil {
+		if err := v.validateExpression(operandExpr, scope); err != nil {
 			return fmt.Errorf("unary operand: %v", err)
 		}
 
