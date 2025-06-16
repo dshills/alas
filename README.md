@@ -23,7 +23,8 @@ alas/
 │   ├── alas-run/           # Reference interpreter
 │   ├── alas-compile/       # Single-module LLVM IR compiler
 │   ├── alas-compile-multi/ # Multi-module LLVM IR compiler with linking
-│   └── alas-plugin/        # Plugin management tool
+│   ├── alas-plugin/        # Plugin management tool
+│   └── alas-stdlib/        # Standard library shared object builder
 ├── internal/
 │   ├── ast/               # AST type definitions
 │   ├── validator/         # AST validation logic
@@ -71,12 +72,13 @@ alas/
 make build
 ```
 
-This creates five binaries in the `bin/` directory:
+This creates six binaries in the `bin/` directory:
 - `alas-validate` - Validates ALaS JSON programs
 - `alas-run` - Executes ALaS programs
 - `alas-compile` - Compiles single ALaS programs to LLVM IR
 - `alas-compile-multi` - Compiles multi-module ALaS programs with cross-module linking
 - `alas-plugin` - Manages plugins (list, install, create, etc.)
+- `alas-stdlib` - Builds standard library as shared object
 
 ### Running Examples
 
@@ -110,7 +112,7 @@ make run-all-examples
 ./bin/alas-compile -file examples/programs/factorial.alas.json
 
 # Multi-module compilation with cross-module linking
-./bin/alas-compile-multi -file examples/programs/complex_modules.alas.json -module-path examples
+./bin/alas-compile-multi -file examples/programs/module_demo.alas.json -module-path examples
 
 # Compile with optimizations
 ./bin/alas-compile -file examples/programs/factorial.alas.json -O 2
@@ -140,9 +142,7 @@ make test
 
 ## Example Programs
 
-### Hello World
-
-Here's a simple "Hello, World!" program in ALaS:
+ALaS programs are written in structured JSON format. Here's a simple "Hello, World!" example:
 
 ```json
 {
@@ -150,7 +150,6 @@ Here's a simple "Hello, World!" program in ALaS:
   "name": "hello",
   "functions": [
     {
-      "type": "function",
       "name": "main",
       "params": [],
       "returns": "string",
@@ -168,498 +167,30 @@ Here's a simple "Hello, World!" program in ALaS:
 }
 ```
 
-### Arrays and Maps
-
-Here's an example demonstrating array and map operations:
-
-```json
-{
-  "type": "module",
-  "name": "arrays_demo",
-  "functions": [
-    {
-      "type": "function",
-      "name": "main",
-      "params": [],
-      "returns": "int",
-      "body": [
-        {
-          "type": "assign",
-          "target": "numbers",
-          "value": {
-            "type": "array_literal",
-            "elements": [
-              {"type": "literal", "value": 10},
-              {"type": "literal", "value": 20},
-              {"type": "literal", "value": 30}
-            ]
-          }
-        },
-        {
-          "type": "assign",
-          "target": "person",
-          "value": {
-            "type": "map_literal",
-            "pairs": [
-              {
-                "key": {"type": "literal", "value": "name"},
-                "value": {"type": "literal", "value": "Alice"}
-              },
-              {
-                "key": {"type": "literal", "value": "age"},
-                "value": {"type": "literal", "value": 30}
-              }
-            ]
-          }
-        },
-        {
-          "type": "return",
-          "value": {
-            "type": "index",
-            "object": {"type": "variable", "name": "numbers"},
-            "index": {"type": "literal", "value": 1}
-          }
-        }
-      ]
-    }
-  ]
-}
-```
+See **[Examples Documentation](docs/examples.md)** for more comprehensive examples including arrays, maps, functions, modules, and advanced patterns.
 
 ## Standard Library
 
-ALaS includes a comprehensive standard library with native runtime implementations for all core functionality:
+ALaS includes a comprehensive standard library with native runtime implementations for all core functionality including I/O, math, collections, strings, type checking, error handling, and async programming.
 
-### Core Modules
-
-- **`std.io`** - File operations and console I/O
-  - `readFile(path)` - Read file contents, returns Result type
-  - `writeFile(path, data)` - Write data to file, returns Result type
-  - `print(value)` - Print any value to stdout
-  - `readLine()` - Read line from stdin
-
-- **`std.math`** - Mathematical functions (all use floating-point)
-  - Basic: `abs`, `min`, `max`, `pow`, `sqrt`
-  - Trigonometric: `sin`, `cos`, `tan`, `asin`, `acos`, `atan`
-  - Rounding: `floor`, `ceil`, `round`
-  - Random: `random()`, `randomInt(min, max)` - Cryptographically secure
-
-- **`std.collections`** - Array and map utilities
-  - `length(collection)` - Get length of array, map, or string
-  - `append(array, value)` - Returns new array with appended value
-  - `contains(collection, value)` - Check if value exists in collection
-  - `indexOf(collection, value)` - Find index of value (-1 if not found)
-  - `slice(collection, start, end?)` - Extract portion of array or string
-
-- **`std.string`** - String manipulation
-  - `length(str)` - Get string length
-  - `split(str, separator)` - Split string into array
-  - `join(array, separator)` - Join array elements into string
-  - `toUpper(str)`, `toLower(str)` - Case conversion
-  - `trim(str)` - Remove leading/trailing whitespace
-  - `replace(str, old, new)` - Replace all occurrences
-
-- **`std.type`** - Type checking and conversion
-  - `typeOf(value)` - Get type name as string
-  - `toString(value)` - Convert any value to string
-  - `parseInt(str)`, `parseFloat(str)` - Parse numbers from strings
-  - Type predicates: `isInt`, `isFloat`, `isString`, `isBool`, `isArray`, `isMap`
-
-- **`std.result`** - Structured error handling
-  - `ok(value)` - Create success Result
-  - `error(message)` - Create error Result
-  - `isOk(result)`, `isError(result)` - Check Result status
-  - `getValue(result)`, `getError(result)` - Extract Result contents
-
-- **`std.async`** - Concurrent and asynchronous programming
-  - `spawn(fn)` - Spawn async task, returns Task handle
-  - `await(task)` - Wait for task completion, returns Result
-  - `awaitTimeout(task, ms)` - Wait with timeout, returns Result with timedOut flag
-  - `parallel(tasks)` - Run tasks in parallel, wait for all
-  - `race(tasks)` - Run tasks in parallel, return first completion
-  - `sleep(ms)` - Create sleep task
-  - `timeout(fn, ms)` - Run function with timeout
-  - `cancel(task)` - Cancel running task
-  - `isRunning(task)`, `isCompleted(task)` - Check task status
-
-### Using Standard Library Functions
-
-Standard library functions are called using the `builtin` expression type:
-
-```json
-{
-  "type": "module",
-  "name": "example",
-  "functions": [
-    {
-      "name": "main",
-      "params": [],
-      "returns": "void",
-      "body": [
-        {
-          "type": "expr",
-          "value": {
-            "type": "builtin",
-            "name": "io.print",
-            "args": [{"type": "literal", "value": "Hello from standard library!"}]
-          }
-        },
-        {
-          "type": "assign",
-          "target": "result",
-          "value": {
-            "type": "builtin",
-            "name": "math.sqrt",
-            "args": [{"type": "literal", "value": 16.0}]
-          }
-        },
-        {
-          "type": "expr",
-          "value": {
-            "type": "builtin",
-            "name": "io.print",
-            "args": [{"type": "variable", "name": "result"}]
-          }
-        }
-      ]
-    }
-  ]
-}
-```
-
-### Example: Using Standard Library
-
-```bash
-# Run example with standard library functions
-./bin/alas-run -file examples/programs/stdlib_comprehensive_test.alas.json
-
-# Output:
-=== ALaS Standard Library Test ===
-Array length: 3
-Original: hello world
-Uppercase: HELLO WORLD
-max(5.5, 3.2) = 5.5
-type of 42: int
-=== Test Complete ===
-```
-
-See the [stdlib/README.md](stdlib/README.md) for complete module specifications.
+See the **[Standard Library Reference](docs/stdlib-reference.md)** for complete documentation of all modules and functions.
 
 ## Plugin System
 
-ALaS features a comprehensive plugin system that enables dynamic extension of the language while maintaining security and type safety. The plugin system supports multiple plugin types and provides a rich development and management experience.
+ALaS features a comprehensive plugin system that enables dynamic extension of the language while maintaining security and type safety. The system supports multiple plugin types including module, native, hybrid, and built-in plugins with sandboxing and capability-based security.
 
-### Plugin Types
+See the **[Plugin System Guide](docs/plugin-system.md)** for complete documentation on plugin development, management, and security features.
 
-- **Module Plugins** - Pure ALaS implementations for business logic and algorithms
-- **Native Plugins** - Compiled shared libraries for performance-critical operations  
-- **Hybrid Plugins** - Combination of ALaS modules with native function implementations
-- **Built-in Plugins** - Runtime-integrated plugins for core system functionality
+## LLVM Compilation
 
-### Plugin Management
+ALaS compiles to LLVM IR with multi-level optimization support (O0-O3) providing significant performance improvements. The system supports both single-module and cross-module compilation with dependency resolution and linking.
 
-```bash
-# List available plugins
-./bin/alas-plugin list -path examples/plugins
-
-# Get detailed plugin information
-./bin/alas-plugin info -path examples/plugins hello-world
-
-# Create a new plugin from template
-./bin/alas-plugin create my-plugin
-
-# Validate plugin manifest
-./bin/alas-plugin validate plugin.json
-
-# Load/unload plugins at runtime
-./bin/alas-plugin load my-plugin
-./bin/alas-plugin unload my-plugin
-```
-
-### Example Plugin Usage
-
-```json
-{
-  "type": "module",
-  "name": "my_program", 
-  "imports": ["hello"],
-  "functions": [
-    {
-      "name": "main",
-      "body": [
-        {
-          "type": "assign",
-          "target": "greeting",
-          "value": {
-            "type": "module_call",
-            "module": "hello",
-            "name": "greet",
-            "args": [{"type": "literal", "value": "World"}]
-          }
-        }
-      ]
-    }
-  ]
-}
-```
-
-### Security Features
-
-- **Sandboxing** - Isolated execution environments with resource limits
-- **Capability System** - Fine-grained permission control
-- **Resource Monitoring** - Memory, CPU, and timeout limits
-- **Validation** - Comprehensive manifest and dependency validation
-
-See the [docs/plugin_system.md](docs/plugin_system.md) for complete plugin development guide.
-
-## LLVM IR Optimization
-
-ALaS includes a sophisticated LLVM IR optimization system that provides multiple optimization levels to balance compilation speed and code performance. The optimizer applies various passes to reduce code size and improve execution speed.
-
-### Optimization Levels
-
-| Level | Description | Optimizations Applied |
-|-------|-------------|----------------------|
-| **O0** | No optimizations | Baseline compilation for debugging |
-| **O1** | Basic optimizations | • Constant folding<br>• Dead code elimination<br>• mem2reg (promote memory to registers) |
-| **O2** | Standard optimizations | O1 optimizations plus:<br>• Common subexpression elimination<br>• Control flow graph simplification |
-| **O3** | Aggressive optimizations | O2 optimizations plus:<br>• Function inlining<br>• Loop invariant code motion |
-
-### Optimization Performance
-
-The optimizer achieves significant code size reductions:
-- **Constant-heavy code**: 10-25% reduction
-- **Dead code scenarios**: 16-30% reduction  
-- **Function call patterns**: 5-15% reduction with inlining
-- **Complex algorithms**: 20-63% overall reduction
-
-### Usage Examples
-
-```bash
-# Compile with different optimization levels
-./bin/alas-compile -file program.alas.json -O 0  # No optimization
-./bin/alas-compile -file program.alas.json -O 1  # Basic optimization
-./bin/alas-compile -file program.alas.json -O 2  # Standard optimization
-./bin/alas-compile -file program.alas.json -O 3  # Aggressive optimization
-
-# Generate LLVM bitcode instead of text IR
-./bin/alas-compile -file program.alas.json -O 2 -format bc -o program.bc
-
-# Compile to native executable (requires LLVM tools)
-./bin/alas-compile -file program.alas.json -O 2 -o program.ll
-llc program.ll -o program.o
-clang program.o -o program
-```
-
-### Testing and Validation
-
-The optimization system includes comprehensive testing:
-- **Unit tests**: Verify individual optimization passes
-- **Integration tests**: Test full compilation pipeline with example programs
-- **Benchmark tests**: Measure optimization effectiveness
-- **Regression tests**: Ensure optimizations don't break functionality
-
-Run optimization tests:
-```bash
-# Run all optimizer tests
-go test ./tests -run TestOptimizer
-
-# Run optimization benchmarks
-go test ./tests -bench=BenchmarkOptimizer
-
-# Test optimization effectiveness
-go test ./tests -run TestOptimizationEffectiveness -v
-```
-
-## Cross-Module LLVM Compilation and Linking
-
-ALaS features a comprehensive cross-module compilation system that enables separate compilation of modules and intelligent linking of dependencies. This system supports both separate module compilation and whole-program linking scenarios.
-
-### Key Features
-
-- **Dependency Resolution**: Automatic topological sorting of module dependencies using Kahn's algorithm
-- **External Function Declarations**: Proper LLVM IR generation with external function declarations
-- **Function Name Mangling**: Qualified naming (`module__function`) prevents symbol collisions
-- **Module Loaders**: Flexible system for discovering and loading module dependencies
-- **Linking Modes**: Support for both separate compilation and whole-program linking
-
-### Multi-Module Compiler Usage
-
-```bash
-# Basic multi-module compilation
-./bin/alas-compile-multi -file main_program.alas.json -module-path ./modules
-
-# Separate compilation mode (default)
-./bin/alas-compile-multi -file program.alas.json -module-path examples -o output
-
-# Whole-program linking mode  
-./bin/alas-compile-multi -file program.alas.json -module-path examples -link all -o linked_program.ll
-
-# Specify optimization level for multi-module compilation
-./bin/alas-compile-multi -file program.alas.json -module-path examples -O 2 -link all
-```
-
-### Module Search Paths
-
-The multi-module compiler searches for dependencies in the following locations:
-- `{module-path}/{module_name}.alas.json`
-- `{module-path}/modules/{module_name}.alas.json`  
-- `{module-path}/lib/{module_name}.alas.json`
-
-### Cross-Module Function Calls
-
-When a module imports another module, it can call exported functions using the `module_call` expression:
-
-```json
-{
-  "type": "module",
-  "name": "main_program",
-  "imports": ["math_utils"],
-  "functions": [{
-    "name": "calculate",
-    "body": [{
-      "type": "assign",
-      "target": "result", 
-      "value": {
-        "type": "module_call",
-        "module": "math_utils",
-        "name": "add",
-        "args": [
-          {"type": "literal", "value": 10},
-          {"type": "literal", "value": 5}
-        ]
-      }
-    }]
-  }]
-}
-```
-
-### LLVM IR Generation
-
-The cross-module system generates proper LLVM IR with:
-- **External function declarations** for imported functions
-- **Qualified function names** to prevent symbol conflicts
-- **Dependency-ordered compilation** ensuring all dependencies are available
-- **Linking support** for combining multiple modules into single executables
-
-### Architecture Components
-
-- **`MultiModuleCodegen`** - Core compilation orchestrator
-- **`ModuleLoader`** - Pluggable module discovery system  
-- **`ExternalFunction`** - Cross-module function metadata
-- **Dependency resolver** - Topological sorting with circular dependency detection
-- **LLVM integration** - Enhanced code generator with external function support
-
-### Example Module Structure
-
-**math_utils.alas.json:**
-```json
-{
-  "type": "module",
-  "name": "math_utils", 
-  "exports": ["add", "multiply"],
-  "functions": [
-    {
-      "name": "add",
-      "params": [
-        {"name": "a", "type": "int"},
-        {"name": "b", "type": "int"}
-      ],
-      "returns": "int",
-      "body": [
-        {
-          "type": "return",
-          "value": {
-            "type": "binary",
-            "op": "+",
-            "left": {"type": "variable", "name": "a"},
-            "right": {"type": "variable", "name": "b"}
-          }
-        }
-      ]
-    }
-  ]
-}
-```
-
-### Testing
-
-The cross-module compilation system includes comprehensive tests:
-```bash
-# Run cross-module compilation tests
-go test ./internal/codegen -run TestMultiModule -v
-
-# Test dependency resolution
-go test ./internal/codegen -run TestMultiModuleCodegen_ResolveDependencies
-
-# Test circular dependency detection  
-go test ./internal/codegen -run TestMultiModuleCodegen_CircularDependency
-```
 
 ## Language Features
 
-### Statements
-- `assign` - Variable assignment
-- `if` - Conditional execution with optional else
-- `while` - Loop while condition is true
-- `return` - Return from function
-- `expr` - Expression statement
+ALaS is a Turing-complete language with functions, conditionals, loops, recursion, arrays, maps, and a module system with import/export capabilities.
 
-### Expressions
-- `literal` - Literal values (int, float, string, bool)
-- `variable` - Variable reference
-- `binary` - Binary operations (+, -, *, /, %, ==, !=, <, <=, >, >=, &&, ||)
-- `unary` - Unary operations (!, -)
-- `call` - Function calls
-- `module_call` - Cross-module function calls (module.function)
-- `builtin` - Standard library function calls (e.g., io.print, math.sqrt)
-- `array_literal` - Array literals with elements
-- `map_literal` - Map literals with key-value pairs
-- `index` - Array/map indexing operations
-
-### Types
-- `int` - Integer numbers
-- `float` - Floating-point numbers
-- `string` - Text strings
-- `bool` - Boolean values (true/false)
-- `array` - Arrays of values with integer indexing
-- `map` - Key-value maps with string keys
-- `void` - No return value
-
-### Module System
-
-ALaS supports modular programming with import/export capabilities:
-
-- **Imports**: Declare dependencies on other modules using the `imports` array
-- **Exports**: Specify which functions are accessible from other modules using the `exports` array
-- **Module Calls**: Call exported functions using `module.function` syntax
-- **Dependency Resolution**: Modules are automatically loaded when imported
-- **Encapsulation**: Non-exported functions remain private to the module
-
-Example:
-```json
-{
-  "type": "module",
-  "name": "main",
-  "imports": ["math_utils"],
-  "functions": [{
-    "name": "calculate",
-    "body": [{
-      "type": "assign",
-      "target": "result",
-      "value": {
-        "type": "module_call",
-        "module": "math_utils",
-        "name": "add",
-        "args": [
-          {"type": "literal", "value": 10},
-          {"type": "literal", "value": 5}
-        ]
-      }
-    }]
-  }]
-}
-```
+See the **[Language Specification](docs/language-spec.md)** for complete details on all language constructs, types, and syntax.
 
 ## Development Status
 
@@ -673,7 +204,7 @@ Current implementation includes:
 - ✅ Binary and unary operations
 - ✅ Arrays and maps with indexing
 - ✅ Module imports/exports with dependency resolution
-- ✅ Standard library runtime implementation (6 core modules)
+- ✅ Standard library runtime implementation (7 core modules)
 - ✅ Plugin system with security and multi-type support
 - ✅ Comprehensive test suite with optimization testing
 - ✅ Runtime garbage collection for arrays/maps (reference counting)
