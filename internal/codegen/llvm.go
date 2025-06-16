@@ -10,6 +10,9 @@ import (
 	"github.com/llir/llvm/ir/value"
 
 	"github.com/dshills/alas/internal/ast"
+	"encoding/json"
+	"os"
+	"path/filepath"
 )
 
 // LLVMCodegen generates LLVM IR from ALaS AST.
@@ -21,10 +24,50 @@ type LLVMCodegen struct {
 	gcFunctions       map[string]*ir.Func
 	externalFunctions map[string]*ir.Func // External functions from other modules
 	builtinFunctions  map[string]*ir.Func // Builtin standard library functions
+	moduleLoader      ModuleResolver
+}
+
+// ModuleResolver interface for loading modules.
+type ModuleResolver interface {
+	LoadModuleByName(name string) (*ast.Module, error)
+}
+
+// FileModuleLoader loads modules from the filesystem.
+type FileModuleLoader struct {
+	searchPaths []string
+}
+
+// NewFileModuleLoader creates a new file-based module loader.
+func NewFileModuleLoader(searchPaths []string) *FileModuleLoader {
+	return &FileModuleLoader{
+		searchPaths: searchPaths,
+	}
+}
+
+// LoadModuleByName loads a module by name from the filesystem.
+func (l *FileModuleLoader) LoadModuleByName(name string) (*ast.Module, error) {
+	for _, searchPath := range l.searchPaths {
+		fileName := filepath.Join(searchPath, name+".alas.json")
+		if data, err := os.ReadFile(fileName); err == nil {
+			var module ast.Module
+			if err := json.Unmarshal(data, &module); err != nil {
+				return nil, fmt.Errorf("failed to parse module %s: %v", name, err)
+			}
+			return &module, nil
+		}
+	}
+	return nil, fmt.Errorf("module %s not found in search paths", name)
 }
 
 // NewLLVMCodegen creates a new LLVM code generator.
 func NewLLVMCodegen() *LLVMCodegen {
+	// Create with default module loader
+	searchPaths := []string{".", "examples/modules", "../examples/modules", "stdlib"}
+	return NewLLVMCodegenWithLoader(NewFileModuleLoader(searchPaths))
+}
+
+// NewLLVMCodegenWithLoader creates a new LLVM code generator with a custom module loader.
+func NewLLVMCodegenWithLoader(loader ModuleResolver) *LLVMCodegen {
 	g := &LLVMCodegen{
 		module:            ir.NewModule(),
 		functions:         make(map[string]*ir.Func),
@@ -32,6 +75,7 @@ func NewLLVMCodegen() *LLVMCodegen {
 		gcFunctions:       make(map[string]*ir.Func),
 		externalFunctions: make(map[string]*ir.Func),
 		builtinFunctions:  make(map[string]*ir.Func),
+		moduleLoader:      loader,
 	}
 	g.declareGCFunctions()
 	g.declareBuiltinFunctions()
@@ -41,6 +85,11 @@ func NewLLVMCodegen() *LLVMCodegen {
 // GenerateModule generates LLVM IR for an entire ALaS module.
 func (g *LLVMCodegen) GenerateModule(module *ast.Module) (*ir.Module, error) {
 	g.module.SourceFilename = module.Name + ".alas"
+
+	// Handle imports - declare external functions from imported modules
+	if err := g.declareImportedFunctions(module.Imports); err != nil {
+		return nil, fmt.Errorf("failed to declare imported functions: %v", err)
+	}
 
 	// First pass: declare all functions
 	for _, fn := range module.Functions {
@@ -955,11 +1004,28 @@ func (g *LLVMCodegen) declareBuiltinFunctions() {
 	absFunc.Params = append(absFunc.Params, ir.NewParam("", cvalueArgType))
 	g.builtinFunctions["math.abs"] = absFunc
 
+	// math.max and math.min take two arguments
+	maxFunc := g.module.NewFunc("alas_builtin_math_max", cvalueReturnType)
+	maxFunc.Params = append(maxFunc.Params, ir.NewParam("", cvalueArgType))
+	maxFunc.Params = append(maxFunc.Params, ir.NewParam("", cvalueArgType))
+	g.builtinFunctions["math.max"] = maxFunc
+
+	minFunc := g.module.NewFunc("alas_builtin_math_min", cvalueReturnType)
+	minFunc.Params = append(minFunc.Params, ir.NewParam("", cvalueArgType))
+	minFunc.Params = append(minFunc.Params, ir.NewParam("", cvalueArgType))
+	g.builtinFunctions["math.min"] = minFunc
+
 	// Collections functions
 	// void* alas_builtin_collections_length(void* val)
 	lengthFunc := g.module.NewFunc("alas_builtin_collections_length", cvalueReturnType)
 	lengthFunc.Params = append(lengthFunc.Params, ir.NewParam("", cvalueArgType))
 	g.builtinFunctions["collections.length"] = lengthFunc
+
+	// void* alas_builtin_collections_contains(void* collection, void* item)
+	containsFunc := g.module.NewFunc("alas_builtin_collections_contains", cvalueReturnType)
+	containsFunc.Params = append(containsFunc.Params, ir.NewParam("", cvalueArgType))
+	containsFunc.Params = append(containsFunc.Params, ir.NewParam("", cvalueArgType))
+	g.builtinFunctions["collections.contains"] = containsFunc
 
 	// String functions
 	// void* alas_builtin_string_toUpper(void* val)
@@ -967,11 +1033,23 @@ func (g *LLVMCodegen) declareBuiltinFunctions() {
 	toUpperFunc.Params = append(toUpperFunc.Params, ir.NewParam("", cvalueArgType))
 	g.builtinFunctions["string.toUpper"] = toUpperFunc
 
+	toLowerFunc := g.module.NewFunc("alas_builtin_string_toLower", cvalueReturnType)
+	toLowerFunc.Params = append(toLowerFunc.Params, ir.NewParam("", cvalueArgType))
+	g.builtinFunctions["string.toLower"] = toLowerFunc
+
+	lengthStrFunc := g.module.NewFunc("alas_builtin_string_length", cvalueReturnType)
+	lengthStrFunc.Params = append(lengthStrFunc.Params, ir.NewParam("", cvalueArgType))
+	g.builtinFunctions["string.length"] = lengthStrFunc
+
 	// Type functions
 	// void* alas_builtin_type_typeOf(void* val)
 	typeOfFunc := g.module.NewFunc("alas_builtin_type_typeOf", cvalueReturnType)
 	typeOfFunc.Params = append(typeOfFunc.Params, ir.NewParam("", cvalueArgType))
 	g.builtinFunctions["type.typeOf"] = typeOfFunc
+
+	isIntFunc := g.module.NewFunc("alas_builtin_type_isInt", cvalueReturnType)
+	isIntFunc.Params = append(isIntFunc.Params, ir.NewParam("", cvalueArgType))
+	g.builtinFunctions["type.isInt"] = isIntFunc
 
 	// TODO: Add more builtin functions as needed
 }
@@ -1007,7 +1085,32 @@ func (g *LLVMCodegen) generateBuiltinCall(expr *ast.Expression) (value.Value, er
 		return nil, nil // io.print returns void
 	}
 
-	// For functions that return values
+	// Handle functions that take multiple arguments
+	if expr.Name == "math.max" || expr.Name == "math.min" || expr.Name == "collections.contains" {
+		// These functions take 2 arguments
+		expectedArgs := 2
+		if len(expr.Args) != expectedArgs {
+			return nil, fmt.Errorf("%s expects %d arguments, got %d", expr.Name, expectedArgs, len(expr.Args))
+		}
+
+		// Generate and convert both arguments
+		var args []value.Value
+		for i := 0; i < expectedArgs; i++ {
+			argVal, err := g.generateExpression(&expr.Args[i])
+			if err != nil {
+				return nil, err
+			}
+			args = append(args, g.convertToCValue(argVal))
+		}
+
+		// Call the function with both arguments
+		result := g.builder.NewCall(builtinFunc, args...)
+		
+		// Convert result from CValue
+		return g.convertFromCValue(result)
+	}
+
+	// For functions that return values with single argument
 	if len(expr.Args) != 1 {
 		return nil, fmt.Errorf("%s expects 1 argument, got %d", expr.Name, len(expr.Args))
 	}
@@ -1034,9 +1137,6 @@ func (g *LLVMCodegen) generateBuiltinCall(expr *ast.Expression) (value.Value, er
 		// Not a pointer type, convert to CValue
 		cval = g.convertToCValue(argVal)
 	}
-	
-	// Debug: Check the types involved in the call
-	// builtinFunc should be a function, result should be a struct
 	
 	// Call the function and get result
 	result := g.builder.NewCall(builtinFunc, cval)
@@ -1189,4 +1289,67 @@ func (g *LLVMCodegen) convertFromCValue(cval value.Value) (value.Value, error) {
 	
 	// Fallback for unexpected types
 	return constant.NewFloat(types.Double, 0.0), nil
+}
+
+// declareImportedFunctions declares external functions from imported modules.
+func (g *LLVMCodegen) declareImportedFunctions(imports []string) error {
+	// If no module loader is set, we can't load imports
+	// This is okay for single-module compilation
+	if g.moduleLoader == nil {
+		return nil
+	}
+
+	for _, importName := range imports {
+		// Load the imported module
+		importedModule, err := g.moduleLoader.LoadModuleByName(importName)
+		if err != nil {
+			// Skip if module not found - this allows testing without full module resolution
+			continue
+		}
+
+		// Declare all exported functions from the imported module
+		for _, fn := range importedModule.Functions {
+			// Check if function is exported
+			isExported := false
+			for _, exportName := range importedModule.Exports {
+				if exportName == fn.Name {
+					isExported = true
+					break
+				}
+			}
+
+			if isExported {
+				// Create qualified name: module__function
+				qualifiedName := fmt.Sprintf("%s__%s", importName, fn.Name)
+
+				// Convert return type
+				retType, err := g.convertType(fn.Returns)
+				if err != nil {
+					return fmt.Errorf("failed to convert return type for %s: %v", qualifiedName, err)
+				}
+
+				// Convert parameter types
+				var paramTypes []types.Type
+				for _, param := range fn.Params {
+					paramType, err := g.convertType(param.Type)
+					if err != nil {
+						return fmt.Errorf("failed to convert parameter type for %s: %v", qualifiedName, err)
+					}
+					paramTypes = append(paramTypes, paramType)
+				}
+
+				// Declare the external function
+				var params []*ir.Param
+				for i := 0; i < len(paramTypes); i++ {
+					params = append(params, ir.NewParam("", paramTypes[i]))
+				}
+				externalFunc := g.module.NewFunc(qualifiedName, retType, params...)
+
+				// Mark as external (no body)
+				g.externalFunctions[qualifiedName] = externalFunc
+			}
+		}
+	}
+
+	return nil
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/llir/llvm/ir"
 	"github.com/llir/llvm/ir/constant"
+	"github.com/llir/llvm/ir/types"
 	"github.com/llir/llvm/ir/value"
 )
 
@@ -251,44 +252,55 @@ func (opt *Optimizer) substituteOperands(operand value.Value, paramMap map[value
 
 // constantFolding performs constant folding optimization.
 func (opt *Optimizer) constantFolding(fn *ir.Func) {
+	// Create a map to track constant values
+	constValues := make(map[value.Value]value.Value)
+	
 	changed := true
 	for changed {
 		changed = false
 		for _, block := range fn.Blocks {
-			for i, inst := range block.Insts {
-				if newInst := opt.foldInstruction(inst); newInst != nil {
-					block.Insts[i] = newInst
-					changed = true
+			for i := 0; i < len(block.Insts); i++ {
+				inst := block.Insts[i]
+				if foldedValue := opt.tryFoldInstruction(inst); foldedValue != nil {
+					// Replace all uses of this instruction with the constant
+					if instValue, ok := inst.(value.Value); ok {
+						constValues[instValue] = foldedValue
+						opt.replaceInstructionUses(instValue, foldedValue, fn)
+						// Remove the instruction
+						block.Insts = append(block.Insts[:i], block.Insts[i+1:]...)
+						i-- // Adjust index since we removed an instruction
+						changed = true
+					}
 				}
 			}
 		}
 	}
 }
 
-// foldInstruction attempts to fold a single instruction if possible.
-func (opt *Optimizer) foldInstruction(inst ir.Instruction) ir.Instruction {
+// tryFoldInstruction attempts to fold a single instruction and return the constant value.
+func (opt *Optimizer) tryFoldInstruction(inst ir.Instruction) value.Value {
 	switch i := inst.(type) {
 	case *ir.InstAdd:
-		return opt.foldBinaryOp(i, i.X, i.Y, func(a, b int64) int64 { return a + b })
+		return opt.foldIntBinaryOp(i.X, i.Y, func(a, b int64) int64 { return a + b })
 	case *ir.InstSub:
-		return opt.foldBinaryOp(i, i.X, i.Y, func(a, b int64) int64 { return a - b })
+		return opt.foldIntBinaryOp(i.X, i.Y, func(a, b int64) int64 { return a - b })
 	case *ir.InstMul:
-		return opt.foldBinaryOp(i, i.X, i.Y, func(a, b int64) int64 { return a * b })
+		return opt.foldIntBinaryOp(i.X, i.Y, func(a, b int64) int64 { return a * b })
 	case *ir.InstSDiv:
-		return opt.foldBinaryOp(i, i.X, i.Y, func(a, b int64) int64 {
+		return opt.foldIntBinaryOp(i.X, i.Y, func(a, b int64) int64 {
 			if b == 0 {
 				return 0 // Avoid division by zero
 			}
 			return a / b
 		})
 	case *ir.InstFAdd:
-		return opt.foldFloatBinaryOp(i, i.X, i.Y, func(a, b float64) float64 { return a + b })
+		return opt.foldFloatBinaryOp(i.X, i.Y, func(a, b float64) float64 { return a + b })
 	case *ir.InstFSub:
-		return opt.foldFloatBinaryOp(i, i.X, i.Y, func(a, b float64) float64 { return a - b })
+		return opt.foldFloatBinaryOp(i.X, i.Y, func(a, b float64) float64 { return a - b })
 	case *ir.InstFMul:
-		return opt.foldFloatBinaryOp(i, i.X, i.Y, func(a, b float64) float64 { return a * b })
+		return opt.foldFloatBinaryOp(i.X, i.Y, func(a, b float64) float64 { return a * b })
 	case *ir.InstFDiv:
-		return opt.foldFloatBinaryOp(i, i.X, i.Y, func(a, b float64) float64 {
+		return opt.foldFloatBinaryOp(i.X, i.Y, func(a, b float64) float64 {
 			if b == 0.0 {
 				return 0.0 // Avoid division by zero
 			}
@@ -298,34 +310,30 @@ func (opt *Optimizer) foldInstruction(inst ir.Instruction) ir.Instruction {
 	return nil
 }
 
-// foldBinaryOp attempts to fold integer binary operations.
-func (opt *Optimizer) foldBinaryOp(_ ir.Instruction, x, y value.Value, op func(int64, int64) int64) ir.Instruction {
+// foldIntBinaryOp attempts to fold integer binary operations.
+func (opt *Optimizer) foldIntBinaryOp(x, y value.Value, op func(int64, int64) int64) value.Value {
 	constX, okX := x.(*constant.Int)
 	constY, okY := y.(*constant.Int)
 
 	if okX && okY {
-		// Can fold this operation
-		// For now, just return nil to indicate no folding (to avoid infinite loop)
-		// TODO: Implement proper constant replacement when LLVM IR supports it
-		_ = op(constX.X.Int64(), constY.X.Int64())
-		return nil
+		// Fold this operation
+		result := op(constX.X.Int64(), constY.X.Int64())
+		return constant.NewInt(constX.Type().(*types.IntType), result)
 	}
 	return nil
 }
 
 // foldFloatBinaryOp attempts to fold floating-point binary operations.
-func (opt *Optimizer) foldFloatBinaryOp(_ ir.Instruction, x, y value.Value, op func(float64, float64) float64) ir.Instruction {
+func (opt *Optimizer) foldFloatBinaryOp(x, y value.Value, op func(float64, float64) float64) value.Value {
 	constX, okX := x.(*constant.Float)
 	constY, okY := y.(*constant.Float)
 
 	if okX && okY {
-		// Can fold this operation
-		// For now, just return nil to indicate no folding (to avoid infinite loop)
-		// TODO: Implement proper constant replacement when LLVM IR supports it
+		// Fold this operation
 		xFloat, _ := constX.X.Float64()
 		yFloat, _ := constY.X.Float64()
-		_ = op(xFloat, yFloat)
-		return nil
+		result := op(xFloat, yFloat)
+		return constant.NewFloat(constX.Type().(*types.FloatType), result)
 	}
 	return nil
 }
@@ -335,11 +343,32 @@ func (opt *Optimizer) deadCodeElimination(fn *ir.Func) {
 	// Mark all used instructions
 	used := make(map[ir.Instruction]bool)
 
-	// Start with side-effect instructions
+	// First, mark stores that contribute to the function's result
+	usedStores := opt.findUsedStores(fn)
+
+	// Start with side-effect instructions and terminators
 	for _, block := range fn.Blocks {
+		// Mark terminators as used
+		if block.Term != nil {
+			for _, operand := range block.Term.Operands() {
+				if inst := opt.findInstructionByValue(*operand, fn); inst != nil {
+					opt.markInstructionUsed(inst, used, fn)
+				}
+			}
+		}
+
+		// Mark side-effect instructions
 		for _, inst := range block.Insts {
 			if opt.hasSideEffects(inst) {
-				opt.markInstructionUsed(inst, used, fn)
+				// For stores, only mark as used if they're in the usedStores set
+				if store, ok := inst.(*ir.InstStore); ok {
+					if usedStores[store] {
+						opt.markInstructionUsed(inst, used, fn)
+					}
+				} else {
+					// Other side-effect instructions are always marked as used
+					opt.markInstructionUsed(inst, used, fn)
+				}
 			}
 		}
 	}
@@ -357,6 +386,60 @@ func (opt *Optimizer) deadCodeElimination(fn *ir.Func) {
 
 	// Remove unreachable blocks
 	opt.removeUnreachableBlocks(fn)
+}
+
+// findUsedStores identifies stores that contribute to the function's result.
+func (opt *Optimizer) findUsedStores(fn *ir.Func) map[*ir.InstStore]bool {
+	usedStores := make(map[*ir.InstStore]bool)
+	loadedAllocas := make(map[value.Value]bool)
+
+	// First pass: find all loads that contribute to the result
+	for _, block := range fn.Blocks {
+		for _, inst := range block.Insts {
+			if load, ok := inst.(*ir.InstLoad); ok {
+				// Check if this load is used
+				if opt.isValueUsed(load, fn) {
+					loadedAllocas[load.Src] = true
+				}
+			}
+		}
+	}
+
+	// Second pass: mark stores to loaded allocas as used
+	for _, block := range fn.Blocks {
+		for _, inst := range block.Insts {
+			if store, ok := inst.(*ir.InstStore); ok {
+				if loadedAllocas[store.Dst] {
+					usedStores[store] = true
+				}
+			}
+		}
+	}
+
+	return usedStores
+}
+
+// isValueUsed checks if a value is used anywhere in the function.
+func (opt *Optimizer) isValueUsed(val value.Value, fn *ir.Func) bool {
+	// Check if used in any instruction
+	for _, block := range fn.Blocks {
+		for _, inst := range block.Insts {
+			for _, operand := range inst.Operands() {
+				if *operand == val {
+					return true
+				}
+			}
+		}
+		// Check if used in terminator
+		if block.Term != nil {
+			for _, operand := range block.Term.Operands() {
+				if *operand == val {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 // markInstructionUsed recursively marks an instruction and its dependencies as used.
@@ -709,6 +792,28 @@ func (opt *Optimizer) mem2reg(fn *ir.Func) {
 
 	// TODO: Implement when ALaS codegen uses alloca/load/store pattern
 	_ = fn
+}
+
+// replaceInstructionUses replaces all uses of oldVal with newVal in the function.
+func (opt *Optimizer) replaceInstructionUses(oldVal, newVal value.Value, fn *ir.Func) {
+	for _, block := range fn.Blocks {
+		for _, inst := range block.Insts {
+			// Replace in instruction operands
+			for _, operand := range inst.Operands() {
+				if *operand == oldVal {
+					*operand = newVal
+				}
+			}
+		}
+		// Replace in terminator operands
+		if block.Term != nil {
+			for _, operand := range block.Term.Operands() {
+				if *operand == oldVal {
+					*operand = newVal
+				}
+			}
+		}
+	}
 }
 
 // replaceAllUsesWith replaces all uses of oldVal with newVal.
