@@ -106,13 +106,13 @@ func TestValidateModule(t *testing.T) {
 			module: ast.Module{
 				Type:    "module",
 				Name:    "test",
-				Imports: []string{"", "std.io"},
+				Imports: []string{""},
 				Functions: []ast.Function{
 					{Type: "function", Name: "main", Body: []ast.Statement{}},
 				},
 			},
 			wantErr: true,
-			errMsg:  "import name cannot be empty",
+			errMsg:  "import 0: name cannot be empty",
 		},
 		{
 			name: "self import",
@@ -226,15 +226,14 @@ func TestValidateFunction(t *testing.T) {
 			errMsg:  "invalid type ''",
 		},
 		{
-			name: "invalid return type",
+			name: "empty return type (valid for void functions)",
 			fn: ast.Function{
 				Type:    "function",
 				Name:    "test",
 				Returns: "",
 				Body:    []ast.Statement{},
 			},
-			wantErr: true,
-			errMsg:  "invalid return type ''",
+			wantErr: false,
 		},
 		{
 			name: "null body",
@@ -682,7 +681,7 @@ func TestValidateExpression(t *testing.T) {
 			name: "valid builtin call",
 			expr: ast.Expression{
 				Type: ast.ExprBuiltin,
-				Name: "len",
+				Name: "array.length",
 				Args: []ast.Expression{{Type: ast.ExprVariable, Name: "arr"}},
 			},
 			scope:   map[string]bool{"arr": true},
@@ -708,6 +707,182 @@ func TestValidateExpression(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			v := New()
 			err := v.validateExpression(&tt.expr, tt.scope, nil)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validateExpression() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if err != nil && tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
+				t.Errorf("validateExpression() error = %v, want error containing %v", err, tt.errMsg)
+			}
+		})
+	}
+}
+
+func TestArrayMapValidation(t *testing.T) {
+	tests := []struct {
+		name    string
+		expr    ast.Expression
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid array literal",
+			expr: ast.Expression{
+				Type: ast.ExprArrayLit,
+				Elements: []ast.Expression{
+					{Type: ast.ExprLiteral, Value: 1},
+					{Type: ast.ExprLiteral, Value: 2},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty array literal",
+			expr: ast.Expression{
+				Type:     ast.ExprArrayLit,
+				Elements: []ast.Expression{},
+			},
+			wantErr: false,
+		},
+		{
+			name: "array element missing type",
+			expr: ast.Expression{
+				Type: ast.ExprArrayLit,
+				Elements: []ast.Expression{
+					{Value: 1}, // Missing Type field
+				},
+			},
+			wantErr: true,
+			errMsg:  "unknown expression type:",
+		},
+		{
+			name: "valid map literal",
+			expr: ast.Expression{
+				Type: ast.ExprMapLit,
+				Pairs: []ast.MapPair{
+					{
+						Key:   ast.Expression{Type: ast.ExprLiteral, Value: "key1"},
+						Value: ast.Expression{Type: ast.ExprLiteral, Value: "value1"},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty map literal",
+			expr: ast.Expression{
+				Type:  ast.ExprMapLit,
+				Pairs: []ast.MapPair{},
+			},
+			wantErr: false,
+		},
+		{
+			name: "map key missing type",
+			expr: ast.Expression{
+				Type: ast.ExprMapLit,
+				Pairs: []ast.MapPair{
+					{
+						Key:   ast.Expression{Value: "key1"}, // Missing Type field
+						Value: ast.Expression{Type: ast.ExprLiteral, Value: "value1"},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "unknown expression type:",
+		},
+		{
+			name: "map value missing type",
+			expr: ast.Expression{
+				Type: ast.ExprMapLit,
+				Pairs: []ast.MapPair{
+					{
+						Key:   ast.Expression{Type: ast.ExprLiteral, Value: "key1"},
+						Value: ast.Expression{Value: "value1"}, // Missing Type field
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "unknown expression type:",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := New()
+			err := v.validateExpression(&tt.expr, map[string]bool{}, nil)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validateExpression() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if err != nil && tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
+				t.Errorf("validateExpression() error = %v, want error containing %v", err, tt.errMsg)
+			}
+		})
+	}
+}
+
+func TestCallValidation(t *testing.T) {
+	tests := []struct {
+		name    string
+		expr    ast.Expression
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid function call",
+			expr: ast.Expression{
+				Type: ast.ExprCall,
+				Name: "foo",
+				Args: []ast.Expression{{Type: ast.ExprLiteral, Value: 42}},
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid function name",
+			expr: ast.Expression{
+				Type: ast.ExprCall,
+				Name: "123invalid",
+				Args: []ast.Expression{},
+			},
+			wantErr: true,
+			errMsg:  "invalid function name '123invalid'",
+		},
+		{
+			name: "valid module call",
+			expr: ast.Expression{
+				Type:   ast.ExprModuleCall,
+				Module: "std_io",
+				Name:   "println",
+				Args:   []ast.Expression{{Type: ast.ExprLiteral, Value: "hello"}},
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid module name",
+			expr: ast.Expression{
+				Type:   ast.ExprModuleCall,
+				Module: "123invalid",
+				Name:   "println",
+				Args:   []ast.Expression{},
+			},
+			wantErr: true,
+			errMsg:  "invalid module name '123invalid'",
+		},
+		{
+			name: "invalid module function name",
+			expr: ast.Expression{
+				Type:   ast.ExprModuleCall,
+				Module: "std_io",
+				Name:   "123invalid",
+				Args:   []ast.Expression{},
+			},
+			wantErr: true,
+			errMsg:  "invalid function name '123invalid'",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := New()
+			err := v.validateExpression(&tt.expr, map[string]bool{}, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("validateExpression() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -1319,6 +1494,368 @@ func TestValidateCustomTypes(t *testing.T) {
 				if !strings.Contains(err.Error(), tt.errMsg) {
 					t.Errorf("ValidateModule() error = %v, want error containing %v", err, tt.errMsg)
 				}
+			}
+		})
+	}
+}
+
+// TestEnhancedValidation tests the new comprehensive validation rules.
+func TestEnhancedValidation(t *testing.T) {
+	tests := []struct {
+		name    string
+		module  ast.Module
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "invalid module name with numbers at start",
+			module: ast.Module{
+				Type:      "module",
+				Name:      "123invalid",
+				Functions: []ast.Function{{Type: "function", Name: "main", Body: []ast.Statement{}}},
+			},
+			wantErr: true,
+			errMsg:  "invalid module name '123invalid'",
+		},
+		{
+			name: "invalid function name",
+			module: ast.Module{
+				Type: "module",
+				Name: "test",
+				Functions: []ast.Function{{
+					Type: "function",
+					Name: "123invalid",
+					Body: []ast.Statement{},
+				}},
+			},
+			wantErr: true,
+			errMsg:  "invalid function name '123invalid'",
+		},
+		{
+			name: "invalid parameter name",
+			module: ast.Module{
+				Type: "module",
+				Name: "test",
+				Functions: []ast.Function{{
+					Type:   "function",
+					Name:   "test",
+					Params: []ast.Parameter{{Name: "123invalid", Type: "int"}},
+					Body:   []ast.Statement{},
+				}},
+			},
+			wantErr: true,
+			errMsg:  "invalid name '123invalid'",
+		},
+		{
+			name: "invalid assignment target",
+			module: ast.Module{
+				Type: "module",
+				Name: "test",
+				Functions: []ast.Function{{
+					Type: "function",
+					Name: "test",
+					Body: []ast.Statement{{
+						Type:   ast.StmtAssign,
+						Target: "123invalid",
+						Value:  &ast.Expression{Type: ast.ExprLiteral, Value: 42},
+					}},
+				}},
+			},
+			wantErr: true,
+			errMsg:  "invalid assignment target '123invalid'",
+		},
+		{
+			name: "invalid variable name",
+			module: ast.Module{
+				Type: "module",
+				Name: "test",
+				Functions: []ast.Function{{
+					Type: "function",
+					Name: "test",
+					Body: []ast.Statement{{
+						Type: ast.StmtExpr,
+						Value: &ast.Expression{
+							Type: ast.ExprVariable,
+							Name: "123invalid",
+						},
+					}},
+				}},
+			},
+			wantErr: true,
+			errMsg:  "invalid variable name '123invalid'",
+		},
+		{
+			name: "empty export name",
+			module: ast.Module{
+				Type:    "module",
+				Name:    "test",
+				Exports: []string{"", "main"},
+				Functions: []ast.Function{{
+					Type: "function",
+					Name: "main",
+					Body: []ast.Statement{},
+				}},
+			},
+			wantErr: true,
+			errMsg:  "export 0: name cannot be empty",
+		},
+		{
+			name: "invalid export name",
+			module: ast.Module{
+				Type:    "module",
+				Name:    "test",
+				Exports: []string{"123invalid"},
+				Functions: []ast.Function{{
+					Type: "function",
+					Name: "main",
+					Body: []ast.Statement{},
+				}},
+			},
+			wantErr: true,
+			errMsg:  "export 0: invalid name '123invalid'",
+		},
+		{
+			name: "invalid import name",
+			module: ast.Module{
+				Type:    "module",
+				Name:    "test",
+				Imports: []string{"123invalid"},
+				Functions: []ast.Function{{
+					Type: "function",
+					Name: "main",
+					Body: []ast.Statement{},
+				}},
+			},
+			wantErr: true,
+			errMsg:  "import 0: invalid name '123invalid'",
+		},
+		{
+			name: "duplicate imports",
+			module: ast.Module{
+				Type:    "module",
+				Name:    "test",
+				Imports: []string{"std_io", "std_io"},
+				Functions: []ast.Function{{
+					Type: "function",
+					Name: "main",
+					Body: []ast.Statement{},
+				}},
+			},
+			wantErr: true,
+			errMsg:  "duplicate import 'std_io'",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := New()
+			err := v.ValidateModule(&tt.module)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateModule() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if err != nil && tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
+				t.Errorf("ValidateModule() error = %v, want error containing %v", err, tt.errMsg)
+			}
+		})
+	}
+}
+
+func TestBuiltinValidation(t *testing.T) {
+	tests := []struct {
+		name    string
+		expr    ast.Expression
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid builtin call",
+			expr: ast.Expression{
+				Type: ast.ExprBuiltin,
+				Name: "io.print",
+				Args: []ast.Expression{{Type: ast.ExprLiteral, Value: "hello"}},
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid builtin format - no dot",
+			expr: ast.Expression{
+				Type: ast.ExprBuiltin,
+				Name: "print",
+				Args: []ast.Expression{},
+			},
+			wantErr: true,
+			errMsg:  "builtin name must be in format 'namespace.function'",
+		},
+		{
+			name: "invalid builtin format - multiple dots",
+			expr: ast.Expression{
+				Type: ast.ExprBuiltin,
+				Name: "io.print.extra",
+				Args: []ast.Expression{},
+			},
+			wantErr: true,
+			errMsg:  "builtin name must be in format 'namespace.function'",
+		},
+		{
+			name: "empty namespace",
+			expr: ast.Expression{
+				Type: ast.ExprBuiltin,
+				Name: ".print",
+				Args: []ast.Expression{},
+			},
+			wantErr: true,
+			errMsg:  "builtin namespace and function cannot be empty",
+		},
+		{
+			name: "empty function name",
+			expr: ast.Expression{
+				Type: ast.ExprBuiltin,
+				Name: "io.",
+				Args: []ast.Expression{},
+			},
+			wantErr: true,
+			errMsg:  "builtin namespace and function cannot be empty",
+		},
+		{
+			name: "unknown namespace",
+			expr: ast.Expression{
+				Type: ast.ExprBuiltin,
+				Name: "unknown.print",
+				Args: []ast.Expression{},
+			},
+			wantErr: true,
+			errMsg:  "unknown builtin namespace 'unknown'",
+		},
+		{
+			name: "valid math builtin",
+			expr: ast.Expression{
+				Type: ast.ExprBuiltin,
+				Name: "math.sqrt",
+				Args: []ast.Expression{{Type: ast.ExprLiteral, Value: 16.0}},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid string builtin",
+			expr: ast.Expression{
+				Type: ast.ExprBuiltin,
+				Name: "string.length",
+				Args: []ast.Expression{{Type: ast.ExprLiteral, Value: "hello"}},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid array builtin",
+			expr: ast.Expression{
+				Type: ast.ExprBuiltin,
+				Name: "array.length",
+				Args: []ast.Expression{{Type: ast.ExprVariable, Name: "arr"}},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid map builtin",
+			expr: ast.Expression{
+				Type: ast.ExprBuiltin,
+				Name: "map.keys",
+				Args: []ast.Expression{{Type: ast.ExprVariable, Name: "map"}},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid collections builtin",
+			expr: ast.Expression{
+				Type: ast.ExprBuiltin,
+				Name: "collections.length",
+				Args: []ast.Expression{{Type: ast.ExprVariable, Name: "arr"}},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid type builtin",
+			expr: ast.Expression{
+				Type: ast.ExprBuiltin,
+				Name: "type.typeOf",
+				Args: []ast.Expression{{Type: ast.ExprVariable, Name: "value"}},
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := New()
+			scope := map[string]bool{"arr": true, "map": true, "value": true}
+			err := v.validateExpression(&tt.expr, scope, nil)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validateExpression() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if err != nil && tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
+				t.Errorf("validateExpression() error = %v, want error containing %v", err, tt.errMsg)
+			}
+		})
+	}
+}
+
+func TestLiteralValidation(t *testing.T) {
+	tests := []struct {
+		name    string
+		expr    ast.Expression
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid string literal",
+			expr: ast.Expression{
+				Type:  ast.ExprLiteral,
+				Value: "hello world",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid int literal",
+			expr: ast.Expression{
+				Type:  ast.ExprLiteral,
+				Value: 42,
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid float literal",
+			expr: ast.Expression{
+				Type:  ast.ExprLiteral,
+				Value: 3.14,
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid bool literal",
+			expr: ast.Expression{
+				Type:  ast.ExprLiteral,
+				Value: true,
+			},
+			wantErr: false,
+		},
+		{
+			name: "null literal value",
+			expr: ast.Expression{
+				Type:  ast.ExprLiteral,
+				Value: nil,
+			},
+			wantErr: true,
+			errMsg:  "literal expression must have a value",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := New()
+			err := v.validateExpression(&tt.expr, map[string]bool{}, nil)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validateExpression() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if err != nil && tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
+				t.Errorf("validateExpression() error = %v, want error containing %v", err, tt.errMsg)
 			}
 		})
 	}

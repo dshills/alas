@@ -7,9 +7,10 @@ ALaS is a general-purpose, Turing-complete programming language designed exclusi
 ## Features
 
 - **Machine-First Design**: Optimized for AI generation, not human readability
-- **JSON-Based**: All code is represented as structured JSON following a strict schema
+- **JSON-Based**: All code is represented as structured JSON following a strict schema with comprehensive validation
 - **Turing-Complete**: Supports functions, conditionals, loops, and recursion
-- **Type System**: Basic types including int, float, string, bool, array, and map
+- **Type System**: Basic types including int, float, string, bool, array, and map with custom struct and enum support
+- **Enhanced Validation**: Comprehensive JSON schema validation for all language constructs with detailed error reporting
 - **Module System**: Import/export capabilities with dependency resolution and encapsulation
 - **Standard Library**: Comprehensive runtime implementation for I/O, math, collections, strings, and more
 - **Plugin System**: Dynamic extensibility with security, sandboxing, and multiple plugin types
@@ -101,8 +102,20 @@ make run-all-examples
 
 ### Validating Programs
 
+ALaS includes comprehensive JSON schema validation for all language constructs:
+
 ```bash
+# Validate a single program
 ./bin/alas-validate -file examples/programs/hello.alas.json
+
+# Validation includes:
+# - Module structure and naming
+# - Function definitions and parameters
+# - Statement and expression syntax
+# - Type definitions and usage
+# - Import/export validation
+# - Builtin function namespace checking
+# - Custom type validation (structs/enums)
 ```
 
 ### Compiling to LLVM IR
