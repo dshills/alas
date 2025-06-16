@@ -271,6 +271,17 @@ ALaS includes a comprehensive standard library with native runtime implementatio
   - `isOk(result)`, `isError(result)` - Check Result status
   - `getValue(result)`, `getError(result)` - Extract Result contents
 
+- **`std.async`** - Concurrent and asynchronous programming
+  - `spawn(fn)` - Spawn async task, returns Task handle
+  - `await(task)` - Wait for task completion, returns Result
+  - `awaitTimeout(task, ms)` - Wait with timeout, returns Result with timedOut flag
+  - `parallel(tasks)` - Run tasks in parallel, wait for all
+  - `race(tasks)` - Run tasks in parallel, return first completion
+  - `sleep(ms)` - Create sleep task
+  - `timeout(fn, ms)` - Run function with timeout
+  - `cancel(task)` - Cancel running task
+  - `isRunning(task)`, `isCompleted(task)` - Check task status
+
 ### Using Standard Library Functions
 
 Standard library functions are called using the `builtin` expression type:
@@ -689,6 +700,7 @@ Recent additions:
   - **std.string**: String manipulation with split/join/replace
   - **std.type**: Type checking and conversion utilities
   - **std.result**: Structured error handling pattern
+  - **std.async**: Concurrent/async programming with tasks, parallel, race, and cancellation
 - ✅ **Runtime Garbage Collection** - Reference counting GC for arrays and maps
   - **Reference Counting**: Automatic memory management with retain/release
   - **Nested Object Support**: Proper cleanup of nested arrays/maps
@@ -702,10 +714,14 @@ Recent additions:
   - **String Functions**: string.toUpper
   - **Type Functions**: type.typeOf
 
+- ✅ **std.async Module Implementation** - Full async/concurrent programming support
+  - **Task System**: Spawn async tasks with context-based cancellation
+  - **Synchronization**: await, awaitTimeout for task completion
+  - **Concurrency Patterns**: parallel (wait for all), race (first to complete)
+  - **Utilities**: sleep, timeout, cancel, isRunning, isCompleted
+  - **Error Handling**: Result-based error propagation for async operations
+
 Future work (Priority order):
-- ⏳ **std.async module implementation** - Concurrent/async programming support
-  - Module specification exists but runtime implementation pending
-  - Functions defined: spawn, await, parallel, race, sleep, timeout, cancel
 - ⏳ **Plugin marketplace and hot reloading** - Dynamic plugin management
   - Hot reload capability for development
   - Remote plugin repository and marketplace

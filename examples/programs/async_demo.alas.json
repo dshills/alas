@@ -1,0 +1,230 @@
+{
+  "type": "module",
+  "name": "async_demo",
+  "imports": ["std.async", "std.io"],
+  "functions": [
+    {
+      "type": "function",
+      "name": "main",
+      "params": [],
+      "returns": "void",
+      "body": [
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "=== ALaS Async Demo ==="
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "\n1. Testing basic sleep:"
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "sleepTask",
+          "value": {
+            "type": "module_call",
+            "module": "async",
+            "name": "sleep",
+            "args": [
+              {
+                "type": "literal",
+                "value": 100
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "Created sleep task, waiting..."
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "sleepResult",
+          "value": {
+            "type": "module_call",
+            "module": "async",
+            "name": "await",
+            "args": [
+              {
+                "type": "variable",
+                "name": "sleepTask"
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "Sleep completed!"
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "\n2. Testing parallel tasks:"
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "task1",
+          "value": {
+            "type": "module_call",
+            "module": "async",
+            "name": "sleep",
+            "args": [
+              {
+                "type": "literal",
+                "value": 50
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "task2",
+          "value": {
+            "type": "module_call",
+            "module": "async",
+            "name": "sleep",
+            "args": [
+              {
+                "type": "literal",
+                "value": 100
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "task3",
+          "value": {
+            "type": "module_call",
+            "module": "async",
+            "name": "sleep",
+            "args": [
+              {
+                "type": "literal",
+                "value": 150
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "tasks",
+          "value": {
+            "type": "array_literal",
+            "elements": [
+              {
+                "type": "variable",
+                "name": "task1"
+              },
+              {
+                "type": "variable",
+                "name": "task2"
+              },
+              {
+                "type": "variable",
+                "name": "task3"
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "Running 3 tasks in parallel..."
+              }
+            ]
+          }
+        },
+        {
+          "type": "assign",
+          "target": "parallelResult",
+          "value": {
+            "type": "module_call",
+            "module": "async",
+            "name": "parallel",
+            "args": [
+              {
+                "type": "variable",
+                "name": "tasks"
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "All tasks completed!"
+              }
+            ]
+          }
+        },
+        {
+          "type": "expr",
+          "value": {
+            "type": "builtin",
+            "name": "io.print",
+            "args": [
+              {
+                "type": "literal",
+                "value": "\n=== Demo Complete ==="
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
