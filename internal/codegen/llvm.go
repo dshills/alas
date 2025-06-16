@@ -965,9 +965,6 @@ func (g *LLVMCodegen) generateStructConstruction(expr *ast.Expression, typeName 
 	structAlloca := g.builder.NewAlloca(structType)
 	structAlloca.SetName(typeName + "_struct")
 	
-	// CRITICAL: The issue might be that the subsequent instructions are not being
-	// added to the same block. Let's ensure we're using the right builder.
-	
 	// Initialize all fields to zero first
 	for i, fieldType := range structType.Fields {
 		fieldPtr := g.builder.NewGetElementPtr(
@@ -1021,7 +1018,8 @@ func (g *LLVMCodegen) generateStructConstruction(expr *ast.Expression, typeName 
 	}
 	
 	// Load and return the struct
-	return g.builder.NewLoad(structType, structAlloca), nil
+	loadedStruct := g.builder.NewLoad(structType, structAlloca)
+	return loadedStruct, nil
 }
 
 // inferVariableType tries to infer the ALaS type of a variable from its value expression.
