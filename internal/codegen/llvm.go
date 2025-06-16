@@ -801,14 +801,8 @@ func (g *LLVMCodegen) generateMapLiteral(expr *ast.Expression) (value.Value, err
 			constant.NewInt(types.I32, 0),
 		)
 		
-		// Ensure key is a pointer type (string or boxed value)
-		keyAsPtr := key
-		if key.Type() != types.I8Ptr {
-			// Box the key value into a heap allocation
-			keyAlloca := g.builder.NewAlloca(key.Type())
-			g.builder.NewStore(key, keyAlloca)
-			keyAsPtr = g.builder.NewBitCast(keyAlloca, types.I8Ptr)
-		}
+		// Box key if needed and store it
+		keyAsPtr := g.boxToI8Ptr(key, "boxed_key")
 		g.builder.NewStore(keyAsPtr, keyPtr)
 		
 		// Store value
@@ -819,14 +813,8 @@ func (g *LLVMCodegen) generateMapLiteral(expr *ast.Expression) (value.Value, err
 			constant.NewInt(types.I32, 1),
 		)
 		
-		// Ensure value is a pointer type
-		valAsPtr := val
-		if val.Type() != types.I8Ptr {
-			// Box the value into a heap allocation
-			valAlloca := g.builder.NewAlloca(val.Type())
-			g.builder.NewStore(val, valAlloca)
-			valAsPtr = g.builder.NewBitCast(valAlloca, types.I8Ptr)
-		}
+		// Box value if needed and store it
+		valAsPtr := g.boxToI8Ptr(val, "boxed_value")
 		g.builder.NewStore(valAsPtr, valPtr)
 	}
 	
@@ -1352,4 +1340,61 @@ func (g *LLVMCodegen) declareImportedFunctions(imports []string) error {
 	}
 
 	return nil
+}
+
+// getTypeSize returns the size in bytes for a given LLVM type.
+func (g *LLVMCodegen) getTypeSize(t types.Type) int64 {
+	switch typ := t.(type) {
+	case *types.IntType:
+		return int64(typ.BitSize) / 8
+	case *types.FloatType:
+		switch typ.Kind {
+		case types.FloatKindHalf:
+			return 2
+		case types.FloatKindFloat:
+			return 4
+		case types.FloatKindDouble:
+			return 8
+		case types.FloatKindFP128:
+			return 16
+		case types.FloatKindX86_FP80:
+			return 10 // 80 bits = 10 bytes
+		case types.FloatKindPPC_FP128:
+			return 16
+		default:
+			return 8
+		}
+	case *types.PointerType:
+		return 8 // 64-bit pointers
+	default:
+		// Default to 8 bytes for unknown types
+		return 8
+	}
+}
+
+// boxToI8Ptr boxes a value into heap memory and returns it as an i8* pointer.
+// If the value is already an i8* pointer, it returns it unchanged.
+func (g *LLVMCodegen) boxToI8Ptr(val value.Value, name string) value.Value {
+	if val.Type() == types.I8Ptr {
+		return val
+	}
+	
+	// Ensure malloc is declared
+	mallocFunc, exists := g.builtinFunctions["malloc"]
+	if !exists {
+		mallocFunc = g.module.NewFunc("malloc", types.I8Ptr, ir.NewParam("size", types.I64))
+		g.builtinFunctions["malloc"] = mallocFunc
+	}
+	
+	// Calculate size and allocate heap memory
+	size := constant.NewInt(types.I64, g.getTypeSize(val.Type()))
+	heapPtr := g.builder.NewCall(mallocFunc, size)
+	heapPtr.SetName(name)
+	
+	// Cast to proper type and store value
+	typedPtr := g.builder.NewBitCast(heapPtr, types.NewPointer(val.Type()))
+	g.builder.NewStore(val, typedPtr)
+	
+	// Return as i8*
+	return heapPtr
 }
