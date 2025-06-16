@@ -27,6 +27,7 @@ func NewRegistry() *Registry {
 	r.registerStringFunctions()
 	r.registerTypeFunctions()
 	r.registerResultFunctions()
+	r.registerAsyncFunctions()
 
 	return r
 }

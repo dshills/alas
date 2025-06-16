@@ -434,6 +434,145 @@ Here's a program that demonstrates various standard library functions:
 }
 ```
 
+## Async Module (`async`)
+
+The async module provides concurrent and asynchronous execution capabilities.
+
+### `async.spawn`
+
+Spawns an asynchronous task.
+
+**Signature:** `Task async.spawn(function)`
+
+**Parameters:**
+- `function`: Function to execute asynchronously
+
+**Returns:** A Task handle
+
+**Example:**
+```json
+{
+  "type": "builtin",
+  "name": "async.spawn",
+  "args": [{"type": "variable", "name": "myFunction"}]
+}
+```
+
+### `async.await`
+
+Waits for a task to complete and returns its result.
+
+**Signature:** `Result async.await(task)`
+
+**Parameters:**
+- `task`: Task handle to wait for
+
+**Returns:** Result with fields:
+- `ok`: bool - Whether the task succeeded
+- `value`: Any - The task's return value
+- `error`: string - Error message if failed
+
+### `async.awaitTimeout`
+
+Waits for a task with a timeout.
+
+**Signature:** `Result async.awaitTimeout(task, timeoutMs)`
+
+**Parameters:**
+- `task`: Task handle to wait for
+- `timeoutMs`: int - Timeout in milliseconds
+
+**Returns:** Result with fields:
+- `ok`: bool - Whether the task succeeded
+- `value`: Any - The task's return value
+- `error`: string - Error message if failed
+- `timedOut`: bool - Whether the timeout was reached
+
+### `async.parallel`
+
+Runs multiple tasks in parallel and waits for all to complete.
+
+**Signature:** `Result async.parallel(tasks)`
+
+**Parameters:**
+- `tasks`: Array of Task handles
+
+**Returns:** Result with fields:
+- `ok`: bool - Whether all tasks succeeded
+- `values`: Array - Return values from all tasks
+- `errors`: Array - Error messages (empty string for successful tasks)
+
+### `async.race`
+
+Runs multiple tasks in parallel and returns the first to complete.
+
+**Signature:** `Result async.race(tasks)`
+
+**Parameters:**
+- `tasks`: Array of Task handles
+
+**Returns:** Result with fields:
+- `ok`: bool - Whether the winning task succeeded
+- `value`: Any - The winning task's return value
+- `error`: string - Error message if the winning task failed
+- `winner`: int - Index of the winning task
+
+### `async.sleep`
+
+Creates a task that sleeps for a specified duration.
+
+**Signature:** `Task async.sleep(ms)`
+
+**Parameters:**
+- `ms`: int - Sleep duration in milliseconds
+
+**Returns:** A Task handle
+
+### `async.timeout`
+
+Runs a function with a timeout.
+
+**Signature:** `Task async.timeout(function, timeoutMs)`
+
+**Parameters:**
+- `function`: Function to execute
+- `timeoutMs`: int - Timeout in milliseconds
+
+**Returns:** A Task handle
+
+### `async.cancel`
+
+Cancels a running task.
+
+**Signature:** `bool async.cancel(task)`
+
+**Parameters:**
+- `task`: Task handle to cancel
+
+**Returns:** bool - Whether the task was successfully cancelled
+
+### `async.isRunning`
+
+Checks if a task is currently running.
+
+**Signature:** `bool async.isRunning(task)`
+
+**Parameters:**
+- `task`: Task handle to check
+
+**Returns:** bool - Whether the task is running
+
+### `async.isCompleted`
+
+Checks if a task has completed (successfully, failed, or cancelled).
+
+**Signature:** `bool async.isCompleted(task)`
+
+**Parameters:**
+- `task`: Task handle to check
+
+**Returns:** bool - Whether the task is completed
+
 ## Notes
 
 - All standard library functions are pure (no side effects) except for I/O operations
