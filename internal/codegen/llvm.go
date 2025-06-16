@@ -25,6 +25,8 @@ type LLVMCodegen struct {
 	externalFunctions map[string]*ir.Func // External functions from other modules
 	builtinFunctions  map[string]*ir.Func // Builtin standard library functions
 	moduleLoader      ModuleResolver
+	customTypes       map[string]*ast.TypeDefinition // Custom type definitions
+	structTypes       map[string]types.Type         // LLVM types for custom types
 }
 
 // ModuleResolver interface for loading modules.
@@ -76,15 +78,59 @@ func NewLLVMCodegenWithLoader(loader ModuleResolver) *LLVMCodegen {
 		externalFunctions: make(map[string]*ir.Func),
 		builtinFunctions:  make(map[string]*ir.Func),
 		moduleLoader:      loader,
+		customTypes:       make(map[string]*ast.TypeDefinition),
+		structTypes:       make(map[string]types.Type),
 	}
 	g.declareGCFunctions()
 	g.declareBuiltinFunctions()
 	return g
 }
 
+// declareCustomType declares a custom type in LLVM IR.
+func (g *LLVMCodegen) declareCustomType(typeDef *ast.TypeDefinition) error {
+	switch typeDef.Definition.Kind {
+	case ast.TypeKindStruct:
+		// Create LLVM struct type
+		var fieldTypes []types.Type
+		for _, field := range typeDef.Definition.Fields {
+			fieldType, err := g.convertType(field.Type)
+			if err != nil {
+				return fmt.Errorf("invalid field type %s: %v", field.Type, err)
+			}
+			fieldTypes = append(fieldTypes, fieldType)
+		}
+		
+		// Create named struct type
+		structType := types.NewStruct(fieldTypes...)
+		g.structTypes[typeDef.Name] = structType
+		
+		// Note: LLVM doesn't support named struct types directly in the IR module
+		// We just keep track of them in our map
+		
+	case ast.TypeKindEnum:
+		// Enums are represented as i32 (could also use string pointers)
+		// For now, we'll use i32 for enum values
+		g.structTypes[typeDef.Name] = types.I32
+		
+	default:
+		return fmt.Errorf("unknown type kind: %s", typeDef.Definition.Kind)
+	}
+	
+	return nil
+}
+
 // GenerateModule generates LLVM IR for an entire ALaS module.
 func (g *LLVMCodegen) GenerateModule(module *ast.Module) (*ir.Module, error) {
 	g.module.SourceFilename = module.Name + ".alas"
+
+	// Process custom types first
+	for idx := range module.Types {
+		typeDef := &module.Types[idx]
+		g.customTypes[typeDef.Name] = typeDef
+		if err := g.declareCustomType(typeDef); err != nil {
+			return nil, fmt.Errorf("failed to declare type %s: %v", typeDef.Name, err)
+		}
+	}
 
 	// Handle imports - declare external functions from imported modules
 	if err := g.declareImportedFunctions(module.Imports); err != nil {
@@ -295,6 +341,9 @@ func (g *LLVMCodegen) generateExpression(expr *ast.Expression) (value.Value, err
 
 	case ast.ExprBuiltin:
 		return g.generateBuiltinCall(expr)
+		
+	case ast.ExprField:
+		return g.generateFieldAccess(expr)
 
 	default:
 		return nil, fmt.Errorf("unsupported expression type: %s", expr.Type)
@@ -639,6 +688,10 @@ func (g *LLVMCodegen) convertType(alasType string) (types.Type, error) {
 	case ast.TypeVoid, "":
 		return types.Void, nil
 	default:
+		// Check if it's a custom type
+		if structType, ok := g.structTypes[alasType]; ok {
+			return structType, nil
+		}
 		return nil, fmt.Errorf("unsupported type: %s", alasType)
 	}
 }
@@ -854,6 +907,26 @@ func (g *LLVMCodegen) generateIndexAccess(expr *ast.Expression) (value.Value, er
 	}
 
 	// For maps or other types, return placeholder for now
+	return constant.NewInt(types.I64, 0), nil
+}
+
+// generateFieldAccess generates LLVM IR for field access (struct.field).
+func (g *LLVMCodegen) generateFieldAccess(expr *ast.Expression) (value.Value, error) {
+	// Generate object expression
+	_, err := g.generateExpression(expr.Object)
+	if err != nil {
+		return nil, err
+	}
+
+	// For now, we represent structs as maps at runtime (simplified)
+	// In a full implementation, we would:
+	// 1. Track the type of the object
+	// 2. Look up the field index in the struct type
+	// 3. Use GEP (GetElementPtr) to access the field
+	
+	// Since we're using maps for now, we can't directly access fields
+	// Return a placeholder value
+	// TODO: Implement proper struct field access
 	return constant.NewInt(types.I64, 0), nil
 }
 
