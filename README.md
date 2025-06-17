@@ -65,7 +65,45 @@ alas/
 
 ### Prerequisites
 
-- Go 1.24.4 or later
+#### Required
+- **Go 1.24.4 or later** - The ALaS compiler is written in Go
+- **LLVM 14 or later** - Required for LLVM IR compilation and optimization
+
+#### Installation Instructions
+
+**Go Installation:**
+- Download from [golang.org](https://golang.org/dl/)
+- Verify: `go version` should show 1.24.4 or later
+
+**LLVM Installation:**
+
+*Ubuntu/Debian:*
+```bash
+sudo apt-get update
+sudo apt-get install -y llvm-14 llvm-14-dev clang
+sudo ln -sf /usr/bin/llvm-config-14 /usr/bin/llvm-config
+```
+
+*macOS:*
+```bash
+brew install llvm
+# Add LLVM to PATH if needed
+export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
+```
+
+*Windows:*
+- Download LLVM from [releases.llvm.org](https://releases.llvm.org/download.html)
+- Add LLVM bin directory to PATH
+
+**Verify Installation:**
+```bash
+llvm-config --version  # Should show LLVM version
+clang --version        # Should show Clang version
+```
+
+#### Optional Dependencies
+- **golangci-lint** - For running code quality checks
+- **git** - For version control and CI/CD
 
 ### Building
 

@@ -354,11 +354,13 @@
   "types": [
     {
       "name": "Task",
-      "type": "map",
-      "schema": {
-        "type": "string",
-        "id": "string",
-        "status": "string"
+      "definition": {
+        "kind": "struct",
+        "fields": [
+          {"name": "type", "type": "string"},
+          {"name": "id", "type": "string"},
+          {"name": "status", "type": "string"}
+        ]
       },
       "meta": {
         "description": "Async task handle"
