@@ -836,6 +836,9 @@ func (g *LLVMCodegen) generateArrayLiteral(expr *ast.Expression) (value.Value, e
 
 	// Allocate array on stack
 	// Safe conversion: elementCount is already validated to be non-negative
+	if elementCount < 0 || elementCount > 0x7FFFFFFF {
+		return nil, fmt.Errorf("array element count out of valid range: %d", elementCount)
+	}
 	arrayAlloca := g.builder.NewAlloca(types.NewArray(uint64(elementCount), elemType))
 	arrayAlloca.SetName("array_literal")
 
@@ -1167,6 +1170,9 @@ func (g *LLVMCodegen) generateFieldAccess(expr *ast.Expression) (value.Value, er
 			fieldIdx, ok := fieldIndices[expr.Field]
 			if ok {
 				// Extract field value from struct
+				if fieldIdx < 0 || fieldIdx > 0xFFFFFFFF {
+					return nil, fmt.Errorf("field index out of valid range: %d", fieldIdx)
+				}
 				return g.builder.NewExtractValue(obj, uint64(fieldIdx)), nil
 			}
 		}
@@ -1188,6 +1194,9 @@ func (g *LLVMCodegen) generateFieldAccess(expr *ast.Expression) (value.Value, er
 					fieldIdx, ok := fieldIndices[expr.Field]
 					if ok {
 						// Extract field value from struct
+						if fieldIdx < 0 || fieldIdx > 0xFFFFFFFF {
+							return nil, fmt.Errorf("field index out of valid range: %d", fieldIdx)
+						}
 						return g.builder.NewExtractValue(obj, uint64(fieldIdx)), nil
 					}
 				}
@@ -2472,7 +2481,12 @@ func (g *LLVMCodegen) getTypeSize(t types.Type) int64 {
 		// e.g., i1 needs 1 byte, i7 needs 1 byte, i9 needs 2 bytes
 		// Safe conversion: BitSize is always positive
 		// Round up to the nearest byte for non-byte-aligned types
-		return int64((typ.BitSize + 7) / 8)
+		if typ.BitSize > 0x7FFFFFFF {
+			return 8 // Default to 8 bytes for invalid bit sizes
+		}
+		// Safe conversion: checked above
+		bitSize := int64(typ.BitSize)
+		return (bitSize + 7) / 8
 	case *types.FloatType:
 		switch typ.Kind {
 		case types.FloatKindHalf:

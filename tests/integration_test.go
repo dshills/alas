@@ -303,6 +303,20 @@ func TestInterpreterVsCompiler(t *testing.T) {
 					if interpBool != compiledBool {
 						t.Errorf("Results differ: interpreter=%t, compiled=%t", interpBool, compiledBool)
 					}
+				case runtime.ValueTypeString:
+					// String comparison not supported in this context (compiled result is int)
+					t.Skipf("String type comparison not implemented for compiled results")
+				case runtime.ValueTypeArray:
+					// Array comparison not supported in this context (compiled result is int)
+					t.Skipf("Array type comparison not implemented for compiled results")
+				case runtime.ValueTypeMap:
+					// Map comparison not supported in this context (compiled result is int)
+					t.Skipf("Map type comparison not implemented for compiled results")
+				case runtime.ValueTypeVoid:
+					// Void type has no value to compare
+					t.Skipf("Void type has no return value to compare")
+				default:
+					t.Errorf("Unknown value type: %d", tc.expectedType)
 				}
 			}
 		})

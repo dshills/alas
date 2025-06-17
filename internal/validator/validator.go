@@ -33,8 +33,8 @@ func (v *Validator) ValidateModule(m *ast.Module) error {
 	// Validate module name
 	if m.Name == "" {
 		v.addError("module name cannot be empty")
-	} else if !isValidIdentifier(m.Name) {
-		v.addError("invalid module name '%s', must be valid identifier", m.Name)
+	} else if !isValidModuleName(m.Name) {
+		v.addError("invalid module name '%s', must be valid module name", m.Name)
 	}
 
 	// Validate custom types
@@ -588,9 +588,10 @@ func (v *Validator) validateBuiltinName(name string) error {
 		"map":         true,
 		"collections": true,
 		"type":        true,
+		"async":       true,
 	}
 	if !knownNamespaces[parts[0]] {
-		return fmt.Errorf("unknown builtin namespace '%s', expected one of: io, math, string, array, map, collections, type", parts[0])
+		return fmt.Errorf("unknown builtin namespace '%s', expected one of: io, math, string, array, map, collections, type, async", parts[0])
 	}
 	return nil
 }

@@ -91,7 +91,7 @@
       "returns": "void",
       "body": [
         {
-          "type": "expression",
+          "type": "expr",
           "value": {
             "type": "builtin",
             "name": "io.print",
