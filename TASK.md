@@ -13,10 +13,10 @@
 
 ## New Top Priority
 
-- [ ] Fix comment formatting (godot) in internal/runtime/async.go and internal/stdlib/async.go
+- [ ] Fix comment formatting (godot) in internal/runtime/async.go (3 instances)
 - [ ] Fix gofmt and goimports formatting in internal/codegen/llvm.go
-- [ ] Address unused functions (12 functions) - these are comprehensive implementations that may be used in future features
 - [ ] Address unused parameter warnings (unparam) - 2 instances in helper functions
+- [ ] Review unused functions (12 functions) - these are comprehensive implementations for future features
 
 ## Linting Issues (Non-Critical)
 - [ ] Additional formatting and style improvements as needed
